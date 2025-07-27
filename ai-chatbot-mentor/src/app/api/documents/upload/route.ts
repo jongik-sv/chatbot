@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     
     // 임시 디렉터리 생성
-    const fs = require('fs');
+    const fs = await import('fs');
     if (!fs.existsSync(TEMP_DIR)) {
       fs.mkdirSync(TEMP_DIR, { recursive: true });
     }

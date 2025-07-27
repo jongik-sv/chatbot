@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // FormData인지 JSON인지 확인
     const contentType = request.headers.get('content-type') || '';
     let body: ChatRequest;
-    let uploadedFiles: any[] = [];
+    const uploadedFiles: unknown[] = [];
 
     if (contentType.includes('multipart/form-data')) {
       // FormData 처리 (파일 업로드가 있는 경우)
