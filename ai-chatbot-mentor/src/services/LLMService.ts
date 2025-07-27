@@ -2,7 +2,7 @@
 import { LLMModel, ChatRequest, ChatResponse } from '../types';
 
 // 기존 JavaScript 서비스들을 import
-const LLMServiceJS = require('../../../../services/LLMService');
+const LLMServiceJS = require('../../../services/LLMService');
 
 export interface LLMGenerationOptions {
   model?: string;

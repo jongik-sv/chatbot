@@ -65,4 +65,14 @@
 - 멀티모달 입력 처리 기능 구현 (utils/multimodal.js)
   - 이미지/음성/문서 파일 처리, 파일 검증, 메타데이터 추출
 - @google/generative-ai 패키지 설치 완료
-------
+------------
+
+npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
+- 루트 디렉토리에서 npm run dev 실행했으나 package.json에 dev 스크립트가 없음
+- ai-chatbot-mentor 폴더에 실제 Next.js 프로젝트가 있음을 확인
+- 올바른 디렉토리에서 실행하도록 안내 필요-
+-----
+빌드 오류 해결 요청: Module not found: Can't resolve '../../../../services/LLMService'
+- src/services/LLMService.ts 파일에서 상대 경로 오류 발생
+- require('../../../../services/LLMService') 경로가 잘못됨
+- 프로젝트 구조 확인 후 올바른 경로로 수정 필요

@@ -6,5 +6,11 @@
       "Bash(git add:*)"
     ],
     "deny": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "fetch",
+    "sequential-thinking",
+    "Context7",
+    "@21st-dev/magic"
+  ]
 }
