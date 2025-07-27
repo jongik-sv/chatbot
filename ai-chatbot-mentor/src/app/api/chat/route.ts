@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChatSessionRepository } from '../../../lib/repositories/ChatSessionRepository';
 import { MessageRepository } from '../../../lib/repositories/MessageRepository';
 import { LLMService } from '../../../services/LLMService';
+import { MentorContextService } from '../../../services/MentorContextService';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -10,6 +11,7 @@ import path from 'path';
 const chatSessionRepo = new ChatSessionRepository();
 const messageRepo = new MessageRepository();
 const llmService = new LLMService();
+const mentorContextService = new MentorContextService();
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +29,8 @@ export async function POST(request: NextRequest) {
         model: formData.get('model') as string,
         mode: formData.get('mode') as string,
         sessionId: formData.get('sessionId') ? parseInt(formData.get('sessionId') as string) : undefined,
+        mentorId: formData.get('mentorId') ? parseInt(formData.get('mentorId') as string) : undefined,
+        userId: formData.get('userId') ? parseInt(formData.get('userId') as string) : undefined,
         files: []
       };
 
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     }
 
-    const { message, model, mode, sessionId } = body;
+    const { message, model, mode, sessionId, mentorId, userId } = body;
 
     // 입력 검증
     if (!message || !message.trim()) {
@@ -88,11 +92,11 @@ export async function POST(request: NextRequest) {
         : message;
         
       currentSession = chatSessionRepo.create({
-        userId: 1, // 기본 사용자 사용 (사용자 인증 구현 전까지)
+        userId: userId || 1, // 기본 사용자 사용 (사용자 인증 구현 전까지)
         title: sessionTitle,
         mode: mode || 'chat',
         modelUsed: model,
-        mentorId: undefined
+        mentorId: mentorId
       });
     }
 
@@ -107,12 +111,42 @@ export async function POST(request: NextRequest) {
       } : undefined
     });
 
-    // 대화 컨텍스트 구성 (최근 메시지들)
-    const recentMessages = messageRepo.getRecentMessages(currentSession.id, 10);
-    const conversationHistory = recentMessages.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
+    // 멘토 컨텍스트 처리
+    let mentorContext = null;
+    let systemInstruction = undefined;
+    
+    if (mentorId) {
+      try {
+        mentorContext = await mentorContextService.createMentorContext(
+          mentorId,
+          currentSession.id,
+          message,
+          userId
+        );
+        systemInstruction = mentorContext.systemPrompt;
+      } catch (error) {
+        console.error('멘토 컨텍스트 생성 오류:', error);
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : '멘토 컨텍스트 생성 실패' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 대화 컨텍스트 구성
+    let conversationHistory;
+    
+    if (mentorContext) {
+      // 멘토별 대화 히스토리 사용
+      conversationHistory = [...mentorContext.conversationHistory];
+    } else {
+      // 일반 대화 히스토리 사용
+      const recentMessages = messageRepo.getRecentMessages(currentSession.id, 10);
+      conversationHistory = recentMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    }
 
     // 현재 사용자 메시지 추가
     conversationHistory.push({
@@ -174,7 +208,8 @@ export async function POST(request: NextRequest) {
         llmResponse = await llmService.chat(conversationHistory, {
           model,
           temperature: 0.7,
-          maxTokens: 2048
+          maxTokens: 2048,
+          systemInstruction
         });
       }
 
@@ -191,9 +226,21 @@ export async function POST(request: NextRequest) {
         metadata: {
           model: llmResponse.model,
           provider: llmResponse.provider,
-          usage: llmResponse.usage
+          usage: llmResponse.usage,
+          mentorId: mentorId,
+          mentorName: mentorContext?.mentor.name
         }
       });
+
+      // 멘토 응답 후처리
+      if (mentorId) {
+        await mentorContextService.processMentorResponse(
+          mentorId,
+          currentSession.id,
+          assistantMessage.id,
+          llmResponse.content
+        );
+      }
 
       // 세션 마지막 활동 시간 업데이트
       chatSessionRepo.updateLastActivity(currentSession.id);

@@ -1,5 +1,5 @@
 // lib/api.ts
-import { ChatRequest, ChatResponse, LLMModel } from '../types';
+import { ChatRequest, ChatResponse, LLMModel, Mentor } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -138,6 +138,161 @@ export class ApiClient {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || '세션 목록 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  // ===== 멘토 관련 API =====
+
+  /**
+   * 멘토 목록 조회
+   */
+  static async getMentors(params?: {
+    userId?: number;
+    publicOnly?: boolean;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    data: Mentor[];
+  }> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.userId) {
+      searchParams.append('userId', params.userId.toString());
+    }
+    
+    if (params?.publicOnly) {
+      searchParams.append('publicOnly', 'true');
+    }
+    
+    if (params?.search) {
+      searchParams.append('search', params.search);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/mentors?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '멘토 목록 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 멘토 조회
+   */
+  static async getMentor(id: number, userId?: number): Promise<{
+    success: boolean;
+    data: Mentor;
+  }> {
+    const searchParams = new URLSearchParams();
+    
+    if (userId) {
+      searchParams.append('userId', userId.toString());
+    }
+
+    const response = await fetch(`${API_BASE_URL}/mentors/${id}?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '멘토 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 멘토 생성
+   */
+  static async createMentor(mentorData: {
+    name: string;
+    description: string;
+    personality: {
+      traits: string[];
+      communicationStyle: string;
+      teachingApproach: string;
+      responseStyle: string;
+    };
+    expertise: string[];
+    mbtiType?: string;
+    systemPrompt: string;
+    isPublic?: boolean;
+    userId?: number;
+  }): Promise<{
+    success: boolean;
+    data: Mentor;
+    message: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/mentors`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mentorData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '멘토 생성에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 멘토 업데이트
+   */
+  static async updateMentor(id: number, mentorData: {
+    name?: string;
+    description?: string;
+    personality?: {
+      traits: string[];
+      communicationStyle: string;
+      teachingApproach: string;
+      responseStyle: string;
+    };
+    expertise?: string[];
+    mbtiType?: string;
+    systemPrompt?: string;
+    isPublic?: boolean;
+    userId: number;
+  }): Promise<{
+    success: boolean;
+    data: Mentor;
+    message: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/mentors/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mentorData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '멘토 업데이트에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 멘토 삭제
+   */
+  static async deleteMentor(id: number, userId: number): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/mentors/${id}?userId=${userId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '멘토 삭제에 실패했습니다.');
     }
 
     return response.json();

@@ -117,6 +117,8 @@ export interface ChatRequest {
   model: string;
   mode: string;
   sessionId?: number;
+  mentorId?: number;
+  userId?: number;
   files?: File[];
 }
 

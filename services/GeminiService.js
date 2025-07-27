@@ -7,15 +7,22 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@googl
 
 class GeminiService {
   constructor() {
-    this.apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    this.apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     
-    if (!this.apiKey) {
+    if (!this.apiKey || this.apiKey === 'your_gemini_api_key_here' || this.apiKey === 'your_actual_gemini_api_key_here') {
       console.warn('Google API 키가 설정되지 않았습니다. Gemini 서비스를 사용할 수 없습니다.');
+      console.warn('현재 API 키:', this.apiKey ? '설정됨 (길이: ' + this.apiKey.length + ')' : '없음');
       this.genAI = null;
       return;
     }
 
-    this.genAI = new GoogleGenerativeAI(this.apiKey);
+    try {
+      this.genAI = new GoogleGenerativeAI(this.apiKey);
+      console.log('✅ Gemini API 클라이언트 초기화 성공');
+    } catch (error) {
+      console.error('❌ Gemini API 클라이언트 초기화 실패:', error.message);
+      this.genAI = null;
+    }
     
     // 안전 설정
     this.safetySettings = [

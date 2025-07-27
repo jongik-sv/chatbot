@@ -161,6 +161,20 @@ export class MessageRepository extends BaseRepository {
   }
 
   /**
+   * ID로 메시지 찾기 (MentorContextService용)
+   */
+  findById(id: number): Message | null {
+    return this.getById(id);
+  }
+
+  /**
+   * 메타데이터 업데이트 (MentorContextService용)
+   */
+  updateMetadata(id: number, metadata: MessageMetadata): Message | null {
+    return this.update(id, { metadata });
+  }
+
+  /**
    * 데이터베이스 행을 Message 객체로 변환
    */
   private mapRowToMessage(row: any): Message {
