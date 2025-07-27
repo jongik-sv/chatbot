@@ -1,35 +1,88 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import ModelSelector from './ModelSelector';
 import TypingIndicator from './TypingIndicator';
+import { ApiClient } from '../../lib/api';
+import { LLMModel, Message as MessageType } from '../../types';
+import { useChatContext } from '../../contexts/ChatContext';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  metadata?: any;
 }
 
 interface ChatInterfaceProps {
   className?: string;
+  sessionId?: number;
 }
 
-export default function ChatInterface({ className = '' }: ChatInterfaceProps) {
+export default function ChatInterface({ className = '', sessionId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('ollama-llama2');
+  const [error, setError] = useState<string | null>(null);
+  const { state, dispatch, getModelSettings, switchModel } = useChatContext();
 
-  const availableModels = [
-    { id: 'ollama-llama2', name: 'Llama 2 (Ollama)', type: 'ollama' },
-    { id: 'ollama-codellama', name: 'Code Llama (Ollama)', type: 'ollama' },
-    { id: 'gemini-pro', name: 'Gemini Pro', type: 'gemini' },
-    { id: 'gemini-pro-vision', name: 'Gemini Pro Vision', type: 'gemini' },
-  ];
+  // 컴포넌트 마운트 시 모델 목록 로드
+  useEffect(() => {
+    loadAvailableModels();
+  }, []);
 
-  const handleSendMessage = async (content: string) => {
+  // 기존 세션이 있으면 로드
+  useEffect(() => {
+    if (sessionId) {
+      loadSession(sessionId);
+    }
+  }, [sessionId]);
+
+  const loadAvailableModels = async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const response = await ApiClient.getAvailableModels();
+      if (response.success) {
+        dispatch({ type: 'SET_MODELS', payload: response.models });
+      }
+    } catch (error) {
+      console.error('모델 목록 로드 실패:', error);
+      dispatch({ type: 'SET_ERROR', payload: '모델 목록을 불러올 수 없습니다.' });
+      setError('모델 목록을 불러올 수 없습니다.');
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const loadSession = async (sessionId: number) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const response = await ApiClient.getSession(sessionId);
+      const loadedMessages = response.messages.map((msg: MessageType) => ({
+        id: msg.id.toString(),
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.createdAt),
+        metadata: msg.metadata
+      }));
+      setMessages(loadedMessages);
+      dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
+      
+      // 세션의 모델 설정
+      if (response.session.modelUsed) {
+        switchModel(response.session.modelUsed);
+      }
+    } catch (error) {
+      console.error('세션 로드 실패:', error);
+      dispatch({ type: 'SET_ERROR', payload: '대화 기록을 불러올 수 없습니다.' });
+      setError('대화 기록을 불러올 수 없습니다.');
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const handleSendMessage = async (content: string, files?: File[]) => {
     if (!content.trim()) return;
 
     const userMessage: Message = {
@@ -40,49 +93,98 @@ export default function ChatInterface({ className = '' }: ChatInterfaceProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
+    dispatch({ type: 'SET_LOADING', payload: true });
+    setError(null);
 
     try {
-      // TODO: API 호출 구현
-      // 임시 응답
-      setTimeout(() => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `안녕하세요! "${content}"에 대한 답변입니다. 현재는 임시 응답이며, 실제 AI 모델 연동은 다음 단계에서 구현됩니다.`,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 1500);
+      // 현재 모델의 설정 가져오기
+      const modelSettings = getModelSettings(state.selectedModel);
+      
+      const response = await ApiClient.sendMessage({
+        message: content,
+        model: state.selectedModel,
+        mode: 'chat',
+        sessionId: state.currentSessionId,
+        files
+      });
+
+      // 세션 ID 업데이트 (새 세션인 경우)
+      if (!state.currentSessionId) {
+        dispatch({ type: 'SET_SESSION_ID', payload: response.sessionId });
+      }
+
+      const assistantMessage: Message = {
+        id: response.messageId.toString(),
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date(),
+        metadata: {
+          artifacts: response.artifacts,
+          sources: response.sources,
+          modelSettings
+        }
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('메시지 전송 실패:', error);
-      setIsLoading(false);
+      const errorMsg = error instanceof Error ? error.message : '메시지 전송에 실패했습니다.';
+      dispatch({ type: 'SET_ERROR', payload: errorMsg });
+      setError(errorMsg);
+      
+      // 오류 메시지 표시
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: '죄송합니다. 응답을 생성하는 중에 오류가 발생했습니다. 다시 시도해 주세요.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
+      {/* Error Banner */}
+      {error && (
+        <div className="flex-shrink-0 bg-red-50 border-b border-red-200 p-3">
+          <div className="flex">
+            <div className="text-sm text-red-700">
+              {error}
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="ml-auto text-red-400 hover:text-red-600"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Model Selector */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
         <ModelSelector
-          models={availableModels}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
+          models={state.availableModels}
+          selectedModel={state.selectedModel}
+          onModelChange={switchModel}
+          disabled={state.isLoading}
         />
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
         <MessageList messages={messages} />
-        {isLoading && <TypingIndicator />}
+        {state.isLoading && <TypingIndicator />}
       </div>
 
       {/* Input */}
       <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
         <MessageInput
           onSendMessage={handleSendMessage}
-          disabled={isLoading}
+          disabled={state.isLoading}
           placeholder="메시지를 입력하세요..."
         />
       </div>

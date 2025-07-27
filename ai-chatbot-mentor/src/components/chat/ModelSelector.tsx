@@ -1,26 +1,24 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
-import { CheckIcon, ChevronUpDownIcon, CpuChipIcon } from '@heroicons/react/24/outline';
-
-interface Model {
-  id: string;
-  name: string;
-  type: 'ollama' | 'gemini';
-}
+import { CheckIcon, ChevronUpDownIcon, CpuChipIcon, CogIcon } from '@heroicons/react/24/outline';
+import { LLMModel } from '../../types';
+import ModelSettings from './ModelSettings';
 
 interface ModelSelectorProps {
-  models: Model[];
+  models: LLMModel[];
   selectedModel: string;
   onModelChange: (modelId: string) => void;
+  disabled?: boolean;
 }
 
-export default function ModelSelector({ models, selectedModel, onModelChange }: ModelSelectorProps) {
+export default function ModelSelector({ models, selectedModel, onModelChange, disabled = false }: ModelSelectorProps) {
+  const [showSettings, setShowSettings] = useState(false);
   const selectedModelData = models.find(model => model.id === selectedModel);
 
-  const getModelIcon = (type: string) => {
-    switch (type) {
+  const getModelIcon = (provider: 'ollama' | 'gemini') => {
+    switch (provider) {
       case 'ollama':
         return '🦙';
       case 'gemini':
@@ -30,8 +28,8 @@ export default function ModelSelector({ models, selectedModel, onModelChange }: 
     }
   };
 
-  const getModelBadgeColor = (type: string) => {
-    switch (type) {
+  const getModelBadgeColor = (provider: 'ollama' | 'gemini') => {
+    switch (provider) {
       case 'ollama':
         return 'bg-green-100 text-green-800';
       case 'gemini':
@@ -41,23 +39,36 @@ export default function ModelSelector({ models, selectedModel, onModelChange }: 
     }
   };
 
+  const getModelStatusColor = (available: boolean) => {
+    return available ? 'text-green-500' : 'text-red-500';
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-      <div className="flex items-center space-x-2">
-        <CpuChipIcon className="w-5 h-5 text-gray-500" />
-        <span className="text-sm font-medium text-gray-700">AI 모델:</span>
-      </div>
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+        <div className="flex items-center space-x-2">
+          <CpuChipIcon className="w-5 h-5 text-gray-500" />
+          <span className="text-sm font-medium text-gray-700">AI 모델:</span>
+        </div>
       
-      <Listbox value={selectedModel} onChange={onModelChange}>
+      <Listbox value={selectedModel} onChange={onModelChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className="relative w-full sm:w-64 cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm">
+          <Listbox.Button className={`relative w-full sm:w-64 cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <span className="flex items-center">
               <span className="mr-2 text-lg">
-                {getModelIcon(selectedModelData?.type || '')}
+                {getModelIcon(selectedModelData?.provider || 'ollama')}
               </span>
-              <span className="block truncate">{selectedModelData?.name}</span>
-              <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelBadgeColor(selectedModelData?.type || '')}`}>
-                {selectedModelData?.type.toUpperCase()}
+              <span className="block truncate">{selectedModelData?.name || selectedModel}</span>
+              <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelBadgeColor(selectedModelData?.provider || 'ollama')}`}>
+                {selectedModelData?.provider.toUpperCase() || 'UNKNOWN'}
+              </span>
+              {selectedModelData?.multimodal && (
+                <span className="ml-1 text-xs text-purple-600" title="멀티모달 지원">
+                  🖼️
+                </span>
+              )}
+              <span className={`ml-1 text-xs ${getModelStatusColor(selectedModelData?.available ?? true)}`}>
+                ●
               </span>
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -86,13 +97,21 @@ export default function ModelSelector({ models, selectedModel, onModelChange }: 
                     <>
                       <div className="flex items-center">
                         <span className="mr-2 text-lg">
-                          {getModelIcon(model.type)}
+                          {getModelIcon(model.provider)}
                         </span>
                         <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
                           {model.name}
                         </span>
-                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelBadgeColor(model.type)}`}>
-                          {model.type.toUpperCase()}
+                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelBadgeColor(model.provider)}`}>
+                          {model.provider.toUpperCase()}
+                        </span>
+                        {model.multimodal && (
+                          <span className="ml-1 text-xs text-purple-600" title="멀티모달 지원">
+                            🖼️
+                          </span>
+                        )}
+                        <span className={`ml-1 text-xs ${getModelStatusColor(model.available)}`}>
+                          ●
                         </span>
                       </div>
                       {selected ? (
@@ -108,6 +127,24 @@ export default function ModelSelector({ models, selectedModel, onModelChange }: 
           </Transition>
         </div>
       </Listbox>
+
+      {/* Settings button */}
+      <button
+        type="button"
+        onClick={() => setShowSettings(true)}
+        disabled={disabled || !selectedModel}
+        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        title="모델 설정"
+      >
+        <CogIcon className="w-5 h-5" />
+      </button>
     </div>
+
+    {/* Settings Modal */}
+    <ModelSettings 
+      isOpen={showSettings} 
+      onClose={() => setShowSettings(false)} 
+    />
+  </>
   );
 }
