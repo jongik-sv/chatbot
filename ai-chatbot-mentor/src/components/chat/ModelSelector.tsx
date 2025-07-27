@@ -53,7 +53,7 @@ export default function ModelSelector({ models, selectedModel, onModelChange, di
       
       <Listbox value={selectedModel} onChange={onModelChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className={`relative w-full sm:w-64 cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <Listbox.Button className={`relative w-full sm:w-[32rem] cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <span className="flex items-center">
               <span className="mr-2 text-lg">
                 {getModelIcon(selectedModelData?.provider || 'ollama')}
