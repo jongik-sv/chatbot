@@ -264,4 +264,15 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - 가장 최신의 Flash, Pro 모델 2가지만 가져오도록 수정
 - 불필요한 모델들 제외하고 핵심 모델만 표시
 
-**관련 파일**: GeminiModelService.ts
+**관련 파일**: GeminiModelService.ts---
+---
+## Gemini 모델 선택 방식 개선 요청
+
+**요청 시간**: 2025-01-27
+
+**요청 내용**: 
+- https://ai.google.dev/gemini-api/docs/models 페이지의 Model variants 섹션 참고
+- 상위 3개 모델을 가져오는 방식으로 변경
+- 현재 방식이 최신 모델을 제대로 선택하지 못함
+
+**관련 파일**: GeminiModelService.ts, LLMService.ts

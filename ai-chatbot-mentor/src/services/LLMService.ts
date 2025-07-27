@@ -89,7 +89,7 @@ export class LLMService {
   }
 
   /**
-   * Gemini 모델 조회 (Google AI API 사용) - 최신 Flash, Pro 2가지만
+   * Gemini 모델 조회 (Google AI API 사용) - Google 공식 문서 기준 상위 3개
    */
   private async getGeminiModels(): Promise<LLMModel[]> {
     try {
@@ -113,35 +113,57 @@ export class LLMService {
         return this.getDefaultGeminiModels();
       }
 
-      // 최신 Flash와 Pro 모델만 필터링
-      const targetModels = ['gemini-1.5-flash', 'gemini-1.5-pro'];
-      
-      const filteredModels = data.models
-        .filter((model: any) => {
-          // generateContent를 지원하는 모델만
-          if (!model.supportedGenerationMethods?.includes('generateContent')) {
-            return false;
-          }
-          
-          const modelId = model.name.replace('models/', '');
-          
-          // 타겟 모델 중 하나와 일치하는지 확인
-          return targetModels.some(target => modelId.includes(target));
-        })
-        .map((model: any) => ({
-          id: model.name.replace('models/', ''),
-          name: this.formatGeminiModelName(model.displayName || model.name),
-          provider: 'gemini' as const,
-          multimodal: this.isGeminiMultimodal(model.name),
-          available: true,
-          description: model.description,
-          version: model.version
-        }));
+      // Google 공식 문서 기준 권장 모델 순서 (상위 3개)
+      const recommendedModels = [
+        'gemini-2.0-flash-exp',      // 1순위: 최신 실험 모델
+        'gemini-1.5-pro',            // 2순위: 강력한 Pro 모델  
+        'gemini-1.5-flash'           // 3순위: 빠른 Flash 모델
+      ];
 
-      // Flash와 Pro 각각에서 가장 최신 버전만 선택
-      const latestModels = this.selectLatestGeminiModels(filteredModels);
-      
-      return latestModels.length > 0 ? latestModels : this.getDefaultGeminiModels();
+      const availableModels: LLMModel[] = [];
+
+      // 권장 순서대로 모델 찾기
+      for (const targetModelId of recommendedModels) {
+        const foundModel = data.models.find((model: any) => {
+          const modelId = model.name.replace('models/', '');
+          return modelId === targetModelId && 
+                 model.supportedGenerationMethods?.includes('generateContent');
+        });
+
+        if (foundModel) {
+          availableModels.push({
+            id: foundModel.name.replace('models/', ''),
+            name: this.formatGeminiModelName(foundModel.displayName || foundModel.name),
+            provider: 'gemini' as const,
+            multimodal: this.isGeminiMultimodal(foundModel.name),
+            available: true,
+            description: foundModel.description,
+            version: foundModel.version
+          });
+        }
+      }
+
+      // 권장 모델이 없는 경우 사용 가능한 모델 중에서 선택
+      if (availableModels.length === 0) {
+        const fallbackModels = data.models
+          .filter((model: any) => 
+            model.supportedGenerationMethods?.includes('generateContent')
+          )
+          .map((model: any) => ({
+            id: model.name.replace('models/', ''),
+            name: this.formatGeminiModelName(model.displayName || model.name),
+            provider: 'gemini' as const,
+            multimodal: this.isGeminiMultimodal(model.name),
+            available: true,
+            description: model.description,
+            version: model.version
+          }))
+          .slice(0, 3); // 상위 3개만
+
+        return fallbackModels;
+      }
+
+      return availableModels;
     } catch (error) {
       console.error('Gemini 모델 조회 실패:', error);
       // 실패 시 기본 모델 반환
@@ -150,55 +172,18 @@ export class LLMService {
   }
 
   /**
-   * Flash와 Pro 각각에서 가장 최신 모델 선택
-   */
-  private selectLatestGeminiModels(models: LLMModel[]): LLMModel[] {
-    const proModels = models.filter(m => m.id.includes('pro'));
-    const flashModels = models.filter(m => m.id.includes('flash'));
-    
-    const result: LLMModel[] = [];
-    
-    // Pro 모델 중 가장 최신 선택 (1.5-pro 우선)
-    if (proModels.length > 0) {
-      const latestPro = proModels.find(m => m.id === 'gemini-1.5-pro') || 
-                       proModels.sort((a, b) => this.compareGeminiVersions(b.id, a.id))[0];
-      result.push(latestPro);
-    }
-    
-    // Flash 모델 중 가장 최신 선택 (1.5-flash 우선)
-    if (flashModels.length > 0) {
-      const latestFlash = flashModels.find(m => m.id === 'gemini-1.5-flash') || 
-                          flashModels.sort((a, b) => this.compareGeminiVersions(b.id, a.id))[0];
-      result.push(latestFlash);
-    }
-    
-    // Pro를 먼저, Flash를 나중에 정렬
-    return result.sort((a, b) => {
-      if (a.id.includes('pro') && !b.id.includes('pro')) return -1;
-      if (!a.id.includes('pro') && b.id.includes('pro')) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }
-
-  /**
-   * Gemini 모델 버전 비교 (높은 버전이 우선)
-   */
-  private compareGeminiVersions(a: string, b: string): number {
-    // 1.5 > 1.0 형태로 비교
-    const getVersion = (modelId: string) => {
-      const match = modelId.match(/(\d+)\.(\d+)/);
-      if (!match) return 0;
-      return parseFloat(`${match[1]}.${match[2]}`);
-    };
-    
-    return getVersion(a) - getVersion(b);
-  }
-
-  /**
-   * 기본 Gemini 모델 (API 호출 실패 시 사용) - 최신 Flash, Pro 2가지만
+   * 기본 Gemini 모델 (API 호출 실패 시 사용) - Google 공식 문서 기준 상위 3개
    */
   private getDefaultGeminiModels(): LLMModel[] {
     return [
+      {
+        id: 'gemini-2.0-flash-exp',
+        name: 'Gemini 2.0 Flash (Experimental)',
+        provider: 'gemini',
+        multimodal: true,
+        available: true,
+        description: 'Google의 최신 실험적 멀티모달 AI 모델'
+      },
       {
         id: 'gemini-1.5-pro',
         name: 'Gemini 1.5 Pro',
@@ -235,6 +220,7 @@ export class LLMService {
    */
   private isGeminiMultimodal(modelName: string): boolean {
     const multimodalGeminiModels = [
+      'gemini-2.0-flash-exp',      // 최신 실험 모델
       'gemini-1.5-pro',
       'gemini-1.5-flash',
       'gemini-1.5-flash-8b',
