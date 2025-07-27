@@ -156,3 +156,11 @@ Schema supports future features:
 - Knowledge source tracking for custom mentors
 
 The codebase is designed for rapid feature expansion while maintaining backward compatibility with the existing JavaScript service layer.
+
+
+## Basic Rules
+1. 대답은 한국어로 해줘.
+2. 내 요청에 대해 user_request_history.md 에 요청을 구분선 `
+------
+`로 구분하여 append 해줘.
+3. 요청을 완성했을 때는 커밋을 해줘.
