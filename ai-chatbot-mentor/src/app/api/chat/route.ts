@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         : message;
         
       currentSession = chatSessionRepo.create({
-        userId: 1, // TODO: 실제 사용자 인증 구현 후 수정
+        userId: 1, // 기본 사용자 사용 (사용자 인증 구현 전까지)
         title: sessionTitle,
         mode: mode || 'chat',
         modelUsed: model,

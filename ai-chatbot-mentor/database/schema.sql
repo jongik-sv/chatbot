@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 대화 세션 테이블
 CREATE TABLE IF NOT EXISTS chat_sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER,
+  user_id INTEGER DEFAULT NULL,
   title TEXT,
   mode TEXT DEFAULT 'chat', -- 'chat', 'document', 'mentor', 'mbti'
   model_used TEXT,

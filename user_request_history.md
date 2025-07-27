@@ -132,4 +132,26 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 **구현 범위**:
 - ModelSelector 컴포넌트 생성
 - 모델 설정 관리 로직
-- 컨텍스트 유지 메커니즘
+- 컨텍스트 유지 메커니즘---
+---
+## API 채팅 엔드포인트 500 에러 해결 요청
+
+**에러 내용:**
+- turbopack-hot-reloader-common.ts:41 [Fast Refresh] rebuilding
+- api.ts:16 POST http://localhost:3000/api/chat 500 (Internal Server Error)  
+- ChatInterface.tsx:130 메시지 전송 실패: Error: 서버 오류가 발생했습니다.
+
+**요청:** /api/chat 엔드포인트에서 발생하는 500 서버 에러를 조사하고 해결해주세요.
+
+------
+**요청 날짜**: 2025-01-27
+**요청 내용**: Task 7 - 파일 업로드 및 문서 처리 시스템 구현
+- 7.1 파일 업로드 API 구현
+  - 파일 업로드 엔드포인트 (/api/upload)
+  - 파일 타입 검증 및 보안 처리
+  - 파일 저장 및 메타데이터 관리
+- 7.2 문서 내용 추출 서비스 구현
+  - PDF, DOCX, TXT 파일 파싱
+  - 문서 내용 텍스트 추출
+  - 문서 구조 분석 및 청킹
+- Requirements: 11.2, 11.5

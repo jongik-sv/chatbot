@@ -38,6 +38,14 @@ function initializeSchema() {
     const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
     db.exec(schema);
     console.log('Database schema initialized successfully');
+    
+    // 기본 데이터 삽입
+    const initDataPath = path.join(process.cwd(), 'database', 'init-data.sql');
+    if (fs.existsSync(initDataPath)) {
+      const initData = fs.readFileSync(initDataPath, 'utf8');
+      db.exec(initData);
+      console.log('Database initial data inserted successfully');
+    }
   } catch (error) {
     console.error('Failed to initialize database schema:', error);
     throw error;
