@@ -297,4 +297,79 @@ export class ApiClient {
 
     return response.json();
   }
+
+  // ===== Gemini 모델 관련 API =====
+
+  /**
+   * 실시간 Gemini 모델 리스트 조회
+   */
+  static async getGeminiModels(options?: {
+    forceRefresh?: boolean;
+    includeDetails?: boolean;
+  }): Promise<{
+    success: boolean;
+    models: LLMModel[];
+    cached: boolean;
+    cacheStatus: any;
+    apiStatus?: any;
+    timestamp: string;
+    error?: string;
+  }> {
+    const searchParams = new URLSearchParams();
+    
+    if (options?.forceRefresh) {
+      searchParams.append('refresh', 'true');
+    }
+    
+    if (options?.includeDetails) {
+      searchParams.append('details', 'true');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/models/gemini?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Gemini 모델 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 특정 Gemini 모델 상세 정보 조회
+   */
+  static async getGeminiModelDetails(modelId: string): Promise<{
+    success: boolean;
+    model: LLMModel;
+    timestamp: string;
+    error?: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/models/gemini/${modelId}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '모델 상세 정보 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Gemini 모델 캐시 초기화
+   */
+  static async clearGeminiModelCache(): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/models/gemini`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '캐시 초기화에 실패했습니다.');
+    }
+
+    return response.json();
+  }
 }

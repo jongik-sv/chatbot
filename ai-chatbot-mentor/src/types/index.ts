@@ -110,6 +110,16 @@ export interface LLMModel {
   provider: 'ollama' | 'gemini';
   multimodal: boolean;
   available: boolean;
+  description?: string;
+  version?: string;
+  size?: number;
+  modified?: string;
+  inputTokenLimit?: number;
+  outputTokenLimit?: number;
+  supportedGenerationMethods?: string[];
+  temperature?: number;
+  topP?: number;
+  topK?: number;
 }
 
 export interface ChatRequest {
