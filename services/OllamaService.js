@@ -10,14 +10,28 @@ class OllamaService {
   }
 
   /**
+   * 타임아웃 시그널 생성 헬퍼
+   */
+  createTimeoutSignal(timeout) {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), timeout);
+    return controller.signal;
+  }
+
+  /**
    * Ollama 서버 연결 상태 확인
    */
   async checkConnection() {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(`${this.baseURL}/api/tags`, {
         method: 'GET',
-        signal: AbortSignal.timeout(5000), // 5초 타임아웃
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -39,10 +53,15 @@ class OllamaService {
    */
   async getAvailableModels() {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const response = await fetch(`${this.baseURL}/api/tags`, {
         method: 'GET',
-        signal: AbortSignal.timeout(10000),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`모델 목록 조회 실패: HTTP ${response.status}`);
@@ -135,7 +154,7 @@ class OllamaService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(this.timeout),
+        signal: this.createTimeoutSignal(this.timeout),
       });
 
       if (!response.ok) {
@@ -283,7 +302,7 @@ class OllamaService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(this.timeout),
+        signal: this.createTimeoutSignal(this.timeout),
       });
 
       if (!response.ok) {
@@ -347,7 +366,7 @@ class OllamaService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(this.timeout),
+        signal: this.createTimeoutSignal(this.timeout),
       });
 
       if (!response.ok) {

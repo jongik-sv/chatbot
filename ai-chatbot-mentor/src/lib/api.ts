@@ -8,6 +8,11 @@ export class ApiClient {
    * 채팅 메시지 전송
    */
   static async sendMessage(request: ChatRequest): Promise<ChatResponse> {
+    // 파일이 있는 경우 FormData 사용, 없으면 JSON 사용
+    if (request.files && request.files.length > 0) {
+      return this.sendMessageWithFiles(request);
+    }
+
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: 'POST',
       headers: {
@@ -19,6 +24,68 @@ export class ApiClient {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || '메시지 전송에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 파일이 포함된 채팅 메시지 전송
+   */
+  static async sendMessageWithFiles(request: ChatRequest): Promise<ChatResponse> {
+    const formData = new FormData();
+    
+    // 기본 필드 추가
+    formData.append('message', request.message);
+    formData.append('model', request.model);
+    formData.append('mode', request.mode || 'chat');
+    
+    if (request.sessionId) {
+      formData.append('sessionId', request.sessionId.toString());
+    }
+
+    // 파일들 추가
+    if (request.files) {
+      for (const file of request.files) {
+        formData.append('files', file);
+      }
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat`, {
+      method: 'POST',
+      body: formData, // Content-Type 헤더는 자동으로 설정됨
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '파일 메시지 전송에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 파일 업로드
+   */
+  static async uploadFiles(files: File[]): Promise<{
+    success: boolean;
+    files: any[];
+    message: string;
+  }> {
+    const formData = new FormData();
+    
+    for (const file of files) {
+      formData.append('files', file);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '파일 업로드에 실패했습니다.');
     }
 
     return response.json();

@@ -76,3 +76,60 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - src/services/LLMService.ts 파일에서 상대 경로 오류 발생
 - require('../../../../services/LLMService') 경로가 잘못됨
 - 프로젝트 구조 확인 후 올바른 경로로 수정 필요
+
+------
+**요청 날짜**: 2025-01-27
+**요청 내용**: Task 6 - 멀티모달 입력 처리 구현
+- .kiro\specs\ai-chatbot-with-multimodal-mentor 파일들 참고하여 구현
+- 6.1 이미지 업로드 및 처리 기능
+  - 이미지 업로드 컴포넌트 구현
+  - 이미지 전처리 및 최적화
+  - Google Gemini를 통한 이미지 분석
+- 6.2 음성 입력 처리 기능
+  - 음성 녹음 컴포넌트 구현
+  - Speech-to-Text 변환 서비스
+  - 음성 파일 저장 및 관리
+- Requirements: 2.2, 2.3, 2.4
+------
+**완료 상태**: ✅ 성공적으로 완료
+**완료 내용**: 
+- 이미지 업로드 컴포넌트 구현 완료 (ImageUpload.tsx)
+  - 드래그앤드롭 지원, 파일 검증, 미리보기 기능
+  - 이미지 최적화 및 크기 제한 (10MB)
+  - JPEG, PNG, WebP, GIF 형식 지원
+- 음성 녹음 컴포넌트 구현 완료 (VoiceRecorder.tsx)
+  - MediaRecorder API 활용한 음성 녹음
+  - 실시간 녹음 진행률 표시, 최대 5분 녹음 지원
+  - WebM/MP4 형식 자동 선택
+- Speech-to-Text 서비스 구현 완료 (SpeechToTextService.ts, VoiceToText.tsx)
+  - Web Speech API 활용한 실시간 음성 인식
+  - 한국어 포함 9개 언어 지원
+  - 실시간 텍스트 변환 및 신뢰도 표시
+- 멀티모달 API 엔드포인트 구현 완료
+  - 파일 업로드 API (/api/upload) 구현
+  - 채팅 API에 멀티모달 처리 로직 추가
+  - FormData 및 JSON 요청 모두 지원
+- Google Gemini 멀티모달 연동 완료
+  - 이미지 분석을 위한 Gemini Vision 활용
+  - 자동 모델 전환 (비멀티모달 모델 → Gemini)
+  - Base64 이미지 인코딩 및 전송
+- UI 컴포넌트 통합 완료
+  - MessageInput에 모든 멀티모달 기능 통합
+  - 이미지 업로드, 음성 녹음, 음성-텍스트 변환 UI
+  - API 클라이언트에 FormData 지원 추가
+------------
+## 
+요청: 5.3 모델 선택 기능 구현
+
+**요청 시간**: 2025-01-27
+
+**요청 내용**: 
+- 모델 선택 드롭다운 컴포넌트 구현
+- 모델별 설정 관리
+- 모델 전환 시 컨텍스트 유지
+- Requirements: 1.1, 1.3 충족
+
+**구현 범위**:
+- ModelSelector 컴포넌트 생성
+- 모델 설정 관리 로직
+- 컨텍스트 유지 메커니즘

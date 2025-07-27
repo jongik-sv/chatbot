@@ -7,7 +7,7 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@googl
 
 class GeminiService {
   constructor() {
-    this.apiKey = process.env.GOOGLE_API_KEY;
+    this.apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     
     if (!this.apiKey) {
       console.warn('Google API 키가 설정되지 않았습니다. Gemini 서비스를 사용할 수 없습니다.');

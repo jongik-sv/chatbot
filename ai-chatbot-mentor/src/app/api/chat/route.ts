@@ -4,6 +4,8 @@ import { ChatSessionRepository } from '../../../lib/repositories/ChatSessionRepo
 import { MessageRepository } from '../../../lib/repositories/MessageRepository';
 import { LLMService } from '../../../services/LLMService';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
+import { readFile } from 'fs/promises';
+import path from 'path';
 
 const chatSessionRepo = new ChatSessionRepository();
 const messageRepo = new MessageRepository();
@@ -11,8 +13,41 @@ const llmService = new LLMService();
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ChatRequest = await request.json();
-    const { message, model, mode, sessionId, files } = body;
+    // FormData인지 JSON인지 확인
+    const contentType = request.headers.get('content-type') || '';
+    let body: ChatRequest;
+    let uploadedFiles: any[] = [];
+
+    if (contentType.includes('multipart/form-data')) {
+      // FormData 처리 (파일 업로드가 있는 경우)
+      const formData = await request.formData();
+      
+      body = {
+        message: formData.get('message') as string,
+        model: formData.get('model') as string,
+        mode: formData.get('mode') as string,
+        sessionId: formData.get('sessionId') ? parseInt(formData.get('sessionId') as string) : undefined,
+        files: []
+      };
+
+      // 업로드된 파일들 처리
+      const files = formData.getAll('files') as File[];
+      for (const file of files) {
+        if (file.size > 0) {
+          uploadedFiles.push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: await file.arrayBuffer()
+          });
+        }
+      }
+    } else {
+      // JSON 처리
+      body = await request.json();
+    }
+
+    const { message, model, mode, sessionId } = body;
 
     // 입력 검증
     if (!message || !message.trim()) {
@@ -66,8 +101,10 @@ export async function POST(request: NextRequest) {
       sessionId: currentSession.id,
       role: 'user',
       content: message,
-      contentType: files && files.length > 0 ? 'image' : 'text',
-      metadata: files && files.length > 0 ? { files: files.map(f => f.name) } : undefined
+      contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
+      metadata: uploadedFiles.length > 0 ? { 
+        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
+      } : undefined
     });
 
     // 대화 컨텍스트 구성 (최근 메시지들)
@@ -86,15 +123,52 @@ export async function POST(request: NextRequest) {
     let llmResponse;
 
     try {
-      // 멀티모달 처리 (이미지가 있는 경우)
-      if (files && files.length > 0) {
-        // TODO: 실제 파일 처리 로직 구현
-        // 현재는 텍스트만 처리
-        llmResponse = await llmService.chat(conversationHistory, {
-          model,
-          temperature: 0.7,
-          maxTokens: 2048
-        });
+      // 멀티모달 처리 (파일이 있는 경우)
+      if (uploadedFiles.length > 0) {
+        // 이미지 파일 찾기
+        const imageFile = uploadedFiles.find(file => file.type.startsWith('image/'));
+        
+        if (imageFile) {
+          // 이미지가 있는 경우 멀티모달 모델 사용
+          const isMultimodalModel = llmService.isMultimodalSupported(model);
+          const targetModel = isMultimodalModel ? model : 'gemini-1.5-flash';
+          
+          // 이미지 데이터를 base64로 변환
+          const base64Image = Buffer.from(imageFile.data).toString('base64');
+          
+          llmResponse = await llmService.generateWithImage(message, base64Image, {
+            model: targetModel,
+            temperature: 0.7,
+            maxTokens: 2048,
+            mimeType: imageFile.type
+          });
+          
+          // 모델이 변경된 경우 알림
+          if (targetModel !== model) {
+            llmResponse.content = `[자동으로 ${targetModel} 모델로 전환됨]\n\n${llmResponse.content}`;
+          }
+        } else {
+          // 이미지가 아닌 파일들 (음성, 문서 등)
+          const audioFile = uploadedFiles.find(file => file.type.startsWith('audio/'));
+          
+          if (audioFile) {
+            // 음성 파일 처리 (향후 Speech-to-Text 구현)
+            llmResponse = await llmService.chat(conversationHistory, {
+              model,
+              temperature: 0.7,
+              maxTokens: 2048,
+              systemInstruction: '사용자가 음성 파일을 업로드했습니다. 음성 처리 기능은 현재 개발 중입니다.'
+            });
+          } else {
+            // 기타 파일들
+            llmResponse = await llmService.chat(conversationHistory, {
+              model,
+              temperature: 0.7,
+              maxTokens: 2048,
+              systemInstruction: `사용자가 다음 파일들을 업로드했습니다: ${uploadedFiles.map(f => f.name).join(', ')}`
+            });
+          }
+        }
       } else {
         // 일반 텍스트 채팅
         llmResponse = await llmService.chat(conversationHistory, {

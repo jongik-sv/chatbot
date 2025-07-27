@@ -7,6 +7,9 @@ import {
   MicrophoneIcon,
   PaperClipIcon 
 } from '@heroicons/react/24/outline';
+import ImageUpload from '../ui/ImageUpload';
+import VoiceRecorder from '../ui/VoiceRecorder';
+import VoiceToText from '../ui/VoiceToText';
 
 interface MessageInputProps {
   onSendMessage: (message: string, files?: File[]) => void;
@@ -21,14 +24,23 @@ export default function MessageInput({
 }: MessageInputProps) {
   const [message, setMessage] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [showVoiceToText, setShowVoiceToText] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{file: File, preview: string} | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
-    if ((message.trim() || selectedFiles.length > 0) && !disabled) {
-      onSendMessage(message.trim(), selectedFiles);
+    const allFiles = selectedImage ? [...selectedFiles, selectedImage.file] : selectedFiles;
+    if ((message.trim() || allFiles.length > 0) && !disabled) {
+      onSendMessage(message.trim(), allFiles);
       setMessage('');
       setSelectedFiles([]);
+      setSelectedImage(null);
+      setShowImageUpload(false);
+      setShowVoiceRecorder(false);
+      setShowVoiceToText(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -64,8 +76,134 @@ export default function MessageInput({
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
+  const handleImageSelect = (file: File, preview: string) => {
+    setSelectedImage({ file, preview });
+    setShowImageUpload(false);
+  };
+
+  const handleImageRemove = () => {
+    setSelectedImage(null);
+  };
+
+  const handleVoiceRecording = (audioBlob: Blob, duration: number) => {
+    // 오디오 파일을 File 객체로 변환
+    const audioFile = new File([audioBlob], `voice-recording-${Date.now()}.webm`, {
+      type: audioBlob.type,
+      lastModified: Date.now()
+    });
+    
+    setSelectedFiles(prev => [...prev, audioFile]);
+    setShowVoiceRecorder(false);
+  };
+
+  const toggleImageUpload = () => {
+    setShowImageUpload(!showImageUpload);
+    setShowVoiceRecorder(false);
+  };
+
+  const toggleVoiceRecorder = () => {
+    setShowVoiceRecorder(!showVoiceRecorder);
+    setShowImageUpload(false);
+    setShowVoiceToText(false);
+  };
+
+  const toggleVoiceToText = () => {
+    setShowVoiceToText(!showVoiceToText);
+    setShowImageUpload(false);
+    setShowVoiceRecorder(false);
+  };
+
+  const handleVoiceTranscript = (transcript: string) => {
+    setMessage(prev => prev + (prev ? ' ' : '') + transcript);
+    setShowVoiceToText(false);
+    // 텍스트 영역에 포커스
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-3">
+      {/* Image Upload Modal */}
+      {showImageUpload && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium text-gray-700">이미지 업로드</h3>
+            <button
+              onClick={() => setShowImageUpload(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+          <ImageUpload
+            onImageSelect={handleImageSelect}
+            onImageRemove={handleImageRemove}
+            disabled={disabled}
+            preview={selectedImage?.preview}
+          />
+        </div>
+      )}
+
+      {/* Voice Recorder Modal */}
+      {showVoiceRecorder && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium text-gray-700">음성 녹음</h3>
+            <button
+              onClick={() => setShowVoiceRecorder(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+          <VoiceRecorder
+            onRecordingComplete={handleVoiceRecording}
+            disabled={disabled}
+          />
+        </div>
+      )}
+
+      {/* Voice to Text Modal */}
+      {showVoiceToText && (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm font-medium text-gray-700">음성으로 텍스트 입력</h3>
+            <button
+              onClick={() => setShowVoiceToText(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+          <VoiceToText
+            onTranscript={handleVoiceTranscript}
+            disabled={disabled}
+            placeholder="마이크 버튼을 클릭하고 음성으로 메시지를 입력하세요"
+          />
+        </div>
+      )}
+
+      {/* Selected Image */}
+      {selectedImage && (
+        <div className="flex items-center bg-green-50 border border-green-200 rounded-lg p-3">
+          <img 
+            src={selectedImage.preview} 
+            alt="선택된 이미지" 
+            className="w-12 h-12 object-cover rounded"
+          />
+          <span className="ml-3 text-sm text-green-700 flex-1">
+            이미지가 선택되었습니다
+          </span>
+          <button
+            onClick={handleImageRemove}
+            className="text-green-400 hover:text-green-600"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Selected files */}
       {selectedFiles.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -101,9 +239,11 @@ export default function MessageInput({
         <div className="hidden sm:flex space-x-1">
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={toggleImageUpload}
             disabled={disabled}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`p-2 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              showImageUpload ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600'
+            }`}
             title="이미지 업로드"
           >
             <PhotoIcon className="w-5 h-5" />
@@ -117,14 +257,34 @@ export default function MessageInput({
           >
             <PaperClipIcon className="w-5 h-5" />
           </button>
-          <button
-            type="button"
-            disabled={disabled}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="음성 입력 (준비 중)"
-          >
-            <MicrophoneIcon className="w-5 h-5" />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={toggleVoiceToText}
+              disabled={disabled}
+              className={`p-2 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                showVoiceToText ? 'text-green-500 bg-green-50' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title="음성으로 텍스트 입력"
+            >
+              <MicrophoneIcon className="w-5 h-5" />
+            </button>
+            
+            {/* 음성 녹음 버튼 (작은 크기) */}
+            <button
+              type="button"
+              onClick={toggleVoiceRecorder}
+              disabled={disabled}
+              className={`absolute -top-1 -right-1 w-3 h-3 rounded-full text-xs hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                showVoiceRecorder ? 'bg-red-500 text-white' : 'bg-gray-300 text-gray-600'
+              }`}
+              title="음성 녹음"
+            >
+              <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 8 8">
+                <circle cx="4" cy="4" r="3" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Mobile attachment button */}
@@ -158,7 +318,7 @@ export default function MessageInput({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={(!message.trim() && selectedFiles.length === 0) || disabled}
+            disabled={(!message.trim() && selectedFiles.length === 0 && !selectedImage) || disabled}
             className="absolute right-2 bottom-2 p-2 text-blue-500 hover:text-blue-600 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             <PaperAirplaneIcon className="w-5 h-5" />
