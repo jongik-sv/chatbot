@@ -15,7 +15,10 @@
       "WebFetch(domain:ai.google.dev)",
       "Bash(cp:*)",
       "Bash(sqlite3:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(ls -la database/)",
+      "Bash(ls:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   },

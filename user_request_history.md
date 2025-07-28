@@ -143,6 +143,51 @@ window.alert = function(message) {
   - HTML 파싱 및 텍스트 정제
   - 웹 콘텐츠 지식 베이스 통합
 
+**구현 완료 사항**:
+
+#### 1. ✅ 백엔드 서비스 구현
+- **YouTubeContentService**: YouTube URL 파싱, 자막 추출, 메타데이터 처리
+- **WebScrapingService**: 웹페이지 스크래핑 (Axios/Puppeteer), HTML 파싱, 텍스트 정제
+- **ExternalContentService**: 통합 처리 서비스, 지식 베이스 자동 추가, 임베딩 생성
+
+#### 2. ✅ API 엔드포인트 구현
+- `POST /api/external-content`: 단일 URL 처리
+- `PUT /api/external-content`: 다중 URL 일괄 처리
+- `GET/POST /api/external-content/search`: 콘텐츠 검색
+- `GET/POST /api/external-content/detect`: URL 유형 감지
+
+#### 3. ✅ UI 컴포넌트 구현
+- **ExternalContentInput**: URL 입력, 유형 자동 감지, 처리 옵션 설정
+- **ExternalContentViewer**: 콘텐츠 상세 보기, 탭 기반 인터페이스, 복사/다운로드 기능
+- **ExternalContentManager**: 콘텐츠 관리, 검색/필터링, 정렬 기능
+
+#### 4. ✅ 기존 시스템 통합
+- GPT 지식 베이스 관리자에 외부 콘텐츠 탭 추가
+- 독립적인 외부 콘텐츠 페이지 (`/external-content`) 생성
+- 사이드바 네비게이션에 외부 콘텐츠 메뉴 추가
+
+#### 5. ✅ 주요 기능
+- YouTube 비디오 자막 자동 추출 (다국어 지원)
+- 웹페이지 스마트 스크래핑 (JavaScript 렌더링 지원)
+- 자동 임베딩 생성 및 벡터 검색 연동
+- 콘텐츠 유형별 메타데이터 관리
+- 실시간 URL 유효성 검증 및 타입 감지
+
+**구현된 파일들**:
+- 서비스: `YouTubeContentService.ts`, `WebScrapingService.ts`, `ExternalContentService.ts`
+- API: `external-content/route.ts`, `external-content/search/route.ts`, `external-content/detect/route.ts`
+- UI: `ExternalContentInput.tsx`, `ExternalContentViewer.tsx`, `ExternalContentManager.tsx`
+- 통합: `GPTKnowledgeBaseManager.tsx` 수정, `/external-content/page.tsx` 생성
+- 네비게이션: `Sidebar.tsx` 업데이트
+
+**패키지 추가**:
+- `youtube-transcript`: YouTube 자막 추출
+- `cheerio`: HTML 파싱
+- `puppeteer`: 동적 웹페이지 스크래핑
+- `axios`: HTTP 클라이언트
+
+**상태**: 🎯 외부 콘텐츠 통합 기능 완전 구현 완료
+
 ------
 
 코드를 보고 sqlite의 테이블을 다시 맞춰줘.
@@ -159,6 +204,28 @@ window.alert = function(message) {
 
 **수정된 파일**:
 - ai-chatbot-mentor/database/schema.sql
+
+------
+
+소스를 확인하고 더 많이 쓰는 DB로 통일해줘.
+
+**분석 결과**:
+- `/data/chatbot.db`: 5개 파일에서 사용 (아티팩트, 메인 API 등)
+- `ai-chatbot-mentor/database/chatbot.db`: 2개 파일에서 사용 (채팅, 세션)
+
+**완료된 작업**:
+- ChatRepository.js의 데이터베이스 경로를 `/data/chatbot.db`로 통일
+- 마이그레이션 스크립트 경로도 통일된 경로로 수정
+- 모든 API (chat, sessions, artifacts)가 동일한 데이터베이스 사용하도록 변경
+
+**수정된 파일**:
+- ai-chatbot-mentor/src/lib/repositories/ChatRepository.js
+- ai-chatbot-mentor/scripts/run-migration.js
+
+**결과**: 
+- ✅ 데이터베이스 통일 완료
+- ✅ 데이터 일관성 보장
+- ✅ 서버 정상 작동 확인
 
 ------
 
