@@ -94,6 +94,78 @@ export interface Artifact {
   createdAt: Date;
 }
 
+export interface CreateArtifactRequest {
+  sessionId: number;
+  messageId?: number;
+  type: Artifact['type'];
+  title: string;
+  content: string;
+  language?: string;
+}
+
+export interface UpdateArtifactRequest {
+  title?: string;
+  content?: string;
+  language?: string;
+}
+
+export interface ArtifactMetadata {
+  type: Artifact['type'];
+  title: string;
+  createdAt: string;
+  size: number;
+  language?: string;
+  lines?: number;
+  wordCount?: number;
+  chartType?: string;
+  dataPoints?: number;
+  diagramType?: string;
+}
+
+export interface ChartData {
+  type: 'bar' | 'line' | 'pie' | 'doughnut' | 'radar' | 'scatter' | 'bubble';
+  data: {
+    labels: string[];
+    datasets: {
+      label: string;
+      data: number[];
+      backgroundColor?: string | string[];
+      borderColor?: string | string[];
+      borderWidth?: number;
+      fill?: boolean;
+    }[];
+  };
+  options?: {
+    responsive?: boolean;
+    plugins?: {
+      title?: {
+        display: boolean;
+        text: string;
+      };
+      legend?: {
+        display: boolean;
+        position?: 'top' | 'bottom' | 'left' | 'right';
+      };
+    };
+    scales?: {
+      x?: {
+        display: boolean;
+        title?: {
+          display: boolean;
+          text: string;
+        };
+      };
+      y?: {
+        display: boolean;
+        title?: {
+          display: boolean;
+          text: string;
+        };
+      };
+    };
+  };
+}
+
 export interface KnowledgeSource {
   id: number;
   mentorId: number;

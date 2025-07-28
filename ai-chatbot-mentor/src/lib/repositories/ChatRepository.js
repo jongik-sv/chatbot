@@ -2,13 +2,17 @@
  * 채팅 관련 데이터베이스 작업을 담당하는 Repository 클래스
  */
 
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
 class ChatRepository {
   constructor() {
-    this.dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'chatbot.db');
+    // ai-chatbot-mentor 디렉토리에서 실행되는 경우를 고려하여 상위 디렉토리의 data 폴더 사용
+    const rootDir = process.cwd().endsWith('ai-chatbot-mentor') 
+      ? path.join(process.cwd(), '..')
+      : process.cwd();
+    this.dbPath = process.env.DATABASE_PATH || path.join(rootDir, 'data', 'chatbot.db');
     this.db = null;
     this.initDatabase();
   }
@@ -21,7 +25,7 @@ class ChatRepository {
         fs.mkdirSync(dbDir, { recursive: true });
       }
 
-      this.db = new sqlite3.Database(this.dbPath);
+      this.db = new Database(this.dbPath);
     } catch (error) {
       console.error('데이터베이스 초기화 실패:', error);
       throw error;
@@ -113,7 +117,7 @@ class ChatRepository {
   /**
    * 특정 세션 조회
    */
-  async getSession(sessionId) {
+  getSession(sessionId) {
     const stmt = this.db.prepare(`
       SELECT 
         cs.*,
@@ -131,7 +135,7 @@ class ChatRepository {
   /**
    * 세션 업데이트
    */
-  async updateSession(sessionId, data) {
+  updateSession(sessionId, data) {
     const { title } = data;
     
     const stmt = this.db.prepare(`
@@ -147,7 +151,7 @@ class ChatRepository {
   /**
    * 세션 삭제
    */
-  async deleteSession(sessionId) {
+  deleteSession(sessionId) {
     // 관련 메시지들도 함께 삭제됨 (CASCADE)
     const stmt = this.db.prepare(`DELETE FROM chat_sessions WHERE id = ?`);
     return stmt.run(sessionId);
@@ -156,7 +160,7 @@ class ChatRepository {
   /**
    * 세션의 메시지 목록 조회
    */
-  async getMessages(sessionId, options = {}) {
+  getMessages(sessionId, options = {}) {
     const { 
       limit = 50, 
       offset = 0, 
@@ -191,7 +195,7 @@ class ChatRepository {
   /**
    * 세션의 메시지 수 조회
    */
-  async getMessageCount(sessionId, options = {}) {
+  getMessageCount(sessionId, options = {}) {
     const { search } = options;
 
     let query = `SELECT COUNT(*) as count FROM messages WHERE session_id = ?`;
@@ -210,7 +214,7 @@ class ChatRepository {
   /**
    * 세션의 마지막 메시지 조회
    */
-  async getLastMessage(sessionId) {
+  getLastMessage(sessionId) {
     const stmt = this.db.prepare(`
       SELECT * FROM messages 
       WHERE session_id = ? 
@@ -224,7 +228,7 @@ class ChatRepository {
   /**
    * 메시지 생성
    */
-  async createMessage(data) {
+  createMessage(data) {
     const { sessionId, role, content, contentType, metadata } = data;
     
     const stmt = this.db.prepare(`
@@ -244,7 +248,7 @@ class ChatRepository {
   /**
    * 특정 메시지 조회
    */
-  async getMessage(messageId) {
+  getMessage(messageId) {
     const stmt = this.db.prepare(`SELECT * FROM messages WHERE id = ?`);
     return stmt.get(messageId);
   }
@@ -252,7 +256,7 @@ class ChatRepository {
   /**
    * 세션 타임스탬프 업데이트
    */
-  async updateSessionTimestamp(sessionId) {
+  updateSessionTimestamp(sessionId) {
     const stmt = this.db.prepare(`
       UPDATE chat_sessions 
       SET updated_at = CURRENT_TIMESTAMP 
@@ -265,7 +269,7 @@ class ChatRepository {
   /**
    * 사용자의 모든 대화 검색
    */
-  async searchConversations(userId, searchTerm, options = {}) {
+  searchConversations(userId, searchTerm, options = {}) {
     const { limit = 20, offset = 0 } = options;
 
     const query = `
@@ -292,7 +296,7 @@ class ChatRepository {
   /**
    * 세션 통계 조회
    */
-  async getSessionStats(userId) {
+  getSessionStats(userId) {
     const queries = {
       totalSessions: `SELECT COUNT(*) as count FROM chat_sessions WHERE user_id = ?`,
       totalMessages: `

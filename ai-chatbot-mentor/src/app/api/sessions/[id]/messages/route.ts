@@ -26,8 +26,8 @@ export async function GET(
     }
 
     // 세션 존재 및 권한 확인
-    const session = await chatRepo.getSession(sessionId);
-    if (!session || session.userId !== userId) {
+    const session = chatRepo.getSession(sessionId);
+    if (!session || session.user_id !== userId) {
       return NextResponse.json(
         { success: false, error: '세션을 찾을 수 없거나 권한이 없습니다.' },
         { status: 404 }
@@ -35,7 +35,7 @@ export async function GET(
     }
 
     // 메시지 조회
-    const messages = await chatRepo.getMessages(sessionId, {
+    const messages = chatRepo.getMessages(sessionId, {
       limit,
       offset,
       before,
@@ -43,7 +43,7 @@ export async function GET(
     });
 
     // 총 메시지 수
-    const totalCount = await chatRepo.getMessageCount(sessionId, { search });
+    const totalCount = chatRepo.getMessageCount(sessionId, { search });
 
     return NextResponse.json({
       success: true,

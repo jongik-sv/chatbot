@@ -23,7 +23,7 @@ export async function GET(
     }
 
     // 세션 정보 조회
-    const session = await chatRepo.getSession(sessionId);
+    const session = chatRepo.getSession(sessionId);
     
     if (!session) {
       return NextResponse.json(
@@ -33,7 +33,7 @@ export async function GET(
     }
 
     // 권한 확인
-    if (session.userId !== userId) {
+    if (session.user_id !== userId) {
       return NextResponse.json(
         { success: false, error: '세션에 접근할 권한이 없습니다.' },
         { status: 403 }
@@ -44,7 +44,7 @@ export async function GET(
 
     // 메시지 포함 요청시
     if (includeMessages) {
-      const messages = await chatRepo.getMessages(sessionId);
+      const messages = chatRepo.getMessages(sessionId);
       result = { ...result, messages };
     }
 
@@ -83,8 +83,8 @@ export async function PUT(
     }
 
     // 세션 소유권 확인
-    const session = await chatRepo.getSession(sessionId);
-    if (!session || session.userId !== (userId || 1)) {
+    const session = chatRepo.getSession(sessionId);
+    if (!session || session.user_id !== (userId || 1)) {
       return NextResponse.json(
         { success: false, error: '세션을 찾을 수 없거나 권한이 없습니다.' },
         { status: 404 }
@@ -92,7 +92,7 @@ export async function PUT(
     }
 
     // 세션 제목 업데이트
-    const updatedSession = await chatRepo.updateSession(sessionId, {
+    const updatedSession = chatRepo.updateSession(sessionId, {
       title: title || session.title
     });
 
@@ -132,8 +132,8 @@ export async function DELETE(
     }
 
     // 세션 소유권 확인
-    const session = await chatRepo.getSession(sessionId);
-    if (!session || session.userId !== userId) {
+    const session = chatRepo.getSession(sessionId);
+    if (!session || session.user_id !== userId) {
       return NextResponse.json(
         { success: false, error: '세션을 찾을 수 없거나 권한이 없습니다.' },
         { status: 404 }
@@ -141,7 +141,7 @@ export async function DELETE(
     }
 
     // 세션 삭제
-    await chatRepo.deleteSession(sessionId);
+    chatRepo.deleteSession(sessionId);
 
     return NextResponse.json({
       success: true,

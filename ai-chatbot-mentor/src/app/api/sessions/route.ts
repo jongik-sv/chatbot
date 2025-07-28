@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search'); // 검색어
 
     // 채팅 세션 목록 조회
-    const sessions = await chatRepo.getSessions({
+    const sessions = chatRepo.getSessions({
       userId,
       limit,
       offset,
@@ -25,26 +25,24 @@ export async function GET(request: NextRequest) {
     });
 
     // 각 세션의 최근 메시지와 메타데이터 추가
-    const sessionsWithDetails = await Promise.all(
-      sessions.map(async (session) => {
-        const lastMessage = await chatRepo.getLastMessage(session.id);
-        const messageCount = await chatRepo.getMessageCount(session.id);
-        
-        return {
-          ...session,
-          lastMessage: lastMessage ? {
-            content: lastMessage.content.substring(0, 100) + (lastMessage.content.length > 100 ? '...' : ''),
-            createdAt: lastMessage.createdAt,
-            role: lastMessage.role
-          } : null,
-          messageCount,
-          updatedAt: lastMessage?.createdAt || session.createdAt
-        };
-      })
-    );
+    const sessionsWithDetails = sessions.map((session) => {
+      const lastMessage = chatRepo.getLastMessage(session.id);
+      const messageCount = chatRepo.getMessageCount(session.id);
+      
+      return {
+        ...session,
+        lastMessage: lastMessage ? {
+          content: lastMessage.content.substring(0, 100) + (lastMessage.content.length > 100 ? '...' : ''),
+          createdAt: lastMessage.createdAt,
+          role: lastMessage.role
+        } : null,
+        messageCount,
+        updatedAt: lastMessage?.createdAt || session.createdAt
+      };
+    });
 
     // 총 세션 수 조회
-    const totalCount = await chatRepo.getSessionsCount({
+    const totalCount = chatRepo.getSessionsCount({
       userId,
       mode,
       search
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
     const { title, mode, modelUsed, mentorId, userId } = await request.json();
 
     // 새 채팅 세션 생성
-    const session = await chatRepo.createSession({
+    const session = chatRepo.createSession({
       userId: userId || 1,
       title: title || `새 대화 ${new Date().toLocaleString()}`,
       mode: mode || 'chat',
@@ -121,8 +119,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 세션 소유권 확인
-    const session = await chatRepo.getSession(sessionId);
-    if (!session || session.userId !== userId) {
+    const session = chatRepo.getSession(sessionId);
+    if (!session || session.user_id !== userId) {
       return NextResponse.json(
         { success: false, error: '세션을 찾을 수 없거나 권한이 없습니다.' },
         { status: 404 }
@@ -130,7 +128,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 세션 및 관련 메시지 삭제
-    await chatRepo.deleteSession(sessionId);
+    chatRepo.deleteSession(sessionId);
 
     return NextResponse.json({
       success: true,

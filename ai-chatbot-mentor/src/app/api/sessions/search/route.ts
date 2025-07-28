@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 대화 내용 검색
-    const searchResults = await chatRepo.searchConversations(userId, searchTerm.trim(), {
+    const searchResults = chatRepo.searchConversations(userId, searchTerm.trim(), {
       limit,
       offset
     });
@@ -43,30 +43,28 @@ export async function GET(request: NextRequest) {
     const totalCount = searchResults.length;
 
     // 검색 결과를 세션별로 그룹핑하고 추가 정보 제공
-    const enhancedResults = await Promise.all(
-      searchResults.map(async (result) => {
-        // 해당 세션의 총 메시지 수
-        const messageCount = await chatRepo.getMessageCount(result.id);
-        
-        // 세션의 첫 번째와 마지막 메시지 시간
-        const messages = await chatRepo.getMessages(result.id, { limit: 1, offset: 0 });
-        const lastMessage = await chatRepo.getLastMessage(result.id);
+    const enhancedResults = searchResults.map((result) => {
+      // 해당 세션의 총 메시지 수
+      const messageCount = chatRepo.getMessageCount(result.id);
+      
+      // 세션의 첫 번째와 마지막 메시지 시간
+      const messages = chatRepo.getMessages(result.id, { limit: 1, offset: 0 });
+      const lastMessage = chatRepo.getLastMessage(result.id);
 
-        return {
-          sessionId: result.id,
-          title: result.title,
-          mode: result.mode,
-          createdAt: result.created_at,
-          updatedAt: result.updated_at,
-          messageCount,
-          matchedContent: result.matched_content,
-          matchedRole: result.matched_role,
-          matchedAt: result.message_created_at,
-          firstMessageAt: messages[0]?.createdAt,
-          lastMessageAt: lastMessage?.createdAt
-        };
-      })
-    );
+      return {
+        sessionId: result.id,
+        title: result.title,
+        mode: result.mode,
+        createdAt: result.created_at,
+        updatedAt: result.updated_at,
+        messageCount,
+        matchedContent: result.matched_content,
+        matchedRole: result.matched_role,
+        matchedAt: result.message_created_at,
+        firstMessageAt: messages[0]?.createdAt,
+        lastMessageAt: lastMessage?.createdAt
+      };
+    });
 
     return NextResponse.json({
       success: true,
