@@ -18,8 +18,8 @@ interface SidebarProps {
 const navigation = [
   { name: '새 채팅', href: '/', icon: PlusIcon, current: false },
   { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, current: false },
+  { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, current: false },
   { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, current: true },
-  { name: '문서 분석', href: '/documents', icon: DocumentTextIcon, current: false },
   { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, current: false },
   { name: '히스토리', href: '/history', icon: ClockIcon, current: false },
 ];
