@@ -11,7 +11,17 @@ function isClient() {
  * 한국 시간대로 변환된 Date 객체 반환
  */
 export function toKoreanTime(date: string | Date): Date {
+  // 유효하지 않은 입력 처리
+  if (!date) {
+    return new Date();
+  }
+  
   const targetDate = typeof date === 'string' ? new Date(date) : date;
+  
+  // 유효하지 않은 Date 객체 처리
+  if (isNaN(targetDate.getTime())) {
+    return new Date();
+  }
   
   // 서버 사이드에서는 원본 시간 반환 (하이드레이션 불일치 방지)
   if (!isClient()) {
@@ -72,9 +82,17 @@ export function formatKoreanDate(date: string | Date, options?: {
  * 상대적 시간 표시 (예: "방금 전", "5분 전", "2시간 전")
  */
 export function formatRelativeTime(date: string | Date, baseDate?: Date): string {
+  // 유효하지 않은 입력 처리
+  if (!date) {
+    return '알 수 없음';
+  }
+  
   // 서버 사이드에서는 기본 포맷 반환 (하이드레이션 불일치 방지)
   if (!isClient()) {
     const targetDate = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(targetDate.getTime())) {
+      return '알 수 없음';
+    }
     return targetDate.toLocaleDateString('ko-KR', {
       month: 'short',
       day: 'numeric',
@@ -85,6 +103,11 @@ export function formatRelativeTime(date: string | Date, baseDate?: Date): string
 
   const targetDate = toKoreanTime(typeof date === 'string' ? new Date(date) : date);
   const now = toKoreanTime(baseDate || new Date());
+  
+  // 유효하지 않은 Date 객체 처리
+  if (isNaN(targetDate.getTime()) || isNaN(now.getTime())) {
+    return '알 수 없음';
+  }
   
   // 한국 시간 기준으로 차이 계산
   const diffMs = now.getTime() - targetDate.getTime();
@@ -116,9 +139,17 @@ export function formatRelativeTime(date: string | Date, baseDate?: Date): string
  * 채팅 메시지용 시간 포맷 (오늘/어제 구분)
  */
 export function formatChatTime(date: string | Date): string {
+  // 유효하지 않은 입력 처리
+  if (!date) {
+    return '알 수 없음';
+  }
+  
   // 서버 사이드에서는 기본 포맷 반환 (하이드레이션 불일치 방지)
   if (!isClient()) {
     const targetDate = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(targetDate.getTime())) {
+      return '알 수 없음';
+    }
     return targetDate.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -128,6 +159,11 @@ export function formatChatTime(date: string | Date): string {
 
   const targetDate = toKoreanTime(date);
   const now = toKoreanTime(new Date());
+  
+  // 유효하지 않은 Date 객체 처리
+  if (isNaN(targetDate.getTime()) || isNaN(now.getTime())) {
+    return '알 수 없음';
+  }
   
   const isToday = targetDate.toDateString() === now.toDateString();
   const yesterday = new Date(now);
@@ -161,8 +197,18 @@ export function formatChatTime(date: string | Date): string {
  * 대화 지속 시간 계산
  */
 export function formatDuration(startDate: string | Date, endDate: string | Date): string {
+  // 유효하지 않은 입력 처리
+  if (!startDate || !endDate) {
+    return '알 수 없음';
+  }
+  
   const start = toKoreanTime(startDate);
   const end = toKoreanTime(endDate);
+  
+  // 유효하지 않은 Date 객체 처리
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return '알 수 없음';
+  }
   
   const diffMs = end.getTime() - start.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
