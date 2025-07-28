@@ -31,7 +31,7 @@ class ChatRepository {
   /**
    * 새로운 채팅 세션 생성
    */
-  async createSession(data) {
+  createSession(data) {
     const { userId, title, mode, modelUsed, mentorId } = data;
     
     const stmt = this.db.prepare(`
@@ -47,7 +47,7 @@ class ChatRepository {
   /**
    * 세션 목록 조회
    */
-  async getSessions(options = {}) {
+  getSessions(options = {}) {
     const { 
       userId, 
       limit = 20, 
@@ -89,7 +89,7 @@ class ChatRepository {
   /**
    * 세션 수 조회
    */
-  async getSessionsCount(options = {}) {
+  getSessionsCount(options = {}) {
     const { userId, mode, search } = options;
 
     let query = `SELECT COUNT(*) as count FROM chat_sessions WHERE user_id = ?`;
