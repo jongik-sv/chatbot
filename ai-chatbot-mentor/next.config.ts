@@ -1,18 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['better-sqlite3', 'pdf-parse'],
+  serverExternalPackages: ['better-sqlite3', 'pdf-parse', 'sqlite3', '@google/generative-ai'],
   webpack: (config) => {
     config.externals.push({
       'better-sqlite3': 'commonjs better-sqlite3',
-      'pdf-parse': 'commonjs pdf-parse'
+      'pdf-parse': 'commonjs pdf-parse',
+      'sqlite3': 'commonjs sqlite3',
+      '@google/generative-ai': 'commonjs @google/generative-ai'
     });
     
-    // pdf-parse 관련 파일 무시
+    // Node.js 모듈 fallback 설정
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
       path: false,
+      crypto: false,
+      stream: false,
+      http: false,
+      https: false,
+      zlib: false,
+      url: false
     };
     
     return config;

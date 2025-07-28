@@ -27,6 +27,7 @@ interface ChatInterfaceProps {
     mentorType: string;
     compatibility?: any;
   };
+  onSessionUpdate?: (sessionId: number, updates: any) => void;
 }
 
 export default function ChatInterface({ 
@@ -34,7 +35,8 @@ export default function ChatInterface({
   sessionId, 
   initialMode,
   initialMentorId,
-  mbtiContext 
+  mbtiContext,
+  onSessionUpdate
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -124,6 +126,19 @@ export default function ChatInterface({
       // 세션 ID 업데이트 (새 세션인 경우)
       if (!state.currentSessionId) {
         dispatch({ type: 'SET_SESSION_ID', payload: response.sessionId });
+      }
+
+      // 세션 업데이트 콜백 호출
+      if (onSessionUpdate && response.sessionId) {
+        onSessionUpdate(response.sessionId, {
+          messageCount: messages.length + 2, // user + assistant message
+          lastMessage: {
+            content: response.content.substring(0, 100) + (response.content.length > 100 ? '...' : ''),
+            role: 'assistant',
+            createdAt: new Date().toISOString()
+          },
+          updatedAt: new Date().toISOString()
+        });
       }
 
       const assistantMessage: Message = {

@@ -316,3 +316,38 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - create() 및 update() 메서드 모두 수정하여 일관성 확보
 - 잘못된 import 경로가 있는 sessions API 폴더 제거
 - 빌드 성공 및 MBTI 시스템 완전 작동 확인
+
+------
+**요청 날짜**: 2025-07-28
+**요청 내용**: 14. 대화 히스토리 관리 시스템 구현
+- 사용자별 대화 세션 관리 기능
+- 대화 히스토리 저장/조회/삭제 기능
+- 세션별 컨텍스트 유지 및 관리
+- 검색 및 필터링 기능
+- UI 컴포넌트 및 API 엔드포인트 구현
+------
+**완료 상태**: ✅ 성공적으로 완료
+**완료 내용**: 
+- ChatRepository 클래스 구현 (세션 및 메시지 관리)
+- 채팅 세션 API 엔드포인트 구현 (/api/sessions)
+  - GET: 세션 목록 조회 (검색, 필터링, 페이지네이션 지원)
+  - POST: 새 세션 생성
+  - DELETE: 세션 삭제
+- 세션 상세 API 구현 (/api/sessions/[id])
+  - GET: 세션 상세 조회 (메시지 포함 옵션)
+  - PUT: 세션 제목 수정
+  - DELETE: 세션 삭제
+- 메시지 API 구현 (/api/sessions/[id]/messages)
+  - GET: 세션의 메시지 목록 조회 (검색, 페이지네이션 지원)
+- 전역 검색 API 구현 (/api/sessions/search)
+  - 대화 내용 통합 검색 기능
+- UI 컴포넌트 구현
+  - ChatHistoryList: 세션 목록 표시 및 관리
+  - ChatHistoryPanel: 사이드 패널 형태의 히스토리 인터페이스
+  - SessionDetailView: 세션 상세 보기 및 메시지 검색
+- 히스토리 페이지 구현 (/history)
+  - 전체 대화 히스토리 관리 인터페이스
+- API 클라이언트에 히스토리 관련 메서드 추가
+- ChatInterface에 세션 업데이트 콜백 통합
+- Next.js 설정 최적화 (sqlite3, @google/generative-ai 패키지 지원)
+- 빌드 성공 및 전체 시스템 통합 완료

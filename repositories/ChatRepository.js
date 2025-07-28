@@ -2,11 +2,30 @@
  * 채팅 관련 데이터베이스 작업을 담당하는 Repository 클래스
  */
 
-const Database = require('../lib/database');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
 
 class ChatRepository {
   constructor() {
-    this.db = Database.getInstance();
+    this.dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'chatbot.db');
+    this.db = null;
+    this.initDatabase();
+  }
+
+  initDatabase() {
+    try {
+      // 데이터베이스 디렉토리 확인 및 생성
+      const dbDir = path.dirname(this.dbPath);
+      if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+      }
+
+      this.db = new sqlite3.Database(this.dbPath);
+    } catch (error) {
+      console.error('데이터베이스 초기화 실패:', error);
+      throw error;
+    }
   }
 
   /**
