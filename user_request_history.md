@@ -456,3 +456,7 @@ setTimeout(() => {
 - CodeArtifact.tsx: Monaco Editor 통합
 
 **결과**: VS Code와 동일한 편집 경험을 제공하는 고품질 코드 에디터로 업그레이드
+
+------
+
+git 충돌이 일어났는데 원격 저장소에 있는 것으로 적용해줘.
