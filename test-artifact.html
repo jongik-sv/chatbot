@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Artifact Test</title>
+</head>
+<body>
+    <h1>Alert/Console.log 테스트</h1>
+    <button onclick="testAlert()">Alert 테스트</button>
+    <button onclick="testConsole()">Console.log 테스트</button>
+    <button onclick="testBoth()">둘 다 테스트</button>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; min-height: 100px;"></div>
+    
+    <script>
+        function testAlert() {
+            alert("이것은 alert 테스트입니다!");
+        }
+        
+        function testConsole() {
+            console.log("이것은 console.log 테스트입니다!");
+        }
+        
+        function testBoth() {
+            console.log("먼저 console.log");
+            alert("그 다음 alert");
+        }
+        
+        // console.log를 div에도 출력
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.textContent = '📝 ' + args.join(' ');
+            div.style.cssText = 'margin: 5px 0; padding: 5px; background: #e8f5e8; border-left: 3px solid #4caf50;';
+            output.appendChild(div);
+        };
+        
+        console.log("페이지 로드 완료 - console.log 테스트");
+    </script>
+</body>
+</html>
