@@ -1528,3 +1528,5 @@ ArtifactPanel에서 null id 참조 오류 발생 - Cannot read properties of nul
 ArtifactService.createArtifact가 undefined를 반환하는 문제 - artifact.id 접근 오류 해결 요청
 ------
 아티팩트 생성 시 FOREIGN KEY constraint failed 오류 - session_id 또는 message_id 참조 오류 해결 요청
+------
+세션 ID가 존재하지 않는 문제 - 데이터베이스 경로 또는 테이블명 불일치 해결 요청
