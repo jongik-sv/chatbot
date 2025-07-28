@@ -2,17 +2,18 @@
  * 채팅 관련 데이터베이스 작업을 담당하는 Repository 클래스
  */
 
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const Database = require("better-sqlite3");
+const path = require("path");
+const fs = require("fs");
 
 class ChatRepository {
   constructor() {
     // ai-chatbot-mentor 디렉토리에서 실행되는 경우를 고려하여 상위 디렉토리의 data 폴더 사용
-    const rootDir = process.cwd().endsWith('ai-chatbot-mentor') 
-      ? path.join(process.cwd(), '..')
+    const rootDir = process.cwd().endsWith("ai-chatbot-mentor")
+      ? path.join(process.cwd(), "..")
       : process.cwd();
-    this.dbPath = process.env.DATABASE_PATH || path.join(rootDir, 'data', 'chatbot.db');
+    this.dbPath =
+      process.env.DATABASE_PATH || path.join(rootDir, "data", "chatbot.db");
     this.db = null;
     this.initDatabase();
   }
@@ -27,9 +28,22 @@ class ChatRepository {
 
       this.db = new Database(this.dbPath);
     } catch (error) {
-      console.error('데이터베이스 초기화 실패:', error);
+      console.error("데이터베이스 초기화 실패:", error);
       throw error;
     }
+  }
+
+  /**
+   * 현재 한국 시간을 ISO 문자열로 반환
+   */
+  getCurrentKoreanTimeISO() {
+    const now = new Date();
+    const koreanOffset = 9 * 60; // 한국은 UTC+9 (분 단위)
+    const localOffset = now.getTimezoneOffset(); // 현재 시스템의 UTC 오프셋 (분 단위, 음수)
+    const offsetDiff = koreanOffset + localOffset; // 한국 시간과의 차이 (분 단위)
+
+    const koreanTime = new Date(now.getTime() + offsetDiff * 60 * 1000);
+    return koreanTime.toISOString();
   }
 
   /**
@@ -39,11 +53,12 @@ class ChatRepository {
     const { userId, title, mode, modelUsed, mentorId } = data;
     
     const stmt = this.db.prepare(`
-      INSERT INTO chat_sessions (user_id, title, mode, model_used, mentor_id)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO chat_sessions (user_id, title, mode, model_used, mentor_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     
-    const result = stmt.run(userId, title, mode, modelUsed, mentorId);
+    const koreanTime = this.getCurrentKoreanTimeISO();
+    const result = stmt.run(userId, title, mode, modelUsed, mentorId, koreanTime, koreanTime);
     
     return this.getSession(result.lastInsertRowid);
   }
@@ -52,13 +67,7 @@ class ChatRepository {
    * 세션 목록 조회
    */
   getSessions(options = {}) {
-    const { 
-      userId, 
-      limit = 20, 
-      offset = 0, 
-      mode,
-      search 
-    } = options;
+    const { userId, limit = 20, offset = 0, mode, search } = options;
 
     let query = `
       SELECT 
@@ -128,7 +137,7 @@ class ChatRepository {
       LEFT JOIN users u ON cs.user_id = u.id
       WHERE cs.id = ?
     `);
-    
+
     return stmt.get(sessionId);
   }
 
@@ -137,23 +146,23 @@ class ChatRepository {
    */
   updateSession(sessionId, data) {
     const { title, modelUsed } = data;
-    
+
     let query = `UPDATE chat_sessions SET updated_at = CURRENT_TIMESTAMP`;
     const params = [];
-    
+
     if (title !== undefined) {
       query += `, title = ?`;
       params.push(title);
     }
-    
+
     if (modelUsed !== undefined) {
       query += `, model_used = ?`;
       params.push(modelUsed);
     }
-    
+
     query += ` WHERE id = ?`;
     params.push(sessionId);
-    
+
     const stmt = this.db.prepare(query);
     stmt.run(...params);
     return this.getSession(sessionId);
@@ -172,12 +181,7 @@ class ChatRepository {
    * 세션의 메시지 목록 조회
    */
   getMessages(sessionId, options = {}) {
-    const { 
-      limit = 50, 
-      offset = 0, 
-      before,
-      search 
-    } = options;
+    const { limit = 50, offset = 0, before, search } = options;
 
     let query = `
       SELECT * FROM messages 
@@ -232,7 +236,7 @@ class ChatRepository {
       ORDER BY created_at DESC 
       LIMIT 1
     `);
-    
+
     return stmt.get(sessionId);
   }
 
@@ -241,18 +245,26 @@ class ChatRepository {
    */
   createMessage(data) {
     const { sessionId, role, content, contentType, metadata } = data;
-    
+
     const stmt = this.db.prepare(`
-      INSERT INTO messages (session_id, role, content, content_type, metadata)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO messages (session_id, role, content, content_type, metadata, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
-    
+
     const metadataStr = metadata ? JSON.stringify(metadata) : null;
-    const result = stmt.run(sessionId, role, content, contentType || 'text', metadataStr);
-    
+    const koreanTime = this.getCurrentKoreanTimeISO();
+    const result = stmt.run(
+      sessionId,
+      role,
+      content,
+      contentType || "text",
+      metadataStr,
+      koreanTime
+    );
+
     // 세션의 updated_at 업데이트
     this.updateSessionTimestamp(sessionId);
-    
+
     return this.getMessage(result.lastInsertRowid);
   }
 
@@ -270,11 +282,12 @@ class ChatRepository {
   updateSessionTimestamp(sessionId) {
     const stmt = this.db.prepare(`
       UPDATE chat_sessions 
-      SET updated_at = CURRENT_TIMESTAMP 
+      SET updated_at = ? 
       WHERE id = ?
     `);
-    
-    return stmt.run(sessionId);
+
+    const koreanTime = this.getCurrentKoreanTimeISO();
+    return stmt.run(koreanTime, sessionId);
   }
 
   /**
@@ -328,14 +341,14 @@ class ChatRepository {
         WHERE user_id = ? AND updated_at >= datetime('now', '-30 days')
         GROUP BY DATE(updated_at)
         ORDER BY date DESC
-      `
+      `,
     };
 
     const results = {};
-    
+
     for (const [key, query] of Object.entries(queries)) {
       const stmt = this.db.prepare(query);
-      if (key === 'sessionsByMode' || key === 'recentActivity') {
+      if (key === "sessionsByMode" || key === "recentActivity") {
         results[key] = stmt.all(userId);
       } else {
         const result = stmt.get(userId);

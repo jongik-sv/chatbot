@@ -9,6 +9,7 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
+import { formatRelativeTime } from '../utils/dateUtils';
 
 interface ChatSession {
   id: number;
@@ -78,22 +79,7 @@ export default function ChatsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) {
-      return '방금 전';
-    } else if (diffInHours < 24) {
-      return `${diffInHours}시간 전`;
-    } else if (diffInHours < 48) {
-      return '어제';
-    } else {
-      return date.toLocaleDateString('ko-KR', {
-        month: 'short',
-        day: 'numeric'
-      });
-    }
+    return formatRelativeTime(dateString);
   };
 
   if (loading) {

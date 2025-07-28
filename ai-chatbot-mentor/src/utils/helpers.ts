@@ -46,7 +46,19 @@ export function isValidMBTI(mbti: string): boolean {
 }
 
 export function formatDate(date: Date): string {
+  // 서버 사이드에서는 기본 포맷 반환 (하이드레이션 불일치 방지)
+  if (typeof window === 'undefined') {
+    return new Intl.DateTimeFormat('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  }
+
   return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
     year: 'numeric',
     month: 'long',
     day: 'numeric',

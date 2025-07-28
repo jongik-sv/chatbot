@@ -1,10 +1,22 @@
 // 한국 시간 기준 날짜/시간 유틸리티 함수들
 
 /**
+ * 클라이언트 사이드에서만 실행되는지 확인
+ */
+function isClient() {
+  return typeof window !== 'undefined';
+}
+
+/**
  * 한국 시간대로 변환된 Date 객체 반환
  */
 export function toKoreanTime(date: string | Date): Date {
   const targetDate = typeof date === 'string' ? new Date(date) : date;
+  
+  // 서버 사이드에서는 원본 시간 반환 (하이드레이션 불일치 방지)
+  if (!isClient()) {
+    return targetDate;
+  }
   
   // 한국 시간대 (UTC+9)로 변환
   // 현재 시스템의 시간대 오프셋을 고려하여 한국 시간으로 변환
@@ -60,11 +72,21 @@ export function formatKoreanDate(date: string | Date, options?: {
  * 상대적 시간 표시 (예: "방금 전", "5분 전", "2시간 전")
  */
 export function formatRelativeTime(date: string | Date, baseDate?: Date): string {
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
-  const now = baseDate || new Date();
+  // 서버 사이드에서는 기본 포맷 반환 (하이드레이션 불일치 방지)
+  if (!isClient()) {
+    const targetDate = typeof date === 'string' ? new Date(date) : date;
+    return targetDate.toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  const targetDate = toKoreanTime(typeof date === 'string' ? new Date(date) : date);
+  const now = toKoreanTime(baseDate || new Date());
   
-  // 데이터베이스에서 가져온 시간이 UTC라고 가정하고 처리
-  // SQLite의 CURRENT_TIMESTAMP는 UTC 시간을 저장함
+  // 한국 시간 기준으로 차이 계산
   const diffMs = now.getTime() - targetDate.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMinutes / 60);
@@ -94,6 +116,16 @@ export function formatRelativeTime(date: string | Date, baseDate?: Date): string
  * 채팅 메시지용 시간 포맷 (오늘/어제 구분)
  */
 export function formatChatTime(date: string | Date): string {
+  // 서버 사이드에서는 기본 포맷 반환 (하이드레이션 불일치 방지)
+  if (!isClient()) {
+    const targetDate = typeof date === 'string' ? new Date(date) : date;
+    return targetDate.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
   const targetDate = toKoreanTime(date);
   const now = toKoreanTime(new Date());
   
@@ -151,4 +183,18 @@ export function formatDuration(startDate: string | Date, endDate: string | Date)
  */
 export function getCurrentKoreanTime(): Date {
   return toKoreanTime(new Date());
+}
+
+/**
+ * 현재 한국 시간을 ISO 문자열로 반환 (데이터베이스 저장용)
+ */
+export function getCurrentKoreanTimeISO(): string {
+  return toKoreanTime(new Date()).toISOString();
+}
+
+/**
+ * 한국 시간을 ISO 문자열로 변환 (데이터베이스 저장용)
+ */
+export function toKoreanTimeISO(date: string | Date): string {
+  return toKoreanTime(date).toISOString();
 }
