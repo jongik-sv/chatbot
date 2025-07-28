@@ -229,6 +229,29 @@ window.alert = function(message) {
 
 ------
 
+세션 목록 조회 오류: SqliteError: no such table: chat_sessions 해결
+
+**문제 상황**:
+- 데이터베이스 경로를 `/data/chatbot.db`로 통일했지만 테이블이 없는 상태
+- ChatRepository에서 chat_sessions 테이블을 찾을 수 없음
+- 세션 API 호출 시 500 오류 발생
+
+**해결 과정**:
+1. ✅ `/data/chatbot.db` 파일 존재 확인 (118KB)
+2. ✅ `node scripts/init-db.js` 실행하여 테이블 생성
+3. ✅ 10개 핵심 테이블 생성 완료:
+   - users, chat_sessions, messages, mentors
+   - documents, embeddings, mentor_knowledge_sources
+   - artifacts, settings, 인덱스들
+4. ✅ 개발 서버 정상 시작 확인
+
+**결과**: 
+- 세션 API 오류 해결 완료
+- 모든 테이블이 통일된 데이터베이스에 생성됨
+- 시스템 정상 작동 확인
+
+------
+
 데이터베이스 경로 분석: `/data/chatbot.db` vs `ai-chatbot-mentor/database/chatbot.db` 사용 현황 파악
 
 ------
