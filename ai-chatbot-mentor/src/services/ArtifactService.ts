@@ -33,26 +33,45 @@ export class ArtifactService {
   static createArtifact(data: CreateArtifactData): Artifact {
     const db = getDatabase();
 
-    // 아티팩트 타입별 검증 및 전처리
-    const processedData = this.processArtifactByType(data);
+    try {
+      console.log('아티팩트 생성 데이터:', data);
 
-    const stmt = db.prepare(
-      `INSERT INTO artifacts (session_id, message_id, type, title, content, language, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
-    );
-    
-    const result = stmt.run([
-      processedData.sessionId,
-      processedData.messageId || null,
-      processedData.type,
-      processedData.title,
-      processedData.content,
-      processedData.language || null
-    ]);
+      // 아티팩트 타입별 검증 및 전처리
+      const processedData = this.processArtifactByType(data);
+      console.log('처리된 데이터:', processedData);
 
-    const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(result.lastID);
+      const stmt = db.prepare(
+        `INSERT INTO artifacts (session_id, message_id, type, title, content, language, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
+      );
+      
+      const result = stmt.run([
+        processedData.sessionId,
+        processedData.messageId || null,
+        processedData.type,
+        processedData.title,
+        processedData.content,
+        processedData.language || null
+      ]);
 
-    return artifact as Artifact;
+      console.log('DB 삽입 결과:', result);
+
+      if (!result.lastID) {
+        throw new Error('아티팩트 삽입 실패: lastID가 없음');
+      }
+
+      const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(result.lastID);
+      console.log('조회된 아티팩트:', artifact);
+
+      if (!artifact) {
+        throw new Error(`아티팩트 조회 실패: ID ${result.lastID}`);
+      }
+
+      return artifact as Artifact;
+    } catch (error) {
+      console.error('ArtifactService.createArtifact 오류:', error);
+      throw error;
+    }
   }
 
   /**

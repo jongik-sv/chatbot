@@ -1524,3 +1524,5 @@ AI가 소스를 출력하면 아티팩트가 실행 될 수 있는 환경을 만
 Hydration mismatch 오류 발생 - className 불일치 문제 해결 요청
 ------
 ArtifactPanel에서 null id 참조 오류 발생 - Cannot read properties of null (reading 'id') 해결 요청
+------
+ArtifactService.createArtifact가 undefined를 반환하는 문제 - artifact.id 접근 오류 해결 요청
