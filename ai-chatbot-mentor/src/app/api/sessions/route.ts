@@ -110,7 +110,19 @@ export async function DELETE(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const sessionId = parseInt(searchParams.get('sessionId') || '0');
     const userId = parseInt(searchParams.get('userId') || '1');
+    const deleteAll = searchParams.get('deleteAll') === 'true';
 
+    // 전체 삭제 요청인 경우
+    if (deleteAll) {
+      const result = chatRepo.deleteAllSessions(userId);
+      
+      return NextResponse.json({
+        success: true,
+        message: `모든 세션이 삭제되었습니다. (${result.changes}개 세션 삭제)`
+      });
+    }
+
+    // 개별 세션 삭제
     if (!sessionId) {
       return NextResponse.json(
         { success: false, error: 'sessionId가 필요합니다.' },

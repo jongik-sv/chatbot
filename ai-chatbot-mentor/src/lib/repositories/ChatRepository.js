@@ -176,9 +176,45 @@ class ChatRepository {
    * 세션 삭제
    */
   deleteSession(sessionId) {
-    // 관련 메시지들도 함께 삭제됨 (CASCADE)
-    const stmt = this.db.prepare(`DELETE FROM chat_sessions WHERE id = ?`);
-    return stmt.run(sessionId);
+    // 트랜잭션으로 안전하게 삭제
+    const deleteTransaction = this.db.transaction((sessionId) => {
+      // 먼저 관련 메시지들 삭제
+      const deleteMessages = this.db.prepare(`DELETE FROM messages WHERE session_id = ?`);
+      deleteMessages.run(sessionId);
+      
+      // 그 다음 세션 삭제
+      const deleteSession = this.db.prepare(`DELETE FROM chat_sessions WHERE id = ?`);
+      return deleteSession.run(sessionId);
+    });
+    
+    return deleteTransaction(sessionId);
+  }
+
+  /**
+   * 사용자의 모든 세션 삭제
+   */
+  deleteAllSessions(userId) {
+    // 트랜잭션으로 안전하게 삭제
+    const deleteAllTransaction = this.db.transaction((userId) => {
+      // 먼저 해당 사용자의 모든 세션 ID 조회
+      const sessionIds = this.db.prepare(`SELECT id FROM chat_sessions WHERE user_id = ?`).all(userId);
+      
+      if (sessionIds.length === 0) {
+        return { changes: 0 };
+      }
+      
+      // 각 세션의 메시지들 삭제
+      const deleteMessages = this.db.prepare(`DELETE FROM messages WHERE session_id = ?`);
+      sessionIds.forEach(session => {
+        deleteMessages.run(session.id);
+      });
+      
+      // 모든 세션 삭제
+      const deleteSessions = this.db.prepare(`DELETE FROM chat_sessions WHERE user_id = ?`);
+      return deleteSessions.run(userId);
+    });
+    
+    return deleteAllTransaction(userId);
   }
 
   /**
