@@ -85,15 +85,15 @@ export class ArtifactService {
 
       console.log('DB 삽입 결과:', result);
 
-      if (!result.lastID) {
-        throw new Error('아티팩트 삽입 실패: lastID가 없음');
+      if (!result.lastInsertRowid) {
+        throw new Error('아티팩트 삽입 실패: lastInsertRowid가 없음');
       }
 
-      const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(result.lastID);
+      const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(result.lastInsertRowid);
       console.log('조회된 아티팩트:', artifact);
 
       if (!artifact) {
-        throw new Error(`아티팩트 조회 실패: ID ${result.lastID}`);
+        throw new Error(`아티팩트 조회 실패: ID ${result.lastInsertRowid}`);
       }
 
       return artifact as Artifact;

@@ -1530,3 +1530,5 @@ ArtifactService.createArtifact가 undefined를 반환하는 문제 - artifact.id
 아티팩트 생성 시 FOREIGN KEY constraint failed 오류 - session_id 또는 message_id 참조 오류 해결 요청
 ------
 세션 ID가 존재하지 않는 문제 - 데이터베이스 경로 또는 테이블명 불일치 해결 요청
+------
+DB 삽입은 성공했지만 result.lastID가 없는 문제 - lastInsertRowid vs lastID 속성명 불일치 해결 요청
