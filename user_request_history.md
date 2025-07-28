@@ -250,6 +250,10 @@ window.alert = function(message) {
 - 모든 테이블이 통일된 데이터베이스에 생성됨
 - 시스템 정상 작동 확인
 
+**추가 수정**: 
+- ChatRepository 경로를 `../data/chatbot.db`로 수정 (Next.js 작업 디렉토리 고려)
+- 최종적으로 세션 API 정상 작동 확인
+
 ------
 
 데이터베이스 경로 분석: `/data/chatbot.db` vs `ai-chatbot-mentor/database/chatbot.db` 사용 현황 파악
