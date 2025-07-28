@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ArtifactService } from '@/services/ArtifactService';
+import { artifactFileManager } from '@/services/ArtifactFileManager';
+import { getDatabase } from '@/lib/database';
 
 // GET /api/artifacts/[id] - 특정 아티팩트 조회
 export async function GET(
@@ -16,7 +18,8 @@ export async function GET(
       );
     }
 
-    const artifact = ArtifactService.getArtifact(Number(id));
+    const db = await getDatabase();
+    const artifact = await db.get('SELECT * FROM artifacts WHERE id = ?', [id]);
 
     if (!artifact) {
       return NextResponse.json(
@@ -68,7 +71,43 @@ export async function PUT(
       );
     }
 
-    const updatedArtifact = ArtifactService.updateArtifact(Number(id), updateData);
+    const db = await getDatabase();
+    
+    // 기존 아티팩트 정보 조회
+    const existingArtifact = await db.get('SELECT * FROM artifacts WHERE id = ?', [id]);
+    if (!existingArtifact) {
+      return NextResponse.json(
+        { success: false, error: '아티팩트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 콘텐츠가 변경된 경우 파일 시스템에도 업데이트
+    if (content !== undefined) {
+      try {
+        await artifactFileManager.saveArtifact({
+          sessionId: existingArtifact.session_id.toString(),
+          artifactId: id,
+          filename: '',
+          content,
+          language: language || existingArtifact.language || 'text'
+        });
+      } catch (fileError) {
+        console.error('파일 업데이트 오류:', fileError);
+        // 파일 업데이트 실패해도 DB 업데이트는 진행
+      }
+    }
+
+    // 데이터베이스 업데이트
+    const setClauses = Object.keys(updateData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updateData), new Date().toISOString(), id];
+    
+    await db.run(
+      `UPDATE artifacts SET ${setClauses}, updated_at = ? WHERE id = ?`,
+      values
+    );
+
+    const updatedArtifact = await db.get('SELECT * FROM artifacts WHERE id = ?', [id]);
 
     if (!updatedArtifact) {
       return NextResponse.json(
@@ -106,7 +145,31 @@ export async function DELETE(
       );
     }
 
-    const deleted = ArtifactService.deleteArtifact(Number(id));
+    const db = await getDatabase();
+    
+    // 아티팩트 정보 조회
+    const artifact = await db.get('SELECT * FROM artifacts WHERE id = ?', [id]);
+    if (!artifact) {
+      return NextResponse.json(
+        { success: false, error: '아티팩트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 파일 시스템에서 아티팩트 삭제
+    try {
+      await artifactFileManager.deleteArtifact(
+        artifact.session_id.toString(),
+        id
+      );
+    } catch (fileError) {
+      console.error('파일 삭제 오류:', fileError);
+      // 파일 삭제 실패해도 DB 삭제는 진행
+    }
+
+    // 데이터베이스에서 삭제
+    const result = await db.run('DELETE FROM artifacts WHERE id = ?', [id]);
+    const deleted = result.changes > 0;
 
     if (!deleted) {
       return NextResponse.json(

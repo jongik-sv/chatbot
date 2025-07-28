@@ -13,6 +13,9 @@ interface CodeArtifactProps {
   showLineNumbers?: boolean;
   theme?: 'light' | 'dark';
   className?: string;
+  artifactId?: string;
+  sessionId?: string;
+  useFileServer?: boolean;
 }
 
 export function CodeArtifact({
@@ -20,7 +23,10 @@ export function CodeArtifact({
   language = 'javascript',
   showLineNumbers = true,
   theme = 'light',
-  className = ''
+  className = '',
+  artifactId,
+  sessionId,
+  useFileServer = false
 }: CodeArtifactProps) {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'monaco' | 'code' | 'raw' | 'execute'>('monaco');
@@ -195,6 +201,9 @@ export function CodeArtifact({
               code={content} 
               language={language || 'javascript'} 
               title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
+              artifactId={artifactId}
+              sessionId={sessionId}
+              useFileServer={useFileServer}
             />
           </div>
         )}

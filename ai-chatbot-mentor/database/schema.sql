@@ -100,7 +100,11 @@ CREATE TABLE IF NOT EXISTS artifacts (
   title TEXT,
   content TEXT NOT NULL,
   language TEXT, -- 코드 언어
+  file_path TEXT, -- 파일 시스템 경로
+  files_info TEXT, -- JSON: 다중 파일 정보 (filename, language, path)
+  is_project BOOLEAN DEFAULT FALSE, -- 다중 파일 프로젝트 여부
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE,
   FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
 );

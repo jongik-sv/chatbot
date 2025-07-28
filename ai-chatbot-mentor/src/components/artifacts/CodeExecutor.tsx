@@ -8,13 +8,19 @@ interface CodeExecutorProps {
   language: string;
   title?: string;
   className?: string;
+  artifactId?: string;
+  sessionId?: string;
+  useFileServer?: boolean;
 }
 
 export function CodeExecutor({ 
   code, 
   language, 
   title = 'Code Output',
-  className = '' 
+  className = '',
+  artifactId,
+  sessionId,
+  useFileServer = false
 }: CodeExecutorProps) {
   const [output, setOutput] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -37,14 +43,20 @@ export function CodeExecutor({
     setOutput('');
 
     try {
-      if (language.toLowerCase() === 'html' || language.includes('html')) {
-        executeHTML();
-      } else if (['javascript', 'js', 'jsx', 'tsx', 'typescript', 'ts'].includes(language.toLowerCase())) {
-        executeJavaScript();
-      } else if (language.toLowerCase() === 'css') {
-        executeCSS();
-      } else if (['python', 'py'].includes(language.toLowerCase())) {
-        executePython();
+      // 파일 서버 사용 모드
+      if (useFileServer && artifactId && sessionId) {
+        executeFromFileServer();
+      } else {
+        // 기존 방식 (인라인 코드 실행)
+        if (language.toLowerCase() === 'html' || language.includes('html')) {
+          executeHTML();
+        } else if (['javascript', 'js', 'jsx', 'tsx', 'typescript', 'ts'].includes(language.toLowerCase())) {
+          executeJavaScript();
+        } else if (language.toLowerCase() === 'css') {
+          executeCSS();
+        } else if (['python', 'py'].includes(language.toLowerCase())) {
+          executePython();
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '실행 중 오류가 발생했습니다.');
@@ -689,16 +701,45 @@ sys.stdout = output_capture
     }
   };
 
+  const executeFromFileServer = () => {
+    if (!iframeRef.current || !artifactId || !sessionId) {
+      setError('아티팩트 정보가 없습니다.');
+      setIsRunning(false);
+      return;
+    }
+
+    // 파일 서버 URL로 iframe 설정
+    const fileServerUrl = `/api/artifacts/serve/${sessionId}/${artifactId}/index.html`;
+    
+    // iframe src 설정
+    iframeRef.current.src = fileServerUrl;
+    
+    // iframe 로딩 완료 대기
+    iframeRef.current.onload = () => {
+      setIsReady(true);
+      setIsRunning(false);
+    };
+    
+    iframeRef.current.onerror = () => {
+      setError('파일 서버에서 아티팩트를 로드할 수 없습니다.');
+      setIsRunning(false);
+    };
+  };
+
   const clearOutput = () => {
     setOutput('');
     setError('');
     setIsReady(false);
     if (iframeRef.current) {
-      const doc = iframeRef.current.contentDocument;
-      if (doc) {
-        doc.open();
-        doc.write('<html><body></body></html>');
-        doc.close();
+      if (useFileServer) {
+        iframeRef.current.src = 'about:blank';
+      } else {
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write('<html><body></body></html>');
+          doc.close();
+        }
       }
     }
   };
@@ -764,6 +805,7 @@ sys.stdout = output_capture
             className="w-full h-full border-none"
             sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms"
             title="Code Execution Result"
+            src={useFileServer ? undefined : 'about:blank'}
           />
         )}
       </div>
