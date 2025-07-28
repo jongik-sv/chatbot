@@ -8,12 +8,8 @@ const fs = require("fs");
 
 class ChatRepository {
   constructor() {
-    // ai-chatbot-mentor 디렉토리에서 실행되는 경우를 고려하여 상위 디렉토리의 data 폴더 사용
-    const rootDir = process.cwd().endsWith("ai-chatbot-mentor")
-      ? path.join(process.cwd(), "..")
-      : process.cwd();
-    this.dbPath =
-      process.env.DATABASE_PATH || path.join(rootDir, "data", "chatbot.db");
+    // ai-chatbot-mentor 프로젝트의 database 폴더 사용
+    this.dbPath = path.join(process.cwd(), "database", "chatbot.db");
     this.db = null;
     this.initDatabase();
   }
@@ -51,15 +47,23 @@ class ChatRepository {
    */
   createSession(data) {
     const { userId, title, mode, modelUsed, mentorId } = data;
-    
+
     const stmt = this.db.prepare(`
       INSERT INTO chat_sessions (user_id, title, mode, model_used, mentor_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     const koreanTime = this.getCurrentKoreanTimeISO();
-    const result = stmt.run(userId, title, mode, modelUsed, mentorId, koreanTime, koreanTime);
-    
+    const result = stmt.run(
+      userId,
+      title,
+      mode,
+      modelUsed,
+      mentorId,
+      koreanTime,
+      koreanTime
+    );
+
     return this.getSession(result.lastInsertRowid);
   }
 
