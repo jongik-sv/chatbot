@@ -38,8 +38,8 @@ export default function HistoryPage() {
   };
 
   const handleLoadSession = (session: ChatSession) => {
-    // 메인 채팅 페이지로 이동하면서 세션 ID 전달
-    router.push(`/?sessionId=${session.id}`);
+    // 동적 라우트로 이동하여 세션 로드
+    router.push(`/chat/${session.id}`);
   };
 
   const handleBackToMain = () => {
