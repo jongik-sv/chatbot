@@ -103,17 +103,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 사용자 메시지 저장
-    const userMessage = chatRepo.createMessage({
-      sessionId: currentSession.id,
-      role: 'user',
-      content: message,
-      contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
-      metadata: uploadedFiles.length > 0 ? { 
-        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
-      } : undefined
-    });
-
     // 멘토 컨텍스트 처리
     let mentorContext = null;
     let systemInstruction = undefined;
@@ -136,15 +125,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 대화 컨텍스트 구성
+    // 대화 컨텍스트 구성 (사용자 메시지 저장 전에 기존 히스토리 가져오기)
     let conversationHistory;
     
     if (mentorContext) {
       // 멘토별 대화 히스토리 사용
       conversationHistory = [...mentorContext.conversationHistory];
     } else {
-      // 일반 대화 히스토리 사용
-      const recentMessages = chatRepo.getMessages(currentSession.id, { limit: 10 });
+      // 일반 대화 히스토리 사용 - 최근 20개 메시지 가져오기
+      const recentMessages = chatRepo.getMessages(currentSession.id, { limit: 20 });
       conversationHistory = recentMessages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -155,6 +144,17 @@ export async function POST(request: NextRequest) {
     conversationHistory.push({
       role: 'user',
       content: message
+    });
+
+    // 사용자 메시지 저장
+    const userMessage = chatRepo.createMessage({
+      sessionId: currentSession.id,
+      role: 'user',
+      content: message,
+      contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
+      metadata: uploadedFiles.length > 0 ? { 
+        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
+      } : undefined
     });
 
     let llmResponse;

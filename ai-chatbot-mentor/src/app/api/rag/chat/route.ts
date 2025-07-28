@@ -65,6 +65,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 대화 컨텍스트 구성 (사용자 메시지 저장 전에 기존 히스토리 가져오기)
+    const recentMessages = chatRepo.getMessages(currentSession.id, { limit: 10 });
+    const conversationHistory = recentMessages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    // 현재 사용자 메시지 추가
+    conversationHistory.push({
+      role: 'user',
+      content: message
+    });
+
     // 사용자 메시지 저장
     const userMessage = chatRepo.createMessage({
       sessionId: currentSession.id,
@@ -123,27 +136,27 @@ export async function POST(request: NextRequest) {
     
     const context = contextParts.join('\n\n');
 
-    // 3. RAG 프롬프트 생성
-    const ragPrompt = `다음은 사용자가 업로드한 문서에서 검색된 관련 정보입니다:
+    // 3. 대화 히스토리와 문서 컨텍스트를 결합한 프롬프트 생성
+    let systemPrompt = `당신은 업로드된 문서를 기반으로 정확한 답변을 제공하는 AI 어시스턴트입니다.
+
+다음은 사용자가 업로드한 문서에서 검색된 관련 정보입니다:
 
 ${context}
 
-위 정보를 바탕으로 다음 질문에 답해주세요. 답변할 때는 반드시:
+답변할 때는 반드시:
 1. 제공된 문서의 내용만을 기반으로 답변하세요
 2. 문서에 없는 내용은 추측하지 마세요
 3. 가능한 경우 어떤 출처에서 정보를 가져왔는지 언급하세요
 4. 문서에서 충분한 정보를 찾을 수 없다면 그렇게 명시하세요
+5. 이전 대화 내용을 참고하여 맥락에 맞는 답변을 제공하세요`;
 
-질문: ${message}
-
-답변:`;
-
-    // 4. LLM으로 답변 생성
+    // 4. LLM으로 답변 생성 (대화 히스토리 포함)
     const llmService = new LLMService();
-    const response = await llmService.chat([{ role: 'user', content: ragPrompt }], {
+    const response = await llmService.chat(conversationHistory, {
       model,
       temperature: 0.1, // 정확성을 위해 낮은 temperature 사용
-      maxTokens: 1000
+      maxTokens: 1000,
+      systemInstruction: systemPrompt
     });
 
     // 5. 출처 정보 구성
@@ -194,7 +207,7 @@ ${context}
         threshold,
         documentsSearched: documentIds?.length || 'all',
         contextLength: context.length,
-        promptLength: ragPrompt.length
+        promptLength: systemPrompt.length
       }
     });
 
