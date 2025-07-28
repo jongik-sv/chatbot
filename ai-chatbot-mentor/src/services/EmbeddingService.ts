@@ -57,6 +57,13 @@ export class EmbeddingService {
   }
 
   /**
+   * 텍스트를 벡터로 변환 (별칭 메서드)
+   */
+  async generateEmbedding(text: string): Promise<number[]> {
+    return this.embedText(text);
+  }
+
+  /**
    * 텍스트를 벡터로 변환
    */
   async embedText(text: string): Promise<number[]> {

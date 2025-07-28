@@ -526,4 +526,62 @@ AI 모델을 가져 오는 부분이 비어있어. 올라마가 설치가 안되
 - **스크롤 동작 개선**: 
   - MainLayout에서 overflow 설정 수정
   - 히스토리/채팅 페이지 레이아웃 flex 기반으로 변경
-  - 헤더 고정, 콘텐츠 영역만 스크롤되도록 구현
+  - 헤더 고정, 콘텐츠 영역만 스크롤되도록 구현------
+#
+# 요청: 커스텀 GPT 기능 구현 (10.1 GPT 지식 베이스 관리)
+
+사용자가 .kiro/specs/ai-chatbot-with-multimodal-mentor/tasks.md에서 "10. 커스텀 GPT 기능 구현" 작업을 요청했습니다.
+
+### 작업 세부사항:
+- 10.1 GPT 지식 베이스 관리
+  - 파일 업로드 및 GPT 연결
+  - 지식 베이스 벡터화 및 저장
+  - GPT별 문서 관리 인터페이스
+  - Requirements: 9.2
+
+### 구현 계획:
+1. 기존 코드 구조 파악
+2. GPT별 문서 연결 API 구현
+3. 멘토별 지식 베이스 관리 서비스 구현
+4. GPT별 문서 관리 UI 컴포넌트 구현
+5. 지식 베이스 벡터화 및 저장 로직 구현----
+--
+CONTEXT TRANSFER: 이전 세션에서 AI 챗봇 멘토 프로젝트의 10.1 작업(GPT별 문서 연결 기능) 구현 중이었음. 컨텍스트 전달 완료.------
+커스
+텀 GPT 기능 구현 - 10.1 GPT 지식 베이스 관리 작업 시작
+- 파일 업로드 및 GPT 연결
+- 지식 베이스 벡터화 및 저장  
+- GPT별 문서 관리 인터페이스
+- Requirements: 9.2
+커스
+텀 GPT 기능 구현 완료:
+
+10.1 GPT 지식 베이스 관리 ✅
+- CustomGPTService를 활용한 GPT 및 지식 베이스 CRUD API 구현
+- /api/gpts 엔드포인트 구현 (GPT 생성, 조회, 수정, 삭제)
+- /api/gpts/[id]/knowledge-base 엔드포인트 구현 (지식 베이스 관리)
+- /api/gpts/[id]/knowledge-base/documents 엔드포인트 구현 (문서 추가/제거)
+- GPTKnowledgeBaseManager 컴포넌트 구현 (지식 베이스 관리 UI)
+- GPTManager 컴포넌트 구현 (GPT 전체 관리 UI)
+- /app/gpts 페이지 구현
+- 문서 벡터화 및 임베딩 저장 기능 통합
+
+10.2 GPT 컨텍스트 활용 시스템 ✅
+- GPTContextService 구현 (지식 베이스 검색 및 컨텍스트 생성)
+- /api/gpts/[id]/chat 엔드포인트 구현 (컨텍스트 기반 채팅)
+- /api/gpts/[id]/search 엔드포인트 구현 (지식 베이스 검색)
+- GPTChatInterface 컴포넌트 구현 (컨텍스트 활용 채팅 UI)
+- GPTSearchInterface 컴포넌트 구현 (지식 베이스 검색 UI)
+- 지식 소스 인용 기능 구현
+- 코사인 유사도 기반 관련 문서 검색
+- 컨텍스트 프롬프트 자동 생성
+
+구현된 주요 기능:
+- 파일 업로드 및 GPT 연결
+- 지식 베이스 벡터화 및 저장
+- GPT별 문서 관리 인터페이스
+- GPT별 지식 베이스 검색
+- 컨텍스트 기반 답변 생성
+- 지식 소스 인용 기능
+
+Requirements 9.2, 9.3 충족 완료

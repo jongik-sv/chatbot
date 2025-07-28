@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { DocumentDuplicateIcon, EyeIcon, CodeBracketIcon } from '@heroicons/react/24/outline';
+import { DocumentDuplicateIcon, EyeIcon, CodeBracketIcon, PlayIcon } from '@heroicons/react/24/outline';
+import { CodeExecutor } from './CodeExecutor';
 
 interface CodeArtifactProps {
   content: string;
@@ -21,7 +22,7 @@ export function CodeArtifact({
   className = ''
 }: CodeArtifactProps) {
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'code' | 'raw'>('code');
+  const [viewMode, setViewMode] = useState<'code' | 'raw' | 'execute'>('code');
 
   const handleCopy = async () => {
     try {
@@ -67,6 +68,10 @@ export function CodeArtifact({
 
   const codeStyle = theme === 'dark' ? vscDarkPlus : vs;
 
+  const isExecutable = () => {
+    return ['javascript', 'typescript', 'jsx', 'tsx', 'html', 'css', 'js', 'ts'].includes(language?.toLowerCase() || '');
+  };
+
   return (
     <div className={`bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
       {/* 코드 헤더 */}
@@ -85,7 +90,9 @@ export function CodeArtifact({
           <div className="flex rounded-md shadow-sm">
             <button
               onClick={() => setViewMode('code')}
-              className={`px-3 py-1 text-xs font-medium rounded-l-md border ${
+              className={`px-3 py-1 text-xs font-medium ${
+                isExecutable() ? 'rounded-l-md' : 'rounded-l-md'
+              } border ${
                 viewMode === 'code'
                   ? 'bg-blue-50 border-blue-200 text-blue-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -96,7 +103,9 @@ export function CodeArtifact({
             </button>
             <button
               onClick={() => setViewMode('raw')}
-              className={`px-3 py-1 text-xs font-medium rounded-r-md border-t border-r border-b ${
+              className={`px-3 py-1 text-xs font-medium ${
+                isExecutable() ? 'border-t border-r border-b' : 'rounded-r-md border-t border-r border-b'
+              } ${
                 viewMode === 'raw'
                   ? 'bg-blue-50 border-blue-200 text-blue-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -105,6 +114,19 @@ export function CodeArtifact({
               <CodeBracketIcon className="h-3 w-3 inline mr-1" />
               원본
             </button>
+            {isExecutable() && (
+              <button
+                onClick={() => setViewMode('execute')}
+                className={`px-3 py-1 text-xs font-medium rounded-r-md border-t border-r border-b ${
+                  viewMode === 'execute'
+                    ? 'bg-green-50 border-green-200 text-green-700'
+                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <PlayIcon className="h-3 w-3 inline mr-1" />
+                실행
+              </button>
+            )}
           </div>
           
           <button
@@ -143,10 +165,18 @@ export function CodeArtifact({
           >
             {content}
           </SyntaxHighlighter>
-        ) : (
+        ) : viewMode === 'raw' ? (
           <pre className="p-4 text-sm font-mono text-gray-800 bg-gray-50 overflow-auto whitespace-pre-wrap">
             {content}
           </pre>
+        ) : (
+          <div className="p-4">
+            <CodeExecutor 
+              code={content} 
+              language={language || 'javascript'} 
+              title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
+            />
+          </div>
         )}
       </div>
 

@@ -170,7 +170,31 @@ export class DocumentProcessingService {
   }
 
   /**
-   * 문서를 청크로 분할
+   * 문서를 청크로 분할 (인스턴스 메서드 추가)
+   */
+  async chunkDocument(content: string, options?: { maxChunkSize?: number; overlap?: number }): Promise<string[]> {
+    const maxChunkSize = options?.maxChunkSize || DocumentProcessingService.CHUNK_SIZE;
+    const overlap = options?.overlap || DocumentProcessingService.CHUNK_OVERLAP;
+    
+    const words = content.split(/\s+/);
+    const chunks: string[] = [];
+    
+    for (let i = 0; i < words.length; i += maxChunkSize - overlap) {
+      const endIndex = Math.min(i + maxChunkSize, words.length);
+      const chunkWords = words.slice(i, endIndex);
+      const chunkContent = chunkWords.join(' ');
+      
+      chunks.push(chunkContent);
+      
+      // 마지막 청크인 경우 반복 종료
+      if (endIndex >= words.length) break;
+    }
+    
+    return chunks;
+  }
+
+  /**
+   * 문서를 청크로 분할 (정적 메서드)
    */
   private static chunkDocument(content: string): Array<{ content: string; metadata: ChunkMetadata }> {
     const words = content.split(/\s+/);
