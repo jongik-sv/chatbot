@@ -30,29 +30,27 @@ export class ArtifactService {
   /**
    * 아티팩트 생성
    */
-  static async createArtifact(data: CreateArtifactData): Promise<Artifact> {
-    const db = await getDatabase();
+  static createArtifact(data: CreateArtifactData): Artifact {
+    const db = getDatabase();
 
     // 아티팩트 타입별 검증 및 전처리
-    const processedData = await this.processArtifactByType(data);
+    const processedData = this.processArtifactByType(data);
 
-    const result = await db.run(
+    const stmt = db.prepare(
       `INSERT INTO artifacts (session_id, message_id, type, title, content, language, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [
-        processedData.sessionId,
-        processedData.messageId || null,
-        processedData.type,
-        processedData.title,
-        processedData.content,
-        processedData.language || null
-      ]
+       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`
     );
+    
+    const result = stmt.run([
+      processedData.sessionId,
+      processedData.messageId || null,
+      processedData.type,
+      processedData.title,
+      processedData.content,
+      processedData.language || null
+    ]);
 
-    const artifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [result.lastID]
-    );
+    const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(result.lastID);
 
     return artifact as Artifact;
   }
@@ -60,12 +58,9 @@ export class ArtifactService {
   /**
    * 아티팩트 조회
    */
-  static async getArtifact(id: number): Promise<Artifact | null> {
-    const db = await getDatabase();
-    const artifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [id]
-    );
+  static getArtifact(id: number): Artifact | null {
+    const db = getDatabase();
+    const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?').get(id);
 
     return artifact as Artifact | null;
   }
@@ -73,14 +68,14 @@ export class ArtifactService {
   /**
    * 아티팩트 목록 조회
    */
-  static async getArtifacts(filters: {
+  static getArtifacts(filters: {
     sessionId?: number;
     messageId?: number;
     type?: string;
     limit?: number;
     offset?: number;
-  } = {}): Promise<Artifact[]> {
-    const db = await getDatabase();
+  } = {}): Artifact[] {
+    const db = getDatabase();
     
     let query = 'SELECT * FROM artifacts WHERE 1=1';
     const params: any[] = [];
@@ -112,18 +107,18 @@ export class ArtifactService {
       }
     }
 
-    const artifacts = await db.all(query, params);
+    const artifacts = db.prepare(query).all(params);
     return artifacts as Artifact[];
   }
 
   /**
    * 아티팩트 업데이트
    */
-  static async updateArtifact(id: number, data: UpdateArtifactData): Promise<Artifact | null> {
-    const db = await getDatabase();
+  static updateArtifact(id: number, data: UpdateArtifactData): Artifact | null {
+    const db = getDatabase();
 
     // 기존 아티팩트 조회
-    const existingArtifact = await this.getArtifact(id);
+    const existingArtifact = this.getArtifact(id);
     if (!existingArtifact) {
       return null;
     }
@@ -139,7 +134,7 @@ export class ArtifactService {
 
     if (data.content !== undefined) {
       // 타입별 콘텐츠 검증
-      const processedContent = await this.validateContentByType(
+      const processedContent = this.validateContentByType(
         existingArtifact.type,
         data.content
       );
@@ -158,52 +153,49 @@ export class ArtifactService {
 
     params.push(id);
 
-    await db.run(
-      `UPDATE artifacts SET ${updates.join(', ')} WHERE id = ?`,
-      params
-    );
+    db.prepare(`UPDATE artifacts SET ${updates.join(', ')} WHERE id = ?`).run(params);
 
-    return await this.getArtifact(id);
+    return this.getArtifact(id);
   }
 
   /**
    * 아티팩트 삭제
    */
-  static async deleteArtifact(id: number): Promise<boolean> {
-    const db = await getDatabase();
+  static deleteArtifact(id: number): boolean {
+    const db = getDatabase();
 
-    const result = await db.run('DELETE FROM artifacts WHERE id = ?', [id]);
+    const result = db.prepare('DELETE FROM artifacts WHERE id = ?').run(id);
     return (result.changes || 0) > 0;
   }
 
   /**
    * 세션의 모든 아티팩트 삭제
    */
-  static async deleteArtifactsBySession(sessionId: number): Promise<number> {
-    const db = await getDatabase();
+  static deleteArtifactsBySession(sessionId: number): number {
+    const db = getDatabase();
 
-    const result = await db.run('DELETE FROM artifacts WHERE session_id = ?', [sessionId]);
+    const result = db.prepare('DELETE FROM artifacts WHERE session_id = ?').run(sessionId);
     return result.changes || 0;
   }
 
   /**
    * 아티팩트 타입별 처리
    */
-  private static async processArtifactByType(data: CreateArtifactData): Promise<CreateArtifactData> {
+  private static processArtifactByType(data: CreateArtifactData): CreateArtifactData {
     const processedData = { ...data };
 
     switch (data.type) {
       case 'code':
-        processedData.content = await this.processCodeArtifact(data.content, data.language);
+        processedData.content = this.processCodeArtifact(data.content, data.language);
         break;
       case 'document':
-        processedData.content = await this.processDocumentArtifact(data.content);
+        processedData.content = this.processDocumentArtifact(data.content);
         break;
       case 'chart':
-        processedData.content = await this.processChartArtifact(data.content);
+        processedData.content = this.processChartArtifact(data.content);
         break;
       case 'mermaid':
-        processedData.content = await this.processMermaidArtifact(data.content);
+        processedData.content = this.processMermaidArtifact(data.content);
         break;
     }
 
@@ -213,7 +205,7 @@ export class ArtifactService {
   /**
    * 코드 아티팩트 처리
    */
-  private static async processCodeArtifact(content: string, language?: string): Promise<string> {
+  private static processCodeArtifact(content: string, language?: string): string {
     // 코드 구문 검증 및 정리
     let processedContent = content.trim();
 
@@ -231,7 +223,7 @@ export class ArtifactService {
   /**
    * 문서 아티팩트 처리
    */
-  private static async processDocumentArtifact(content: string): Promise<string> {
+  private static processDocumentArtifact(content: string): string {
     // 마크다운 문서 처리
     return content.trim();
   }
@@ -239,7 +231,7 @@ export class ArtifactService {
   /**
    * 차트 아티팩트 처리
    */
-  private static async processChartArtifact(content: string): Promise<string> {
+  private static processChartArtifact(content: string): string {
     try {
       // JSON 형태의 차트 데이터 검증
       const chartData = JSON.parse(content);
@@ -258,7 +250,7 @@ export class ArtifactService {
   /**
    * Mermaid 다이어그램 처리
    */
-  private static async processMermaidArtifact(content: string): Promise<string> {
+  private static processMermaidArtifact(content: string): string {
     // Mermaid 구문 기본 검증
     const trimmedContent = content.trim();
     
@@ -282,16 +274,16 @@ export class ArtifactService {
   /**
    * 타입별 콘텐츠 검증
    */
-  private static async validateContentByType(type: Artifact['type'], content: string): Promise<string> {
+  private static validateContentByType(type: Artifact['type'], content: string): string {
     switch (type) {
       case 'code':
-        return await this.processCodeArtifact(content);
+        return this.processCodeArtifact(content);
       case 'document':
-        return await this.processDocumentArtifact(content);
+        return this.processDocumentArtifact(content);
       case 'chart':
-        return await this.processChartArtifact(content);
+        return this.processChartArtifact(content);
       case 'mermaid':
-        return await this.processMermaidArtifact(content);
+        return this.processMermaidArtifact(content);
       default:
         return content;
     }

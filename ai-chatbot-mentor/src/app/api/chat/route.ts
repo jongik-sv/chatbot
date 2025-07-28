@@ -257,7 +257,7 @@ export async function POST(request: NextRequest) {
       const createdArtifacts = [];
       for (const artifactData of parsedArtifacts.artifacts) {
         try {
-          const artifact = await ArtifactService.createArtifact(artifactData);
+          const artifact = ArtifactService.createArtifact(artifactData);
           createdArtifacts.push(artifact);
         } catch (error) {
           console.error('아티팩트 생성 오류:', error);
