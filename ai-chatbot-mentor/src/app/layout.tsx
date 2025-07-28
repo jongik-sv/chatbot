@@ -6,14 +6,14 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false, // preload를 false로 변경
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  preload: false, // preload를 false로 변경
 });
 
 export const metadata: Metadata = {
@@ -28,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <body className={`min-h-screen bg-background font-sans antialiased ${geistSans.variable} ${geistMono.variable}`}>
+      <body 
+        className={`min-h-screen bg-background font-sans antialiased ${geistSans.variable} ${geistMono.variable}`}
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>
