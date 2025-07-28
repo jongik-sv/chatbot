@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '../database/chatbot.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../data/chatbot.db');
 const migrationPath = path.join(__dirname, '../database/migration-mentor-improvement.sql');
 
 const db = new sqlite3.Database(dbPath);

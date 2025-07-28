@@ -8,8 +8,8 @@ const fs = require("fs");
 
 class ChatRepository {
   constructor() {
-    // ai-chatbot-mentor 프로젝트의 database 폴더 사용
-    this.dbPath = path.join(process.cwd(), "database", "chatbot.db");
+    // 통일된 데이터베이스 경로 사용
+    this.dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "data", "chatbot.db");
     this.db = null;
     this.initDatabase();
   }

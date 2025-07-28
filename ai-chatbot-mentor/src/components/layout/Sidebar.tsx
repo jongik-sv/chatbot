@@ -9,7 +9,8 @@ import {
   XMarkIcon,
   PlusIcon,
   Cog6ToothIcon,
-  SparklesIcon
+  SparklesIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
 
@@ -28,6 +29,7 @@ const navigation = [
   { name: '새 채팅', href: '/', icon: PlusIcon, current: false, description: '새로운 대화 시작' },
   { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, current: false, description: 'MBTI 기반 맞춤 멘토' },
   { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, current: false, description: '업로드한 문서로 대화' },
+  { name: '외부 콘텐츠', href: '/external-content', icon: GlobeAltIcon, current: false, description: 'YouTube/웹사이트 콘텐츠 추가' },
   { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, current: true, description: '최근 대화 빠른 보기' },
   { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, current: false, description: '커스텀 멘토 생성/관리' },
   { name: '히스토리', href: '/history', icon: ClockIcon, current: false, description: '대화 검색 및 상세 관리' },

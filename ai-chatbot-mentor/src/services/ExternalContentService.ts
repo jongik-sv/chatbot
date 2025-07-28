@@ -1,0 +1,327 @@
+import YouTubeContentService from './YouTubeContentService';
+import WebScrapingService from './WebScrapingService';
+import DocumentStorageService from './DocumentStorageService';
+import EmbeddingService from './EmbeddingService';
+
+interface ExternalContentResult {
+  id: string;
+  type: 'youtube' | 'website';
+  url: string;
+  title: string;
+  content: string;
+  summary: string;
+  metadata: any;
+  createdAt: Date;
+  embeddingId?: string;
+}
+
+interface ContentProcessingOptions {
+  addToKnowledgeBase?: boolean;
+  generateEmbedding?: boolean;
+  customGptId?: string;
+  summarize?: boolean;
+  extractKeywords?: boolean;
+  scrapingOptions?: {
+    useJavaScript?: boolean;
+    timeout?: number;
+    waitForSelector?: string;
+    removeElements?: string[];
+  };
+}
+
+export class ExternalContentService {
+  private static instance: ExternalContentService;
+  private youtubeService: YouTubeContentService;
+  private webScrapingService: WebScrapingService;
+  private documentStorageService: DocumentStorageService;
+  private embeddingService: EmbeddingService;
+
+  private constructor() {
+    this.youtubeService = YouTubeContentService.getInstance();
+    this.webScrapingService = WebScrapingService.getInstance();
+    this.documentStorageService = DocumentStorageService.getInstance();
+    this.embeddingService = EmbeddingService.getInstance();
+  }
+
+  public static getInstance(): ExternalContentService {
+    if (!ExternalContentService.instance) {
+      ExternalContentService.instance = new ExternalContentService();
+    }
+    return ExternalContentService.instance;
+  }
+
+  /**
+   * URL 유형 감지
+   */
+  public detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
+    if (this.youtubeService.isValidYouTubeUrl(url)) {
+      return 'youtube';
+    } else if (this.webScrapingService.isValidUrl(url)) {
+      return 'website';
+    }
+    return 'unknown';
+  }
+
+  /**
+   * YouTube 콘텐츠 처리
+   */
+  private async processYouTubeContent(
+    url: string, 
+    options: ContentProcessingOptions
+  ): Promise<ExternalContentResult> {
+    try {
+      const youtubeContent = await this.youtubeService.processYouTubeContent(url);
+      
+      const result: ExternalContentResult = {
+        id: `youtube_${youtubeContent.videoInfo.videoId}_${Date.now()}`,
+        type: 'youtube',
+        url,
+        title: youtubeContent.videoInfo.title || 'YouTube 비디오',
+        content: youtubeContent.transcript,
+        summary: youtubeContent.summary || '',
+        metadata: {
+          videoId: youtubeContent.videoInfo.videoId,
+          channelName: youtubeContent.videoInfo.channelName,
+          thumbnailUrl: youtubeContent.videoInfo.thumbnailUrl,
+          transcriptItems: youtubeContent.transcriptItems,
+          keywords: youtubeContent.keywords
+        },
+        createdAt: new Date()
+      };
+
+      // 지식 베이스에 추가
+      if (options.addToKnowledgeBase && youtubeContent.transcript) {
+        await this.addToKnowledgeBase(result, options.customGptId);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('YouTube 콘텐츠 처리 실패:', error);
+      throw new Error(`YouTube 콘텐츠 처리 실패: ${error}`);
+    }
+  }
+
+  /**
+   * 웹사이트 콘텐츠 처리
+   */
+  private async processWebsiteContent(
+    url: string, 
+    options: ContentProcessingOptions
+  ): Promise<ExternalContentResult> {
+    try {
+      const scrapedContent = await this.webScrapingService.scrapeWebsite(
+        url, 
+        options.scrapingOptions || {}
+      );
+      
+      const result: ExternalContentResult = {
+        id: `website_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: 'website',
+        url,
+        title: scrapedContent.title,
+        content: scrapedContent.content,
+        summary: scrapedContent.excerpt,
+        metadata: {
+          author: scrapedContent.author,
+          publishedDate: scrapedContent.publishedDate,
+          wordCount: scrapedContent.wordCount,
+          language: scrapedContent.language,
+          tags: scrapedContent.tags,
+          images: scrapedContent.images,
+          links: scrapedContent.links
+        },
+        createdAt: new Date()
+      };
+
+      // 지식 베이스에 추가
+      if (options.addToKnowledgeBase && scrapedContent.content) {
+        await this.addToKnowledgeBase(result, options.customGptId);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('웹사이트 콘텐츠 처리 실패:', error);
+      throw new Error(`웹사이트 콘텐츠 처리 실패: ${error}`);
+    }
+  }
+
+  /**
+   * 지식 베이스에 콘텐츠 추가
+   */
+  private async addToKnowledgeBase(
+    content: ExternalContentResult, 
+    customGptId?: string
+  ): Promise<void> {
+    try {
+      // 문서로 저장
+      const documentId = await this.documentStorageService.storeDocument({
+        filename: `${content.type}_${content.id}.txt`,
+        originalName: content.title,
+        mimeType: 'text/plain',
+        size: content.content.length,
+        uploadedAt: new Date(),
+        customGptId: customGptId || null
+      }, content.content);
+
+      // 임베딩 생성 및 저장
+      if (content.content.length > 100) {
+        const chunks = this.chunkContent(content.content, 1000);
+        
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          const embedding = await this.embeddingService.generateEmbedding(chunk);
+          
+          await this.embeddingService.storeEmbedding({
+            documentId,
+            chunkIndex: i,
+            chunkText: chunk,
+            embedding,
+            metadata: {
+              sourceUrl: content.url,
+              sourceType: content.type,
+              title: content.title,
+              ...content.metadata
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('지식 베이스 추가 실패:', error);
+      // 지식 베이스 추가 실패는 전체 처리를 중단하지 않음
+    }
+  }
+
+  /**
+   * 콘텐츠를 청크로 분할
+   */
+  private chunkContent(content: string, chunkSize: number = 1000): string[] {
+    const chunks: string[] = [];
+    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    
+    let currentChunk = '';
+    
+    for (const sentence of sentences) {
+      const trimmedSentence = sentence.trim();
+      
+      if (currentChunk.length + trimmedSentence.length + 1 <= chunkSize) {
+        currentChunk += (currentChunk ? '. ' : '') + trimmedSentence;
+      } else {
+        if (currentChunk) {
+          chunks.push(currentChunk + '.');
+        }
+        currentChunk = trimmedSentence;
+      }
+    }
+    
+    if (currentChunk) {
+      chunks.push(currentChunk + '.');
+    }
+    
+    return chunks;
+  }
+
+  /**
+   * 외부 콘텐츠 통합 처리 메인 메서드
+   */
+  public async processExternalContent(
+    url: string, 
+    options: ContentProcessingOptions = {}
+  ): Promise<ExternalContentResult> {
+    const contentType = this.detectContentType(url);
+    
+    if (contentType === 'unknown') {
+      throw new Error('지원하지 않는 URL 형식입니다.');
+    }
+
+    // 기본 옵션 설정
+    const defaultOptions: ContentProcessingOptions = {
+      addToKnowledgeBase: true,
+      generateEmbedding: true,
+      summarize: true,
+      extractKeywords: true,
+      ...options
+    };
+
+    switch (contentType) {
+      case 'youtube':
+        return await this.processYouTubeContent(url, defaultOptions);
+      case 'website':
+        return await this.processWebsiteContent(url, defaultOptions);
+      default:
+        throw new Error('알 수 없는 콘텐츠 유형입니다.');
+    }
+  }
+
+  /**
+   * 여러 URL 일괄 처리
+   */
+  public async processMultipleUrls(
+    urls: string[], 
+    options: ContentProcessingOptions = {},
+    concurrency: number = 2
+  ): Promise<(ExternalContentResult | Error)[]> {
+    const results: (ExternalContentResult | Error)[] = [];
+    
+    // 동시 실행 제한으로 서버 부하 방지
+    for (let i = 0; i < urls.length; i += concurrency) {
+      const batch = urls.slice(i, i + concurrency);
+      const batchPromises = batch.map(url => 
+        this.processExternalContent(url, options).catch(error => {
+          console.error(`URL 처리 실패 ${url}:`, error);
+          return error;
+        })
+      );
+      
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    }
+
+    return results;
+  }
+
+  /**
+   * 처리된 콘텐츠 검색
+   */
+  public async searchProcessedContent(
+    query: string, 
+    contentType?: 'youtube' | 'website',
+    limit: number = 10
+  ): Promise<ExternalContentResult[]> {
+    // 임베딩 서비스를 통한 유사도 검색
+    try {
+      const searchResults = await this.embeddingService.searchSimilarChunks(query, limit);
+      
+      // 결과를 ExternalContentResult 형식으로 변환
+      const results: ExternalContentResult[] = searchResults
+        .filter(result => !contentType || result.metadata?.sourceType === contentType)
+        .map(result => ({
+          id: result.metadata?.sourceUrl || `search_${Date.now()}`,
+          type: result.metadata?.sourceType || 'website',
+          url: result.metadata?.sourceUrl || '',
+          title: result.metadata?.title || '제목 없음',
+          content: result.chunkText,
+          summary: result.chunkText.substring(0, 200) + '...',
+          metadata: result.metadata,
+          createdAt: new Date()
+        }));
+
+      return results;
+    } catch (error) {
+      console.error('콘텐츠 검색 실패:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 리소스 정리
+   */
+  public async cleanup(): Promise<void> {
+    try {
+      await this.webScrapingService.closeBrowser();
+    } catch (error) {
+      console.error('리소스 정리 실패:', error);
+    }
+  }
+}
+
+export default ExternalContentService;

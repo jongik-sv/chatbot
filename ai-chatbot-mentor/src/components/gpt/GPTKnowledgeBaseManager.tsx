@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { DocumentUpload } from '../ui/DocumentUpload';
 import { DocumentList } from '../ui/DocumentList';
+import { ExternalContentInput, ExternalContentManager } from '../external';
 
 interface Document {
   id: number;
@@ -50,6 +51,7 @@ export default function GPTKnowledgeBaseManager({
   const [isCreatingKB, setIsCreatingKB] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'documents' | 'external'>('documents');
 
   // 지식 베이스 목록 로드
   const loadKnowledgeBases = async () => {
@@ -185,6 +187,19 @@ export default function GPTKnowledgeBaseManager({
     await loadAvailableDocuments();
   };
 
+  // 외부 콘텐츠 처리 완료 후 처리
+  const handleExternalContentProcessed = async (content: any) => {
+    // 외부 콘텐츠가 성공적으로 처리되면 지식 베이스 새로고침
+    await loadKnowledgeBases();
+    onKnowledgeBaseUpdate?.();
+    setError(''); // 이전 에러 제거
+  };
+
+  // 외부 콘텐츠 에러 처리
+  const handleExternalContentError = (errorMessage: string) => {
+    setError(`외부 콘텐츠 처리 실패: ${errorMessage}`);
+  };
+
   useEffect(() => {
     loadKnowledgeBases();
     loadAvailableDocuments();
@@ -239,13 +254,52 @@ export default function GPTKnowledgeBaseManager({
         </div>
       </Card>
 
-      {/* 문서 업로드 */}
+      {/* 콘텐츠 추가 탭 */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">문서 업로드</h3>
-        <DocumentUpload
-          onUploadComplete={handleDocumentUploaded}
-          acceptedTypes={['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
-        />
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">콘텐츠 추가</h3>
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setActiveTab('documents')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'documents'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              문서 업로드
+            </button>
+            <button
+              onClick={() => setActiveTab('external')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'external'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              외부 콘텐츠
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'documents' && (
+          <div>
+            <DocumentUpload
+              onUploadComplete={handleDocumentUploaded}
+              acceptedTypes={['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']}
+            />
+          </div>
+        )}
+
+        {activeTab === 'external' && (
+          <div>
+            <ExternalContentInput
+              onContentProcessed={handleExternalContentProcessed}
+              onError={handleExternalContentError}
+              customGptId={gptId}
+            />
+          </div>
+        )}
       </Card>
 
       {/* 지식 베이스 목록 */}
