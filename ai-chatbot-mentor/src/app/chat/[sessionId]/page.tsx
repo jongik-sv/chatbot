@@ -86,10 +86,12 @@ export default function ChatSessionPage() {
   return (
     <ChatProvider>
       <MainLayout>
-        <ChatInterface 
-          className="h-full" 
-          sessionId={sessionId}
-        />
+        <div className="h-full flex flex-col overflow-hidden">
+          <ChatInterface 
+            className="flex-1" 
+            sessionId={sessionId}
+          />
+        </div>
       </MainLayout>
     </ChatProvider>
   );

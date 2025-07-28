@@ -53,12 +53,12 @@ export default function ModelSelector({ models, selectedModel, onModelChange, di
       
       <Listbox value={selectedModel} onChange={onModelChange} disabled={disabled}>
         <div className="relative">
-          <Listbox.Button className={`relative w-full sm:w-[32rem] cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <Listbox.Button className={`relative w-full sm:w-[32rem] cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm ${disabled ? 'opacity-50 cursor-not-allowed' : ''} text-gray-900 placeholder:text-gray-900`}>
             <span className="flex items-center">
               <span className="mr-2 text-lg">
                 {getModelIcon(selectedModelData?.provider || 'ollama')}
               </span>
-              <span className="block truncate">{selectedModelData?.name || selectedModel}</span>
+              <span className="block truncate text-gray-900">{selectedModelData?.name || selectedModel}</span>
               <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getModelBadgeColor(selectedModelData?.provider || 'ollama')}`}>
                 {selectedModelData?.provider.toUpperCase() || 'UNKNOWN'}
               </span>
@@ -88,8 +88,7 @@ export default function ModelSelector({ models, selectedModel, onModelChange, di
                   key={model.id}
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
-                    }`
+                      active ? 'bg-blue-100 text-blue-900' : 'text-gray-800'} text-gray-800`
                   }
                   value={model.id}
                 >

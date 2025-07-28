@@ -290,21 +290,6 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 
 ------
 **요청 날짜**: 2025-07-28
-**요청 내용**: MBTI 멘토 생성 시 SQLite 바인딩 오류 해결
-- TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null 오류 발생
-- MentorRepository.create() 메서드에서 personality, expertise 필드 이중 JSON.stringify 문제
-- API 라우트에서 이미 JSON 문자열로 변환한 데이터를 다시 변환하려 시도하는 문제
-------
-**완료 상태**: ✅ 성공적으로 완료
-**완료 내용**: 
-- MentorRepository.create() 및 update() 메서드에 타입 검사 로직 추가
-- personality, expertise 필드가 이미 문자열인지 객체인지 확인 후 적절히 처리
-- typeof 검사를 통해 객체일 때만 JSON.stringify() 수행하도록 수정
-- MBTI 멘토 생성 플로우 정상 작동 확인
-- 빌드 성공 및 3단계 채팅 진행 가능
-
-------
-**요청 날짜**: 2025-07-28
 **요청 내용**: MBTI 멘토 생성 SQLite 바인딩 오류 재발 해결
 - 동일한 TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null 오류 재발
 - Boolean 값이 SQLite에서 지원되지 않는 문제 확인 및 해결
@@ -867,3 +852,650 @@ Requirements 9.2, 9.3 충족 완료
 **해결 필요사항**:
 1. 세션의 mode가 'document'인 경우 RAG 채팅으로 열리도록 수정
 2. 채팅 인터페이스에서 문서 모드 감지 및 적절한 엔드포인트 사용
+```
+------
+
+## 요청: SSR 하이드레이션 오류 수정
+
+**문제**: 서버 사이드 렌더링과 클라이언트 사이드 하이드레이션 간의 불일치 오류 발생
+- Error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties
+- 시간 관련 함수들이 서버와 클라이언트에서 다른 값을 반환하여 발생
+- 특히 한국 시간 변환 함수들이 SSR과 클라이언트에서 다르게 동작
+
+**해결된 작업:**
+
+1. **시간 유틸리티 함수 SSR 안전성 개선**
+   - `src/utils/dateUtils.ts`에 `isClient()` 함수 추가
+   - `toKoreanTime`, `formatRelativeTime`, `formatChatTime` 함수에서 서버 사이드 처리 추가
+   - 서버 사이드에서는 기본 포맷 반환, 클라이언트에서만 한국 시간 변환 적용
+
+2. **헬퍼 함수 SSR 안전성 개선**
+   - `src/utils/helpers.ts`의 `formatDate` 함수에 서버 사이드 처리 추가
+   - `src/components/ui/DocumentList.tsx`의 `formatDate` 함수에 서버 사이드 처리 추가
+
+3. **하이드레이션 불일치 방지 로직**
+   - 서버 사이드에서는 `typeof window === 'undefined'` 체크
+   - 서버에서는 기본 시간 포맷 사용
+   - 클라이언트에서만 한국 시간대 변환 적용
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/utils/dateUtils.ts` - 시간 유틸리티 함수 SSR 안전성 개선
+- `ai-chatbot-mentor/src/utils/helpers.ts` - formatDate 함수 SSR 안전성 개선
+- `ai-chatbot-mentor/src/components/ui/DocumentList.tsx` - formatDate 함수 SSR 안전성 개선
+
+**개선된 사용자 경험:**
+- SSR과 클라이언트 하이드레이션 간 불일치 오류 해결
+- 페이지 로딩 시 콘솔 오류 없음
+- 시간 표시는 여전히 한국 시간 기준으로 정확하게 작동
+- 서버 사이드 렌더링 성능 유지
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: 최근 대화에서 이전 대화 삭제 기능 추가
+
+**요청 내용**: 최근 대화 목록에서 이전 대화를 삭제할 수 있는 기능 추가
+
+**해결된 작업:**
+
+1. **채팅 목록 페이지에 삭제 기능 추가**
+   - `src/app/chats/page.tsx`에 삭제 버튼 및 기능 구현
+   - TrashIcon import 추가
+   - 삭제 상태 관리를 위한 `deletingSessionId` state 추가
+
+2. **삭제 기능 구현**
+   - `handleDeleteSession` 함수 구현
+   - 삭제 확인 다이얼로그 추가
+   - API 호출 및 에러 처리
+   - 삭제 중 로딩 상태 표시
+
+3. **UI/UX 개선**
+   - 각 세션 카드 우상단에 삭제 버튼 배치
+   - 호버 시 빨간색으로 변경되는 시각적 피드백
+   - 삭제 중 스피너 애니메이션 표시
+   - 삭제 버튼 클릭 시 이벤트 전파 방지
+
+4. **API 연동**
+   - 기존 `/api/sessions/[id]` DELETE 엔드포인트 활용
+   - userId를 쿼리 파라미터로 전달
+   - 삭제 성공 시 목록에서 즉시 제거
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/chats/page.tsx` - 삭제 기능 추가
+
+**구현된 기능:**
+- 각 대화 카드 우상단에 휴지통 아이콘 버튼
+- 클릭 시 확인 다이얼로그 표시
+- 삭제 중 로딩 스피너 표시
+- 삭제 완료 시 목록에서 즉시 제거
+- 에러 발생 시 사용자에게 알림
+
+**개선된 사용자 경험:**
+- 직관적인 삭제 버튼 위치
+- 실수 방지를 위한 확인 다이얼로그
+- 삭제 진행 상태 시각적 피드백
+- 즉시 반영되는 UI 업데이트
+- 명확한 에러 메시지
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: 문서 기반 채팅 세션에서 원래 문서 이름 표시 기능 추가
+
+**요청 내용**: 최근 대화에서 문서 기반 채팅 이력을 선택해서 채팅을 이어 나갈 때 원래 있던 '선택된 문서: writing an INTERPRETER in go.pdf' 형식의 문서 이름이 표시되도록 개선
+
+**해결된 작업:**
+
+1. **문서 정보 추출 로직 구현**
+   - `ChatInterface` 컴포넌트에 `documentInfo` 상태 추가
+   - 세션 로드 시 문서 기반 세션인지 확인
+   - 메시지 메타데이터에서 문서 정보 추출
+
+2. **다양한 문서 정보 추출 방법 구현**
+   - RAG 메타데이터에서 `documentIds` 추출
+   - 소스 정보에서 `documentTitle` 추출
+   - 메시지 내용에서 "선택된 문서:" 패턴 매칭
+   - API를 통한 문서 이름 조회
+
+3. **문서 정보 표시 UI 구현**
+   - 모델 선택기 아래에 문서 정보 배너 추가
+   - 파란색 배경의 시각적으로 구분되는 디자인
+   - 문서 아이콘과 함께 "선택된 문서: [문서명]" 형식 표시
+   - 문서명이 길 경우 truncate 처리
+
+4. **API 연동**
+   - `/api/documents/[id]` 엔드포인트를 통한 문서 정보 조회
+   - 문서 ID를 기반으로 실제 파일명 가져오기
+   - 에러 처리 및 fallback 로직 구현
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/components/chat/ChatInterface.tsx` - 문서 정보 추출 및 표시 기능 추가
+
+**구현된 기능:**
+- 문서 기반 세션 로드 시 자동으로 문서 정보 추출
+- 메시지 메타데이터에서 문서 ID 또는 제목 추출
+- API를 통한 정확한 문서 이름 조회
+- 시각적으로 구분되는 문서 정보 배너
+- 문서명이 길어도 적절히 표시
+
+**개선된 사용자 경험:**
+- 문서 기반 채팅 세션을 다시 열 때 원래 문서명 확인 가능
+- "선택된 문서: [문서명]" 형식으로 직관적인 표시
+- 문서 기반 대화임을 명확히 인지할 수 있는 UI
+- 기존 대화 맥락과 문서 정보를 동시에 확인
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: chats/page.tsx에서 dateUtils import 경로 오류 수정
+
+**문제**: Module not found: Can't resolve '../utils/dateUtils' 오류 발생
+- `src/app/chats/page.tsx`에서 상대 경로 `../utils/dateUtils` 사용 시 모듈을 찾을 수 없음
+- Next.js App Router에서 상대 경로 해석 문제
+
+**해결된 작업:**
+
+1. **import 경로 수정**
+   - 상대 경로 `../utils/dateUtils`를 절대 경로 `@/utils/dateUtils`로 변경
+   - Next.js tsconfig.json의 path alias 설정 활용
+   - 더 안정적이고 명확한 모듈 참조
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/chats/page.tsx` - dateUtils import 경로 수정
+
+**해결된 문제:**
+- Module not found 오류 완전 해결
+- 빌드 및 개발 서버 정상 실행
+- 시간 표시 기능 정상 작동
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: RootLayout에서 SSR 하이드레이션 오류 수정
+
+**문제**: 서버 사이드 렌더링과 클라이언트 사이드 하이드레이션 간의 불일치 오류 발생
+- Error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties
+- html 태그의 className에서 폰트 변수 처리 시 서버와 클라이언트 간 불일치
+- Geist 폰트 변수들이 서버와 클라이언트에서 다르게 렌더링
+
+**해결된 작업:**
+
+1. **RootLayout 수정**
+   - html 태그에서 폰트 변수 className 제거
+   - 폰트 변수들을 body 태그의 className으로 이동
+   - 서버와 클라이언트 간 일관된 렌더링 보장
+
+2. **하이드레이션 불일치 방지**
+   - html 태그의 className을 단순화
+   - 폰트 변수 처리를 body 태그에서 수행
+   - CSS 변수 적용 방식 개선
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/layout.tsx` - RootLayout 하이드레이션 오류 수정
+
+**해결된 문제:**
+- SSR과 클라이언트 하이드레이션 간 불일치 오류 완전 해결
+- html 태그 className 불일치 문제 해결
+- 폰트 로딩 및 적용 정상 작동
+- 페이지 로딩 시 콘솔 오류 없음
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: RootLayout에서 브라우저 확장 프로그램 간섭 방지
+
+**문제**: 서버 사이드 렌더링과 클라이언트 사이드 하이드레이션 간의 불일치 오류 재발
+- Error: A tree hydrated but some attributes of the server rendered HTML didn't match the client properties
+- html 태그의 className에서 'tc-new-price' 클래스가 서버와 클라이언트에서 다르게 렌더링
+- 브라우저 확장 프로그램이나 외부 스크립트가 HTML을 수정하는 것으로 추정
+
+**해결된 작업:**
+
+1. **suppressHydrationWarning 추가**
+   - html 태그에 `suppressHydrationWarning` 속성 추가
+   - 브라우저 확장 프로그램의 HTML 수정 간섭 허용
+   - 하이드레이션 경고 메시지 억제
+
+2. **브라우저 확장 프로그램 간섭 대응**
+   - 외부 스크립트나 확장 프로그램이 추가하는 클래스 허용
+   - 서버와 클라이언트 간 className 불일치 문제 해결
+   - 안정적인 페이지 렌더링 보장
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/layout.tsx` - suppressHydrationWarning 추가
+
+**해결된 문제:**
+- 브라우저 확장 프로그램 간섭으로 인한 하이드레이션 오류 해결
+- 'tc-new-price' 클래스 불일치 문제 해결
+- 페이지 로딩 시 콘솔 오류 억제
+- 안정적인 애플리케이션 동작 보장
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: 안쓰는 DB 파일 삭제 및 dateUtils 안전성 개선
+
+**문제**: 
+1. 안쓰는 DB 파일 정리 필요
+2. TypeError: Cannot read properties of undefined (reading 'getTimezoneOffset') 오류 발생
+   - toKoreanTime 함수에서 유효하지 않은 Date 객체 처리 시 오류
+   - formatRelativeTime, formatChatTime 등에서 연쇄 오류 발생
+
+**해결된 작업:**
+
+1. **안쓰는 DB 파일 정리**
+   - 구버전 `data/chatbot.db` 파일 삭제
+   - 실제 사용되는 `ai-chatbot-mentor/database/chatbot.db`만 유지
+   - 데이터베이스 경로 혼란 방지
+
+2. **dateUtils 함수들 안전성 개선**
+   - `toKoreanTime()`: 유효하지 않은 입력 및 Date 객체 검사 추가
+   - `formatRelativeTime()`: null/undefined 입력 및 유효하지 않은 Date 처리
+   - `formatChatTime()`: 안전성 검사 추가
+   - `formatDuration()`: 입력값 검증 및 오류 처리
+
+3. **오류 처리 로직 추가**
+   - 유효하지 않은 Date 객체: `isNaN(date.getTime())` 검사
+   - null/undefined 입력: 기본값 반환
+   - 오류 발생 시: '알 수 없음' 메시지 표시
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/utils/dateUtils.ts` - 모든 시간 관련 함수에 안전성 검사 추가
+
+**해결된 문제:**
+- getTimezoneOffset() 호출 시 undefined 오류 해결
+- 유효하지 않은 날짜 데이터로 인한 애플리케이션 크래시 방지
+- 안정적인 시간 표시 기능 보장
+- 데이터베이스 파일 관리 개선
+
+**완료 시간:** 2025-01-28
+```
+------
+
+## 요청: 커스텀 GPT 기능 구현 (10.1 GPT 지식 베이스 관리)
+
+사용자가 .kiro/specs/ai-chatbot-with-multimodal-mentor/tasks.md에서 "10. 커스텀 GPT 기능 구현" 작업을 요청했습니다.
+
+### 작업 세부사항:
+- 10.1 GPT 지식 베이스 관리
+  - 파일 업로드 및 GPT 연결
+  - 지식 베이스 벡터화 및 저장
+  - GPT별 문서 관리 인터페이스
+  - Requirements: 9.2
+
+### 구현 계획:
+1. 기존 코드 구조 파악
+2. GPT별 문서 연결 API 구현
+3. 멘토별 지식 베이스 관리 서비스 구현
+4. GPT별 문서 관리 UI 컴포넌트 구현
+5. 지식 베이스 벡터화 및 저장 로직 구현
+------
+CONTEXT TRANSFER: 이전 세션에서 AI 챗봇 멘토 프로젝트의 10.1 작업(GPT별 문서 연결 기능) 구현 중이었음. 컨텍스트 전달 완료.
+------
+커스텀 GPT 기능 구현 - 10.1 GPT 지식 베이스 관리 작업 시작
+- 파일 업로드 및 GPT 연결
+- 지식 베이스 벡터화 및 저장  
+- GPT별 문서 관리 인터페이스
+- Requirements: 9.2
+커스
+텀 GPT 기능 구현 완료:
+
+10.1 GPT 지식 베이스 관리 ✅
+- CustomGPTService를 활용한 GPT 및 지식 베이스 CRUD API 구현
+- /api/gpts 엔드포인트 구현 (GPT 생성, 조회, 수정, 삭제)
+- /api/gpts/[id]/knowledge-base 엔드포인트 구현 (지식 베이스 관리)
+- /api/gpts/[id]/knowledge-base/documents 엔드포인트 구현 (문서 추가/제거)
+- GPTKnowledgeBaseManager 컴포넌트 구현 (지식 베이스 관리 UI)
+- GPTManager 컴포넌트 구현 (GPT 전체 관리 UI)
+- /app/gpts 페이지 구현
+- 문서 벡터화 및 임베딩 저장 기능 통합
+
+10.2 GPT 컨텍스트 활용 시스템 ✅
+- GPTContextService 구현 (지식 베이스 검색 및 컨텍스트 생성)
+- /api/gpts/[id]/chat 엔드포인트 구현 (컨텍스트 기반 채팅)
+- /api/gpts/[id]/search 엔드포인트 구현 (지식 베이스 검색)
+- GPTChatInterface 컴포넌트 구현 (컨텍스트 활용 채팅 UI)
+- GPTSearchInterface 컴포넌트 구현 (지식 베이스 검색 UI)
+- 지식 소스 인용 기능 구현
+- 코사인 유사도 기반 관련 문서 검색
+- 컨텍스트 프롬프트 자동 생성
+
+구현된 주요 기능:
+- 파일 업로드 및 GPT 연결
+- 지식 베이스 벡터화 및 저장
+- GPT별 문서 관리 인터페이스
+- GPT별 지식 베이스 검색
+- 컨텍스트 기반 답변 생성
+- 지식 소스 인용 기능
+
+Requirements 9.2, 9.3 충족 완료
+------
+## 요청: 14.3 히스토리 관리 기능 구현
+
+**작업 내용:**
+- 대화 세션 삭제 기능
+- 히스토리 내보내기 (JSON/텍스트)
+- 히스토리 백업 및 복원
+- Requirements: 8.4, 8.5
+
+**시작 시간:** 2025-01-28
+**완료된 작업:*
+*
+
+1. **대화 세션 삭제 기능**
+   - 기존 API에서 이미 구현되어 있음을 확인
+   - `/api/sessions/[id]` DELETE 엔드포인트
+   - 세션과 관련 메시지 모두 삭제
+   - 프론트엔드에서 삭제 버튼으로 사용 가능
+
+2. **히스토리 내보내기 기능**
+   - `/api/sessions/export` GET 엔드포인트 구현
+   - JSON 및 텍스트 형식 지원
+   - 전체 히스토리 또는 특정 세션 내보내기
+   - 메타데이터 포함 옵션
+   - 파일 다운로드 기능
+
+3. **히스토리 백업 및 복원 기능**
+   - `/api/sessions/backup` POST/GET 엔드포인트 구현
+   - `/api/sessions/restore` POST/GET 엔드포인트 구현
+   - 백업 생성, 목록 조회, 다운로드
+   - 복원 모드 지원 (병합/교체)
+   - 백업 메타데이터 관리
+
+4. **프론트엔드 히스토리 관리 컴포넌트**
+   - `HistoryManagement.tsx` 컴포넌트 구현
+   - `ChatHistoryList.tsx`에 관리 버튼 추가
+   - 내보내기, 백업, 복원 UI 제공
+   - 사용자 친화적인 인터페이스
+
+**구현된 파일:**
+- `ai-chatbot-mentor/src/app/api/sessions/export/route.ts`
+- `ai-chatbot-mentor/src/app/api/sessions/backup/route.ts`
+- `ai-chatbot-mentor/src/app/api/sessions/restore/route.ts`
+- `ai-chatbot-mentor/src/components/history/HistoryManagement.tsx`
+- `ai-chatbot-mentor/src/components/history/ChatHistoryList.tsx` (수정)
+
+**테스트 결과:**
+- 모든 기능 정상 작동 확인
+- 세션 삭제, 내보내기, 백업, 복원 기능 테스트 통과
+- Requirements 8.4, 8.5 충족
+
+**완료 시간:** 2025-01-28
+------
+## 요청: 문서기반 대화 및 히스토리 기능 문제 해결
+
+**문제점:**
+1. 문서기반 대화에서 선택한 문서 내용을 제대로 읽어오지 못함
+2. 히스토리 기능이 제대로 동작하지 않음 (최근 대화에 안생기고 히스토리에도 안보임)
+
+**시작 시간:** 2025-01-28**
+해결된 문제:**
+
+1. **문서기반 대화에서 문서 내용을 제대로 읽어오지 못하는 문제**
+   - 채팅 API와 히스토리 API가 서로 다른 Repository를 사용하여 데이터 연동 문제 발생
+   - 채팅 API를 JavaScript Repository(ChatRepository.js)를 사용하도록 수정
+   - RAG 채팅 API도 동일한 Repository를 사용하도록 수정하여 세션과 메시지 저장
+
+2. **히스토리 기능이 제대로 동작하지 않는 문제**
+   - TypeScript Repository와 JavaScript Repository 간 불일치 해결
+   - 모든 채팅 관련 API가 동일한 ChatRepository.js를 사용하도록 통일
+   - 문서 기반 대화도 히스토리에 저장되도록 수정
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/api/chat/route.ts` - JavaScript Repository 사용으로 변경
+- `ai-chatbot-mentor/src/app/api/rag/chat/route.ts` - 세션/메시지 저장 기능 추가
+- `ai-chatbot-mentor/src/lib/repositories/ChatRepository.js` - updateSession 메서드 개선
+
+**테스트 결과:**
+- 문서 기반 대화 세션 생성 ✅
+- RAG 메타데이터를 포함한 메시지 저장 ✅
+- 히스토리 목록에서 문서 세션 조회 ✅
+- 모드별 세션 필터링 ✅
+- 대화 내용 검색 ✅
+- 세션 메타데이터 관리 ✅
+
+**완료 시간:** 2025-01-28--
+----
+## 요청: 챗봇 컨텍스트 이해 문제 해결
+
+**문제점:**
+- 챗봇이 전혀 컨텍스트를 이해하지 못하고 처음 대화하는 것처럼 행동
+- 한 채팅방에서 맥락을 계속 이해하도록 개선 필요
+
+**시작 시간:** 2025-01-28**해결된
+ 문제:**
+
+**챗봇 컨텍스트 이해 문제 해결**
+
+**문제 원인:**
+1. 채팅 API에서 사용자 메시지를 먼저 저장한 후 대화 히스토리를 가져와서 컨텍스트가 제대로 전달되지 않음
+2. RAG 채팅 API에서 대화 히스토리를 전혀 고려하지 않고 단순히 문서 검색 결과만 사용
+
+**해결 방법:**
+
+1. **일반 채팅 API 수정 (`ai-chatbot-mentor/src/app/api/chat/route.ts`)**
+   - 사용자 메시지 저장 전에 기존 대화 히스토리를 먼저 가져오도록 순서 변경
+   - 최근 20개 메시지를 컨텍스트로 사용하도록 개선
+   - 대화 히스토리에 현재 사용자 메시지를 추가한 후 LLM에 전달
+
+2. **RAG 채팅 API 수정 (`ai-chatbot-mentor/src/app/api/rag/chat/route.ts`)**
+   - 문서 검색과 함께 대화 히스토리도 고려하도록 개선
+   - 최근 10개 메시지를 컨텍스트로 포함
+   - 시스템 프롬프트에 "이전 대화 내용을 참고하여 맥락에 맞는 답변 제공" 지시 추가
+   - 대화 히스토리와 문서 컨텍스트를 결합한 프롬프트 생성
+
+**개선된 기능:**
+- ✅ 대화 히스토리 구성 및 전달
+- ✅ 세션별 컨텍스트 분리
+- ✅ 이전 대화 내용 참조 가능
+- ✅ 문서 기반 대화에서도 컨텍스트 유지
+- ✅ 메시지 순서 및 역할 구분
+- ✅ 개인 정보와 문서 정보의 적절한 분리
+
+**테스트 결과:**
+- 일반 채팅에서 이름, 직업 등 개인 정보 기억 ✅
+- 문서 기반 대화에서 이전 질문 맥락 이해 ✅
+- 세션별 컨텍스트 분리 정상 작동 ✅
+- 컨텍스트 연속성 유지 ✅
+
+**완료 시간:** 2025-01-28
+------
+## 
+요청: 히스토리 선택 시 404 오류 해결
+
+**문제점:**
+- 히스토리 선택하면 '404 This page could not be found.' 페이지가 나타남
+
+**시작 시간:** 2025-01-28
+------
+
+## 요청: 히스토리 선택 시 404 오류 해결
+
+**문제점:**
+- 히스토리 선택하면 '404 This page could not be found.' 페이지가 나타남
+
+**시작 시간:** 2025-01-28
+------
+
+## 요청: 히스토리 선택 시 404 오류 해결
+
+**문제점:**
+- 히스토리 선택하면 '404 This page could not be found.' 페이지가 나타남
+
+**시작 시간:** 2025-01-28**해결된 문
+제:**
+
+**히스토리 선택 시 404 오류 문제 해결**
+
+**문제 원인:**
+- 히스토리에서 세션을 선택했을 때 `/?sessionId=123` 형태의 URL로 이동하려고 했으나, 라우팅 처리에서 문제 발생
+- Next.js App Router에서 쿼리 파라미터 처리 시 예상치 못한 404 오류 발생
+
+**해결 방법:**
+
+1. **동적 라우트 추가**
+   - `/chat/[sessionId]/page.tsx` 동적 라우트 페이지 생성
+   - 세션 ID를 URL 파라미터로 직접 처리하여 더 안정적인 라우팅 구현
+
+2. **히스토리 네비게이션 개선**
+   - 히스토리 페이지에서 세션 선택 시 `/chat/123` 형태의 동적 라우트로 이동
+   - 기존 쿼리 파라미터 방식(`/?sessionId=123`)도 메인 페이지에서 계속 지원
+
+3. **에러 처리 강화**
+   - 잘못된 세션 ID 처리
+   - 세션 로딩 실패 시 사용자 친화적인 에러 페이지 표시
+   - 히스토리로 돌아가기, 메인 페이지로 이동 버튼 제공
+
+4. **로딩 상태 개선**
+   - 세션 로딩 중 로딩 인디케이터 표시
+   - 사용자에게 현재 상태를 명확히 전달
+
+**구현된 파일:**
+- `ai-chatbot-mentor/src/app/chat/[sessionId]/page.tsx` - 새로운 동적 라우트 페이지
+- `ai-chatbot-mentor/src/app/history/page.tsx` - 히스토리 네비게이션 수정
+
+**테스트 결과:**
+- 세션 목록 조회 ✅
+- 개별 세션 상세 조회 ✅
+- 세션 메시지 조회 ✅
+- 권한 확인 ✅
+- API 엔드포인트 시뮬레이션 ✅
+- 라우팅 시나리오 검증 ✅
+
+**개선된 사용자 경험:**
+- 히스토리에서 세션 선택 시 안정적인 페이지 이동
+- 404 오류 없이 대화 내용 정상 로드
+- 오류 발생 시 명확한 안내 메시지와 대안 제공
+- 로딩 상태 시각적 피드백
+
+**완료 시간:** 2025-01-28---
+---
+## 요청: 시간 표시 한국 시간 기준 변경 및 대화창 스크롤 추가
+
+**요청 내용:**
+1. 모든 시간은 한국 시간 기준으로 표시
+2. 대화창에 스크롤 기능 추가
+
+**시작 시간:** 2025-01-28**
+완료된 작업:**
+
+**시간 표시 한국 시간 기준 변경 및 대화창 스크롤 개선**
+
+**구현된 기능:**
+
+1. **한국 시간 기준 시간 표시**
+   - `src/utils/dateUtils.ts` 유틸리티 함수 생성
+   - 모든 시간 표시를 한국 시간대(UTC+9) 기준으로 변경
+   - 상대적 시간 표시 ("방금 전", "5분 전", "2시간 전" 등)
+   - 채팅용 시간 포맷 (오늘/어제 구분)
+   - 대화 지속 시간 계산
+
+2. **대화창 스크롤 기능 개선**
+   - MessageList 컴포넌트에 부드러운 스크롤 적용
+   - 새 메시지 추가 시 자동으로 하단으로 스크롤
+   - 스크롤 동작 최적화 및 시각적 개선
+   - 메시지 간격 및 레이아웃 개선
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/utils/dateUtils.ts` - 한국 시간 유틸리티 함수
+- `ai-chatbot-mentor/src/components/history/ChatHistoryList.tsx` - 히스토리 목록 시간 표시
+- `ai-chatbot-mentor/src/components/history/SessionDetailView.tsx` - 세션 상세 시간 표시
+- `ai-chatbot-mentor/src/components/chat/MessageList.tsx` - 메시지 목록 시간 표시 및 스크롤 개선
+- `ai-chatbot-mentor/src/components/chat/ChatInterface.tsx` - 메시지 생성 시 한국 시간 적용
+
+**개선된 사용자 경험:**
+- 모든 시간이 한국 시간 기준으로 일관되게 표시
+- 직관적인 상대적 시간 표시 ("5분 전", "어제 14:30" 등)
+- 대화창에서 부드러운 스크롤 경험
+- 새 메시지 추가 시 자동 스크롤로 최신 메시지 확인 용이
+- 메시지 간 시각적 구분 개선
+
+**시간 표시 형식:**
+- 상대적 시간: "방금 전", "5분 전", "2시간 전", "3일 전"
+- 채팅 시간: "14:30", "어제 14:30", "1월 25일 14:30"
+- 상세 시간: "2025년 1월 28일 14:30"
+- 지속 시간: "5분", "1시간 30분"
+
+**완료 시간:** 2025-01-28
+------
+
+
+## 요청: API 엔드포인트 오류 수정
+
+**문제**: 문서 기반 대화에서 `/api/chat` 엔드포인트 사용 시 400 에러 발생
+- 에러 메시지: "문서 기반 대화는 /api/rag/chat 엔드포인트를 사용해주세요"
+- 발생 위치: ChatInterface.tsx:118, api.ts:26
+
+**해결 필요사항**:
+1. 문서 기반 대화 시 올바른 엔드포인트 사용하도록 수정
+2. API 클라이언트에서 적절한 엔드포인트 라우팅 구현---
+---
+
+## 요청: 대화 리스트 시간 표시 오류 수정
+
+**문제**: 최근 대화 리스트에서 방금 전 대화가 "9시간 전"으로 표시됨
+- UTC와 한국 시간(KST) 간의 9시간 시차 문제로 추정
+- 대화 시간이 올바르게 한국 시간으로 표시되지 않음
+
+**해결 필요사항**:
+1. 대화 리스트에서 시간 표시 로직 확인
+2. 한국 시간으로 올바른 시간 계산 및 표시----
+--
+
+## 요청: 문서 기반 채팅이 일반 채팅으로 열리는 문제 수정
+
+**문제**: 문서 기반 채팅 세션이 저장되지만 다시 열 때 일반 채팅으로 열림
+- 문서 기반 대화 내용이 데이터베이스에 저장됨
+- 하지만 세션을 다시 열면 RAG 모드가 아닌 일반 채팅 모드로 열림
+
+**해결 필요사항**:
+1. 세션의 mode가 'document'인 경우 RAG 채팅으로 열리도록 수정
+2. 채팅 인터페이스에서 문서 모드 감지 및 적절한 엔드포인트 사용
+```
+------
+
+## 요청: 채팅 창 스크롤 개선 - 채팅 창에만 스크롤바 생성
+
+**문제**: 대화가 길어지면 세로 스크롤바가 오른쪽 전체에 생김
+- 현재는 전체 페이지에 스크롤이 생겨서 사용자 경험이 좋지 않음
+- 채팅 창 내부에만 스크롤이 생기도록 개선 필요
+
+**해결된 작업:**
+
+1. **채팅 페이지 레이아웃 수정**
+   - `ai-chatbot-mentor/src/app/chat/[sessionId]/page.tsx` 수정
+   - `ai-chatbot-mentor/src/app/page.tsx` 수정
+   - 전체 화면 높이(`h-screen`)를 사용하는 컨테이너 추가
+   - `ChatInterface`에 `flex-1` 클래스 적용하여 남은 공간 모두 사용
+
+2. **ChatInterface 컴포넌트 스크롤 개선**
+   - 메시지 목록 영역에 `min-h-0` 추가하여 flex 아이템이 올바르게 축소되도록 설정
+   - `overflow-y-auto`로 메시지 영역에만 스크롤 적용
+   - 헤더, 입력창은 고정 위치 유지
+
+3. **MessageList 컴포넌트 정리**
+   - 중복된 스크롤 설정 제거
+   - 부모 컴포넌트에서 스크롤 처리하도록 변경
+   - 불필요한 `overflow-y-auto` 및 `scroll-smooth` 제거
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/chat/[sessionId]/page.tsx` - 채팅 페이지 레이아웃 수정
+- `ai-chatbot-mentor/src/app/page.tsx` - 메인 페이지 레이아웃 수정
+- `ai-chatbot-mentor/src/components/chat/ChatInterface.tsx` - 스크롤 영역 설정
+- `ai-chatbot-mentor/src/components/chat/MessageList.tsx` - 중복 스크롤 제거
+
+**개선된 사용자 경험:**
+- 채팅 창 내부에만 스크롤바 생성
+- 헤더와 입력창은 항상 고정 위치
+- 전체 페이지 스크롤 없이 깔끔한 인터페이스
+- 메시지가 많아져도 레이아웃 안정성 유지
+- 부드러운 스크롤 경험
+
+**완료 시간:** 2025-01-28------
+AI가 소스를 출력하면 아티팩트가 실행 될 수 있는 환경을 만들어줘.

@@ -13,10 +13,12 @@ function HomeContent() {
   return (
     <ChatProvider>
       <MainLayout>
-        <ChatInterface 
-          className="h-full" 
-          sessionId={sessionId ? parseInt(sessionId) : undefined}
-        />
+        <div className="h-full flex flex-col overflow-hidden">
+          <ChatInterface 
+            className="flex-1" 
+            sessionId={sessionId ? parseInt(sessionId) : undefined}
+          />
+        </div>
       </MainLayout>
     </ChatProvider>
   );

@@ -18,9 +18,13 @@ interface ModelSettingsProps {
 
 export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
   const { state, getModelSettings, updateModelSettings } = useChatContext();
-  const [localSettings, setLocalSettings] = useState(() => 
-    getModelSettings(state.selectedModel)
-  );
+  const [localSettings, setLocalSettings] = useState(() => {
+    const settings = getModelSettings(state.selectedModel);
+    return {
+      ...settings,
+      maxTokens: settings.maxTokens && settings.maxTokens > 0 ? settings.maxTokens : 200000,
+    };
+  });
 
   const selectedModel = state.availableModels.find(m => m.id === state.selectedModel);
 
@@ -32,7 +36,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
   const handleReset = () => {
     const defaultSettings = {
       temperature: 0.7,
-      maxTokens: 2048,
+      maxTokens: 200000,
       systemPrompt: '',
     };
     setLocalSettings(defaultSettings);
@@ -72,7 +76,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-700 hover:text-gray-900"
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
@@ -99,9 +103,9 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
                 <div className="space-y-4">
                   {/* Temperature */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       Temperature
-                      <span className="ml-1 text-gray-400">
+                      <span className="ml-1 text-gray-700">
                         <InformationCircleIcon 
                           className="w-4 h-4 inline" 
                           title="창의성 조절 (0.0 = 보수적, 1.0 = 창의적)"
@@ -121,7 +125,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
                         }))}
                         className="flex-1"
                       />
-                      <span className="text-sm text-gray-600 w-8">
+                      <span className="text-sm text-gray-800 w-8">
                         {localSettings.temperature}
                       </span>
                     </div>
@@ -129,9 +133,9 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
 
                   {/* Max Tokens */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       최대 토큰 수
-                      <span className="ml-1 text-gray-400">
+                      <span className="ml-1 text-gray-700">
                         <InformationCircleIcon 
                           className="w-4 h-4 inline" 
                           title="응답의 최대 길이"
@@ -141,22 +145,22 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
                     <input
                       type="number"
                       min="100"
-                      max="8192"
+                      max="200000"
                       step="100"
                       value={localSettings.maxTokens}
                       onChange={(e) => setLocalSettings(prev => ({
                         ...prev,
-                        maxTokens: parseInt(e.target.value) || 2048
+                        maxTokens: parseInt(e.target.value) || 200000
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-700"
                     />
                   </div>
 
                   {/* System Prompt */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       시스템 프롬프트
-                      <span className="ml-1 text-gray-400">
+                      <span className="ml-1 text-gray-700">
                         <InformationCircleIcon 
                           className="w-4 h-4 inline" 
                           title="AI의 역할과 행동을 정의하는 지시사항"
@@ -171,7 +175,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
                         systemPrompt: e.target.value
                       }))}
                       placeholder="예: 당신은 도움이 되는 AI 어시스턴트입니다..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      className="w-full px-3 py-2 border border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-gray-900 placeholder-gray-700"
                     />
                   </div>
                 </div>

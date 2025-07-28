@@ -10,6 +10,7 @@ import { LLMModel, Message as MessageType } from '../../types';
 import { useChatContext } from '../../contexts/ChatContext';
 import { getCurrentKoreanTime } from '../../utils/dateUtils';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import { ArtifactPanel } from '../artifacts/ArtifactPanel';
 
 interface Message {
   id: string;
@@ -252,7 +253,7 @@ export default function ChatInterface({
   };
 
   return (
-    <div className={`flex flex-col h-full ${className}`}>
+    <div className={`flex flex-col h-full overflow-hidden ${className}`}>
       {/* Error Banner */}
       {error && (
         <div className="flex-shrink-0 bg-red-50 border-b border-red-200 p-3">
@@ -292,10 +293,21 @@ export default function ChatInterface({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <MessageList messages={messages} mentorId={initialMentorId} />
         {state.isLoading && <TypingIndicator />}
       </div>
+
+      {/* Artifacts Panel */}
+      {(() => {
+        // 모든 메시지의 metadata.artifacts를 하나의 배열로 합침
+        const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []));
+        return artifacts.length > 0 ? (
+          <div className="p-4 border-t border-gray-100 bg-gray-50">
+            <ArtifactPanel artifacts={artifacts} />
+          </div>
+        ) : null;
+      })()}
 
       {/* Input */}
       <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
