@@ -14,7 +14,8 @@
       "Bash(powershell:*)",
       "WebFetch(domain:ai.google.dev)",
       "Bash(cp:*)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   },

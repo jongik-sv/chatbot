@@ -2,20 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import { UserIcon, CpuChipIcon } from '@heroicons/react/24/outline';
+import { FeedbackButton } from '@/components/feedback/FeedbackButton';
+import { useChatContext } from '@/contexts/ChatContext';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  metadata?: any;
 }
 
 interface MessageListProps {
   messages: Message[];
+  mentorId?: number;
 }
 
-export default function MessageList({ messages }: MessageListProps) {
+export default function MessageList({ messages, mentorId }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { state } = useChatContext();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,26 +76,43 @@ export default function MessageList({ messages }: MessageListProps) {
             </div>
 
             {/* Message content */}
-            <div
-              className={`px-4 py-2 rounded-lg ${
-                message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-900'
-              }`}
-            >
-              <div className="whitespace-pre-wrap break-words">
-                {message.content}
-              </div>
+            <div className="flex flex-col">
               <div
-                className={`text-xs mt-1 ${
-                  message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                className={`px-4 py-2 rounded-lg ${
+                  message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-900'
                 }`}
               >
-                {message.timestamp.toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                <div className="whitespace-pre-wrap break-words">
+                  {message.content}
+                </div>
+                <div
+                  className={`text-xs mt-1 ${
+                    message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  }`}
+                >
+                  {message.timestamp.toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
               </div>
+              
+              {/* 피드백 버튼 (멘토 응답에만 표시) */}
+              {message.role === 'assistant' && mentorId && state.currentSessionId && (
+                <div className="flex justify-end mt-1">
+                  <FeedbackButton
+                    mentorId={mentorId.toString()}
+                    sessionId={state.currentSessionId.toString()}
+                    messageId={message.id}
+                    onFeedbackSubmitted={() => {
+                      // 피드백 제출 후 처리 (선택사항)
+                      console.log('피드백이 제출되었습니다.');
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
