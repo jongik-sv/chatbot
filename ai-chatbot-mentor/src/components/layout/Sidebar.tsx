@@ -11,7 +11,7 @@ import {
   Cog6ToothIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
-import { getChatSessions } from '@/lib/api';
+import { ApiClient } from '@/lib/api';
 
 interface SidebarProps {
   onClose: () => void;
@@ -44,7 +44,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const loadRecentChats = async () => {
     try {
       setLoadingRecentChats(true);
-      const response = await getChatSessions({ limit: 4 });
+      const response = await ApiClient.getChatSessions({ 
+        userId: 1, // 임시 사용자 ID
+        limit: 4 
+      });
       setRecentChats(response.sessions || []);
     } catch (error) {
       console.error('최근 대화 로딩 오류:', error);

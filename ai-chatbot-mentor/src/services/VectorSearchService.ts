@@ -75,7 +75,6 @@ export class VectorSearchService extends BaseRepository {
       console.error('Failed to store embeddings:', error);
       throw error;
     } finally {
-      stmt.finalize();
     }
   }
 
@@ -210,7 +209,6 @@ export class VectorSearchService extends BaseRepository {
       console.error(`Failed to delete embeddings for document ${documentId}:`, error);
       throw error;
     } finally {
-      stmt.finalize();
     }
   }
 

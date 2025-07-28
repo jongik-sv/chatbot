@@ -37,7 +37,8 @@ export class DocumentStorageService {
   private static readonly UPLOAD_DIR = path.join(process.cwd(), 'data', 'uploads');
 
   constructor() {
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    // lib/database.ts와 동일한 경로 사용
+    const dbPath = path.join(process.cwd(), 'database', 'chatbot.db');
     this.db = new Database(dbPath);
     this.initializeTables();
     this.ensureUploadDirectory();
@@ -47,35 +48,19 @@ export class DocumentStorageService {
    * 필요한 테이블 초기화
    */
   private initializeTables(): void {
-    // documents 테이블이 이미 존재하는지 확인
-    const tableExists = this.db.prepare(`
-      SELECT name FROM sqlite_master WHERE type='table' AND name='documents'
+    // documents 테이블은 이미 schema.sql에서 생성되므로 추가 작업만 수행
+    
+    // document_chunks 테이블이 존재하지 않으면 생성
+    const chunksTableExists = this.db.prepare(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='document_chunks'
     `).get();
 
-    if (!tableExists) {
-      // documents 테이블 생성
-      this.db.exec(`
-        CREATE TABLE documents (
-          id TEXT PRIMARY KEY,
-          filename TEXT NOT NULL,
-          file_type TEXT NOT NULL,
-          file_path TEXT NOT NULL,
-          content TEXT NOT NULL,
-          metadata TEXT NOT NULL,
-          word_count INTEGER DEFAULT 0,
-          language TEXT DEFAULT 'unknown',
-          summary TEXT,
-          file_size INTEGER NOT NULL,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
+    if (!chunksTableExists) {
       // document_chunks 테이블 생성
       this.db.exec(`
         CREATE TABLE document_chunks (
           id TEXT PRIMARY KEY,
-          document_id TEXT NOT NULL,
+          document_id INTEGER NOT NULL,
           content TEXT NOT NULL,
           chunk_index INTEGER NOT NULL,
           start_position INTEGER NOT NULL,
@@ -89,9 +74,6 @@ export class DocumentStorageService {
 
       // 인덱스 생성
       this.db.exec(`
-        CREATE INDEX idx_documents_filename ON documents(filename);
-        CREATE INDEX idx_documents_file_type ON documents(file_type);
-        CREATE INDEX idx_documents_language ON documents(language);
         CREATE INDEX idx_document_chunks_document_id ON document_chunks(document_id);
         CREATE INDEX idx_document_chunks_chunk_index ON document_chunks(chunk_index);
       `);
@@ -120,29 +102,31 @@ export class DocumentStorageService {
       // 파일 복사
       fs.copyFileSync(filePath, savedFilePath);
 
-      // 문서 정보 저장
+      // 문서 정보 저장 (기존 schema에 맞춰 수정)
       const insertDoc = this.db.prepare(`
         INSERT INTO documents (
-          id, filename, file_type, file_path, content, metadata,
-          word_count, language, summary, file_size, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          filename, file_type, file_path, content, metadata, file_size
+        ) VALUES (?, ?, ?, ?, ?, ?)
       `);
 
-      const now = new Date().toISOString();
-      insertDoc.run(
-        doc.id,
+      const metadata = {
+        ...doc.metadata,
+        wordCount: doc.metadata.wordCount || 0,
+        language: doc.metadata.language || 'unknown',
+        summary: doc.metadata.summary || '',
+        documentId: doc.id
+      };
+
+      const result = insertDoc.run(
         doc.filename,
         doc.fileType,
         savedFilePath,
         doc.content,
-        JSON.stringify(doc.metadata),
-        doc.metadata.wordCount || 0,
-        doc.metadata.language || 'unknown',
-        doc.metadata.summary || '',
-        doc.metadata.fileSize,
-        now,
-        now
+        JSON.stringify(metadata),
+        doc.metadata.fileSize || 0
       );
+
+      const newDocId = result.lastInsertRowid;
 
       // 청크 정보 저장
       const insertChunk = this.db.prepare(`
@@ -152,11 +136,12 @@ export class DocumentStorageService {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
+      const now = new Date().toISOString();
       for (const chunk of doc.chunks) {
-        chunk.documentId = doc.id; // 문서 ID 설정
+        chunk.documentId = newDocId.toString(); // 실제 DB에서 생성된 ID 사용
         insertChunk.run(
           chunk.id,
-          chunk.documentId,
+          newDocId,
           chunk.content,
           chunk.chunkIndex,
           chunk.metadata.startPosition,
@@ -167,7 +152,7 @@ export class DocumentStorageService {
         );
       }
 
-      return doc.id;
+      return newDocId.toString();
     });
 
     try {
@@ -189,19 +174,20 @@ export class DocumentStorageService {
     const result = query.get(documentId) as any;
     if (!result) return null;
 
+    const metadata = JSON.parse(result.metadata || '{}');
     return {
-      id: result.id,
+      id: result.id.toString(),
       filename: result.filename,
       fileType: result.file_type,
       filePath: result.file_path,
       content: result.content,
       metadata: result.metadata,
-      wordCount: result.word_count,
-      language: result.language,
-      summary: result.summary,
-      fileSize: result.file_size,
+      wordCount: metadata.wordCount || 0,
+      language: metadata.language || 'unknown',
+      summary: metadata.summary || '',
+      fileSize: result.file_size || 0,
       createdAt: result.created_at,
-      updatedAt: result.updated_at
+      updatedAt: result.created_at // schema에 updated_at이 없으므로 created_at 사용
     };
   }
 
@@ -225,20 +211,23 @@ export class DocumentStorageService {
     const stmt = this.db.prepare(query);
     const results = stmt.all(...params) as any[];
 
-    return results.map(result => ({
-      id: result.id,
-      filename: result.filename,
-      fileType: result.file_type,
-      filePath: result.file_path,
-      content: result.content,
-      metadata: result.metadata,
-      wordCount: result.word_count,
-      language: result.language,
-      summary: result.summary,
-      fileSize: result.file_size,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    }));
+    return results.map(result => {
+      const metadata = JSON.parse(result.metadata || '{}');
+      return {
+        id: result.id.toString(),
+        filename: result.filename,
+        fileType: result.file_type,
+        filePath: result.file_path,
+        content: result.content,
+        metadata: result.metadata,
+        wordCount: metadata.wordCount || 0,
+        language: metadata.language || 'unknown',
+        summary: metadata.summary || '',
+        fileSize: result.file_size || 0,
+        createdAt: result.created_at,
+        updatedAt: result.created_at
+      };
+    });
   }
 
   /**

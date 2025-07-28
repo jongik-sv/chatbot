@@ -8,7 +8,7 @@ import {
   SparklesIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import { getChatSessions } from '@/lib/api';
+import { ApiClient } from '@/lib/api';
 
 interface ChatSession {
   id: number;
@@ -36,7 +36,10 @@ export default function ChatsPage() {
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const response = await getChatSessions({ limit: 50 });
+      const response = await ApiClient.getChatSessions({ 
+        userId: 1, // 임시 사용자 ID
+        limit: 50 
+      });
       setSessions(response.sessions || []);
     } catch (err) {
       setError('채팅 목록을 불러오는데 실패했습니다.');

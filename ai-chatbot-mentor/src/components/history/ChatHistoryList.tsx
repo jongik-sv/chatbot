@@ -197,9 +197,9 @@ export default function ChatHistoryList({
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm border ${className} flex flex-col`}>
       {/* 헤더 */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">대화 히스토리</h2>
         
         {/* 검색 및 필터 */}
@@ -231,7 +231,7 @@ export default function ChatHistoryList({
 
       {/* 오류 메시지 */}
       {error && (
-        <div className="p-4 bg-red-50 border-b border-red-200">
+        <div className="p-4 bg-red-50 border-b border-red-200 flex-shrink-0">
           <p className="text-sm text-red-700">{error}</p>
           <button 
             onClick={() => setError(null)}
@@ -243,7 +243,7 @@ export default function ChatHistoryList({
       )}
 
       {/* 세션 목록 */}
-      <div className="max-h-96 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         {sessions.length === 0 && !loading ? (
           <div className="p-8 text-center text-gray-500">
             <ChatBubbleLeftRightIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />

@@ -47,10 +47,10 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen bg-gray-50 flex flex-col">
+      <div className="max-w-7xl mx-auto flex-1 flex flex-col">
         {/* 헤더 */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -87,22 +87,22 @@ export default function HistoryPage() {
         </div>
 
         {/* 내용 */}
-        <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-6 lg:px-8 flex-1 overflow-hidden">
           {view === 'list' ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto h-full">
               <ChatHistoryList
                 userId={1}
                 onSessionSelect={handleSessionSelect}
-                className="bg-white shadow-sm rounded-lg"
+                className="bg-white shadow-sm rounded-lg h-full"
               />
             </div>
           ) : selectedSession ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto h-full">
               <SessionDetailView
                 session={selectedSession}
                 userId={1}
                 onLoadSession={handleLoadSession}
-                className="bg-white shadow-sm rounded-lg"
+                className="bg-white shadow-sm rounded-lg h-full"
               />
             </div>
           ) : null}
