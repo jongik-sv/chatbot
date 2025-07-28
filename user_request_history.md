@@ -636,4 +636,38 @@ Requirements 9.2, 9.3 충족 완료---
 - 세션 삭제, 내보내기, 백업, 복원 기능 테스트 통과
 - Requirements 8.4, 8.5 충족
 
+**완료 시간:** 2025-01-28-----
+-
+## 요청: 문서기반 대화 및 히스토리 기능 문제 해결
+
+**문제점:**
+1. 문서기반 대화에서 선택한 문서 내용을 제대로 읽어오지 못함
+2. 히스토리 기능이 제대로 동작하지 않음 (최근 대화에 안생기고 히스토리에도 안보임)
+
+**시작 시간:** 2025-01-28**
+해결된 문제:**
+
+1. **문서기반 대화에서 문서 내용을 제대로 읽어오지 못하는 문제**
+   - 채팅 API와 히스토리 API가 서로 다른 Repository를 사용하여 데이터 연동 문제 발생
+   - 채팅 API를 JavaScript Repository(ChatRepository.js)를 사용하도록 수정
+   - RAG 채팅 API도 동일한 Repository를 사용하도록 수정하여 세션과 메시지 저장
+
+2. **히스토리 기능이 제대로 동작하지 않는 문제**
+   - TypeScript Repository와 JavaScript Repository 간 불일치 해결
+   - 모든 채팅 관련 API가 동일한 ChatRepository.js를 사용하도록 통일
+   - 문서 기반 대화도 히스토리에 저장되도록 수정
+
+**수정된 파일:**
+- `ai-chatbot-mentor/src/app/api/chat/route.ts` - JavaScript Repository 사용으로 변경
+- `ai-chatbot-mentor/src/app/api/rag/chat/route.ts` - 세션/메시지 저장 기능 추가
+- `ai-chatbot-mentor/src/lib/repositories/ChatRepository.js` - updateSession 메서드 개선
+
+**테스트 결과:**
+- 문서 기반 대화 세션 생성 ✅
+- RAG 메타데이터를 포함한 메시지 저장 ✅
+- 히스토리 목록에서 문서 세션 조회 ✅
+- 모드별 세션 필터링 ✅
+- 대화 내용 검색 ✅
+- 세션 메타데이터 관리 ✅
+
 **완료 시간:** 2025-01-28

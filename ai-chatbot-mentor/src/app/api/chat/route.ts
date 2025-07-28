@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { ChatSessionRepository } from '../../../lib/repositories/ChatSessionRepository';
-import { MessageRepository } from '../../../lib/repositories/MessageRepository';
+// JavaScript Repository 사용 (히스토리 API와 호환성을 위해)
+const ChatRepository = require('../../../lib/repositories/ChatRepository');
 import { LLMService } from '../../../services/LLMService';
 import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
@@ -9,8 +9,7 @@ import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
-const chatSessionRepo = new ChatSessionRepository();
-const messageRepo = new MessageRepository();
+const chatRepo = new ChatRepository();
 const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
 
@@ -74,7 +73,7 @@ export async function POST(request: NextRequest) {
     
     if (sessionId) {
       // 기존 세션 사용
-      currentSession = chatSessionRepo.getById(sessionId);
+      currentSession = chatRepo.getSession(sessionId);
       if (!currentSession) {
         return NextResponse.json(
           { error: '세션을 찾을 수 없습니다.' },
@@ -83,8 +82,11 @@ export async function POST(request: NextRequest) {
       }
       
       // 세션의 모델이 변경된 경우 업데이트
-      if (currentSession.modelUsed !== model) {
-        currentSession = chatSessionRepo.update(sessionId, { modelUsed: model });
+      if (currentSession.model_used !== model) {
+        currentSession = chatRepo.updateSession(sessionId, { 
+          title: currentSession.title,
+          modelUsed: model 
+        });
       }
     } else {
       // 새 세션 생성
@@ -92,7 +94,7 @@ export async function POST(request: NextRequest) {
         ? message.substring(0, 50) + '...' 
         : message;
         
-      currentSession = chatSessionRepo.create({
+      currentSession = chatRepo.createSession({
         userId: userId || 1, // 기본 사용자 사용 (사용자 인증 구현 전까지)
         title: sessionTitle,
         mode: mode || 'chat',
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 사용자 메시지 저장
-    const userMessage = messageRepo.create({
+    const userMessage = chatRepo.createMessage({
       sessionId: currentSession.id,
       role: 'user',
       content: message,
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
       conversationHistory = [...mentorContext.conversationHistory];
     } else {
       // 일반 대화 히스토리 사용
-      const recentMessages = messageRepo.getRecentMessages(currentSession.id, 10);
+      const recentMessages = chatRepo.getMessages(currentSession.id, { limit: 10 });
       conversationHistory = recentMessages.map(msg => ({
         role: msg.role,
         content: msg.content
@@ -158,56 +160,15 @@ export async function POST(request: NextRequest) {
     let llmResponse;
 
     try {
-      // RAG 모드 처리
+      // 문서 모드는 별도 RAG API 사용을 권장
       if (mode === 'document' || mode === 'rag') {
-        // RAG 기반 답변 생성
-        const searchResults = await vectorSearchService.searchSimilarChunks(message, {
-          topK: 3,
-          threshold: 0.5,
-          includeMetadata: true
-        });
-
-        if (searchResults.length > 0) {
-          // 컨텍스트 구성
-          const contextParts = searchResults.map((result, index) => 
-            `[출처 ${index + 1}: ${result.documentTitle || '문서'}]\n${result.chunkText}`
-          );
-          const context = contextParts.join('\n\n');
-
-          // RAG 프롬프트 생성
-          const ragPrompt = `다음은 업로드된 문서에서 검색된 관련 정보입니다:
-
-${context}
-
-위 정보를 바탕으로 다음 질문에 답해주세요. 답변할 때는:
-1. 제공된 문서의 내용만을 기반으로 답변하세요
-2. 문서에 없는 내용은 추측하지 마세요
-3. 가능한 경우 어떤 출처에서 정보를 가져왔는지 언급하세요
-
-질문: ${message}`;
-
-          llmResponse = await llmService.chat([{ role: 'user', content: ragPrompt }], {
-            model,
-            temperature: 0.1,
-            maxTokens: 1000,
-            systemInstruction: systemInstruction || '당신은 업로드된 문서를 기반으로 정확한 답변을 제공하는 도우미입니다.'
-          });
-
-          // 출처 정보 추가
-          llmResponse.sources = searchResults.map((result, index) => ({
-            index: index + 1,
-            documentTitle: result.documentTitle,
-            similarity: Math.round(result.similarity * 1000) / 1000,
-            excerpt: result.chunkText.substring(0, 150) + '...'
-          }));
-        } else {
-          llmResponse = await llmService.chat(conversationHistory, {
-            model,
-            temperature: 0.7,
-            maxTokens: 1000,
-            systemInstruction: systemInstruction || '업로드된 문서에서 관련 정보를 찾을 수 없습니다. 일반적인 지식으로 답변하겠습니다.'
-          });
-        }
+        return NextResponse.json(
+          { 
+            error: '문서 기반 대화는 /api/rag/chat 엔드포인트를 사용해주세요.',
+            suggestion: 'Use /api/rag/chat endpoint for document-based conversations'
+          },
+          { status: 400 }
+        );
       }
       // 멀티모달 처리 (파일이 있는 경우)
       else if (uploadedFiles.length > 0) {
@@ -270,7 +231,7 @@ ${context}
       }
 
       // AI 응답 저장
-      const assistantMessage = messageRepo.create({
+      const assistantMessage = chatRepo.createMessage({
         sessionId: currentSession.id,
         role: 'assistant',
         content: llmResponse.content,
@@ -295,7 +256,7 @@ ${context}
       }
 
       // 세션 마지막 활동 시간 업데이트
-      chatSessionRepo.updateLastActivity(currentSession.id);
+      chatRepo.updateSessionTimestamp(currentSession.id);
 
       // 응답 구성
       const response: ChatResponse = {
@@ -312,7 +273,7 @@ ${context}
       console.error('LLM 처리 오류:', llmError);
       
       // 오류 메시지 저장
-      const errorMessage = messageRepo.create({
+      const errorMessage = chatRepo.createMessage({
         sessionId: currentSession.id,
         role: 'assistant',
         content: '죄송합니다. 응답을 생성하는 중에 오류가 발생했습니다. 다시 시도해 주세요.',
@@ -357,7 +318,7 @@ export async function GET(request: NextRequest) {
 
     if (sessionId) {
       // 특정 세션의 메시지들 조회
-      const session = chatSessionRepo.getById(parseInt(sessionId));
+      const session = chatRepo.getSession(parseInt(sessionId));
       if (!session) {
         return NextResponse.json(
           { error: '세션을 찾을 수 없습니다.' },
@@ -365,7 +326,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const messages = messageRepo.getBySessionId(session.id);
+      const messages = chatRepo.getMessages(session.id);
       
       return NextResponse.json({
         session,
@@ -373,7 +334,7 @@ export async function GET(request: NextRequest) {
       });
     } else if (userId) {
       // 사용자의 모든 세션 조회
-      const sessions = chatSessionRepo.getByUserId(parseInt(userId));
+      const sessions = chatRepo.getSessions({ userId: parseInt(userId), limit: 100 });
       
       return NextResponse.json({
         sessions

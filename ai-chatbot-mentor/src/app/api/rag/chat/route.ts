@@ -5,6 +5,9 @@ import { vectorSearchService } from '@/services/VectorSearchService';
 // LLM 서비스 import
 import { LLMService } from '@/services/LLMService';
 
+// JavaScript Repository 사용 (히스토리 API와 호환성을 위해)
+const ChatRepository = require('../../../../lib/repositories/ChatRepository');
+
 export async function POST(request: NextRequest) {
   try {
     const { 
@@ -24,6 +27,56 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ChatRepository 인스턴스 생성
+    const chatRepo = new ChatRepository();
+
+    // 세션 관리
+    let currentSession;
+    
+    if (sessionId) {
+      // 기존 세션 사용
+      currentSession = chatRepo.getSession(sessionId);
+      if (!currentSession) {
+        return NextResponse.json(
+          { success: false, error: '세션을 찾을 수 없습니다.' },
+          { status: 404 }
+        );
+      }
+      
+      // 세션의 모델이 변경된 경우 업데이트
+      if (currentSession.model_used !== model) {
+        currentSession = chatRepo.updateSession(sessionId, { 
+          title: currentSession.title,
+          modelUsed: model 
+        });
+      }
+    } else {
+      // 새 세션 생성
+      const sessionTitle = message.length > 50 
+        ? message.substring(0, 50) + '...' 
+        : message;
+        
+      currentSession = chatRepo.createSession({
+        userId: userId,
+        title: sessionTitle,
+        mode: 'document',
+        modelUsed: model,
+        mentorId: null
+      });
+    }
+
+    // 사용자 메시지 저장
+    const userMessage = chatRepo.createMessage({
+      sessionId: currentSession.id,
+      role: 'user',
+      content: message,
+      contentType: 'text',
+      metadata: {
+        documentIds: documentIds,
+        ragQuery: true
+      }
+    });
+
     // 1. 관련 문서 검색
     const searchResults = await vectorSearchService.searchSimilarChunks(message, {
       topK,
@@ -33,9 +86,31 @@ export async function POST(request: NextRequest) {
     });
 
     if (searchResults.length === 0) {
+      const noResultsResponse = "죄송합니다. 업로드된 문서에서 관련 정보를 찾을 수 없습니다. 다른 질문을 시도해보시거나 더 많은 문서를 업로드해주세요.";
+      
+      // 검색 결과가 없어도 AI 응답 저장
+      const assistantMessage = chatRepo.createMessage({
+        sessionId: currentSession.id,
+        role: 'assistant',
+        content: noResultsResponse,
+        contentType: 'text',
+        metadata: {
+          model: model,
+          provider: 'rag',
+          ragQuery: true,
+          noResults: true,
+          searchResults: 0
+        }
+      });
+
+      // 세션 마지막 활동 시간 업데이트
+      chatRepo.updateSessionTimestamp(currentSession.id);
+
       return NextResponse.json({
         success: true,
-        response: "죄송합니다. 업로드된 문서에서 관련 정보를 찾을 수 없습니다. 다른 질문을 시도해보시거나 더 많은 문서를 업로드해주세요.",
+        response: noResultsResponse,
+        sessionId: currentSession.id,
+        messageId: assistantMessage.id,
         sources: [],
         searchResults: []
       });
@@ -81,9 +156,32 @@ ${context}
       excerpt: result.chunkText.substring(0, 150) + (result.chunkText.length > 150 ? '...' : '')
     }));
 
+    const responseContent = response.content || (typeof response === 'string' ? response : JSON.stringify(response));
+
+    // AI 응답 저장
+    const assistantMessage = chatRepo.createMessage({
+      sessionId: currentSession.id,
+      role: 'assistant',
+      content: responseContent,
+      contentType: 'text',
+      metadata: {
+        model: model,
+        provider: 'rag',
+        ragQuery: true,
+        sources: sources,
+        searchResults: searchResults.length,
+        contextLength: context.length
+      }
+    });
+
+    // 세션 마지막 활동 시간 업데이트
+    chatRepo.updateSessionTimestamp(currentSession.id);
+
     return NextResponse.json({
       success: true,
-      response: response.content || (typeof response === 'string' ? response : JSON.stringify(response)),
+      response: responseContent,
+      sessionId: currentSession.id,
+      messageId: assistantMessage.id,
       sources,
       searchResults: searchResults.map(r => ({
         documentTitle: r.documentTitle,

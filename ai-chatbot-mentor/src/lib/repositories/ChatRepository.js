@@ -136,15 +136,26 @@ class ChatRepository {
    * 세션 업데이트
    */
   updateSession(sessionId, data) {
-    const { title } = data;
+    const { title, modelUsed } = data;
     
-    const stmt = this.db.prepare(`
-      UPDATE chat_sessions 
-      SET title = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
+    let query = `UPDATE chat_sessions SET updated_at = CURRENT_TIMESTAMP`;
+    const params = [];
     
-    stmt.run(title, sessionId);
+    if (title !== undefined) {
+      query += `, title = ?`;
+      params.push(title);
+    }
+    
+    if (modelUsed !== undefined) {
+      query += `, model_used = ?`;
+      params.push(modelUsed);
+    }
+    
+    query += ` WHERE id = ?`;
+    params.push(sessionId);
+    
+    const stmt = this.db.prepare(query);
+    stmt.run(...params);
     return this.getSession(sessionId);
   }
 
