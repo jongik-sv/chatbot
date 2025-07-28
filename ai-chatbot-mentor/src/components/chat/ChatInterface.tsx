@@ -8,6 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import { ApiClient } from '../../lib/api';
 import { LLMModel, Message as MessageType } from '../../types';
 import { useChatContext } from '../../contexts/ChatContext';
+import { getCurrentKoreanTime } from '../../utils/dateUtils';
 
 interface Message {
   id: string;
@@ -78,7 +79,7 @@ export default function ChatInterface({
         id: msg.id.toString(),
         role: msg.role,
         content: msg.content,
-        timestamp: new Date(msg.createdAt),
+        timestamp: new Date(msg.createdAt), // 실제 메시지 생성 시간 사용
         metadata: msg.metadata
       }));
       setMessages(loadedMessages);
@@ -104,7 +105,7 @@ export default function ChatInterface({
       id: Date.now().toString(),
       role: 'user',
       content,
-      timestamp: new Date(),
+      timestamp: getCurrentKoreanTime(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -146,7 +147,7 @@ export default function ChatInterface({
         id: response.messageId.toString(),
         role: 'assistant',
         content: response.content,
-        timestamp: new Date(),
+        timestamp: getCurrentKoreanTime(),
         metadata: {
           artifacts: response.artifacts,
           sources: response.sources,
@@ -166,7 +167,7 @@ export default function ChatInterface({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: '죄송합니다. 응답을 생성하는 중에 오류가 발생했습니다. 다시 시도해 주세요.',
-        timestamp: new Date(),
+        timestamp: getCurrentKoreanTime(),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

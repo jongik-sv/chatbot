@@ -10,6 +10,7 @@ import {
   ClockIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
+import { formatKoreanDate, formatDuration as formatDurationKorean, formatChatTime } from '../../utils/dateUtils';
 
 interface Message {
   id: number;
@@ -88,27 +89,11 @@ export default function SessionDetailView({
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatKoreanDate(dateStr, { includeTime: true });
   };
 
   const formatDuration = (start: string, end: string) => {
-    const startTime = new Date(start).getTime();
-    const endTime = new Date(end).getTime();
-    const diffMinutes = Math.round((endTime - startTime) / (1000 * 60));
-    
-    if (diffMinutes < 1) return '1분 미만';
-    if (diffMinutes < 60) return `${diffMinutes}분`;
-    
-    const hours = Math.floor(diffMinutes / 60);
-    const minutes = diffMinutes % 60;
-    return `${hours}시간 ${minutes}분`;
+    return formatDurationKorean(start, end);
   };
 
   const getModeInfo = (mode: string) => {
@@ -284,7 +269,7 @@ export default function SessionDetailView({
                       ? 'text-blue-100' 
                       : 'text-gray-500'
                   } mt-1`}>
-                    {formatDate(message.createdAt)}
+                    {formatChatTime(message.createdAt)}
                   </div>
                 </div>
               </div>

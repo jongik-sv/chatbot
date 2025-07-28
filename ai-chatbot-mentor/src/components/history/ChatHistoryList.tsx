@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '../../lib/api';
 import HistoryManagement from './HistoryManagement';
+import { formatRelativeTime } from '../../utils/dateUtils';
 
 interface ChatSession {
   id: number;
@@ -192,14 +193,7 @@ export default function ChatHistoryList({
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return '오늘';
-    if (diffDays === 1) return '어제';
-    if (diffDays < 7) return `${diffDays}일 전`;
-    return date.toLocaleDateString('ko-KR');
+    return formatRelativeTime(dateStr);
   };
 
   return (
