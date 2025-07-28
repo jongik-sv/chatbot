@@ -276,3 +276,14 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - 현재 방식이 최신 모델을 제대로 선택하지 못함
 
 **관련 파일**: GeminiModelService.ts, LLMService.ts
+
+------
+**요청 날짜**: 2025-07-27
+**요청 내용**: .kiro\specs\ai-chatbot-with-multimodal-mentor 안에 있는 문서가 이 프로젝트의 정의야. 참고하여 이전에 작업하다 중단됐던 tasks.md의 '12. MBTI 기반 멘토 시스템 구현' 이 부분을 구현해줘.
+
+------
+**요청 날짜**: 2025-07-27
+**요청 내용**: AI 모델을 가져오는 부분이 비어있어서 Gemini 모델 가져오기 구현
+- Ollama가 설치되지 않아서 모델 목록이 비어있는 상황
+- Google Gemini API 문서의 Model variants 섹션에서 상위 3개 모델을 가져오는 서비스 구현
+- https://ai.google.dev/gemini-api/docs/models 페이지 참고하여 구현

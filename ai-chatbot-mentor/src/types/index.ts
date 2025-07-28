@@ -139,3 +139,48 @@ export interface ChatResponse {
   sessionId: number;
   messageId: number;
 }
+
+// MBTI 관련 타입 정의
+export type MBTIType = 
+  | 'INTJ' | 'INTP' | 'ENTJ' | 'ENTP'
+  | 'INFJ' | 'INFP' | 'ENFJ' | 'ENFP'
+  | 'ISTJ' | 'ISFJ' | 'ESTJ' | 'ESFJ'
+  | 'ISTP' | 'ISFP' | 'ESTP' | 'ESFP';
+
+export interface MBTIProfile {
+  type: MBTIType;
+  name: string;
+  nickname: string;
+  description: string;
+  strengths: string[];
+  weaknesses: string[];
+  communicationStyle: string;
+  learningPreferences: string[];
+  motivations: string[];
+  stressors: string[];
+  workStyle: string;
+  decisionMaking: string;
+  relationshipStyle: string;
+  cognitiveStack: {
+    dominant: string;
+    auxiliary: string;
+    tertiary: string;
+    inferior: string;
+  };
+}
+
+export interface MBTIMentor extends Mentor {
+  mbtiType: MBTIType;
+  mbtiProfile: MBTIProfile;
+  adaptedPersonality: MentorPersonality;
+}
+
+export interface MBTICompatibility {
+  userType: MBTIType;
+  mentorType: MBTIType;
+  compatibilityScore: number; // 1-10
+  strengths: string[];
+  challenges: string[];
+  communicationTips: string[];
+  learningTips: string[];
+}

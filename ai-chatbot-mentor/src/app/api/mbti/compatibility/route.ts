@@ -1,6 +1,7 @@
 // app/api/mbti/compatibility/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MBTIService, MBTIType } from '@/services/MBTIService';
+import { mbtiService } from '@/services/MBTIService';
+import { MBTIType } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,17 +19,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const mbtiService = new MBTIService();
-    
     // 유효한 MBTI 타입인지 확인
-    const validTypes: MBTIType[] = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP', 
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP'
-    ];
-
-    if (!validTypes.includes(userType) || !validTypes.includes(mentorType)) {
+    if (!mbtiService.isValidMBTIType(userType) || !mbtiService.isValidMBTIType(mentorType)) {
       return NextResponse.json(
         {
           success: false,
@@ -38,17 +30,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const compatibility = mbtiService.analyzeMBTICompatibility(userType, mentorType);
+    const compatibility = mbtiService.getMBTICompatibility(userType, mentorType);
     
     // 각 타입의 특성 정보도 함께 제공
-    const userCharacteristics = mbtiService.getMBTICharacteristics(userType);
-    const mentorCharacteristics = mbtiService.getMBTICharacteristics(mentorType);
+    const userProfile = mbtiService.getMBTIProfile(userType);
+    const mentorProfile = mbtiService.getMBTIProfile(mentorType);
 
     return NextResponse.json({
       success: true,
       compatibility,
-      userCharacteristics,
-      mentorCharacteristics
+      userProfile,
+      mentorProfile
     });
 
   } catch (error) {
@@ -79,15 +71,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const mbtiService = new MBTIService();
-    
+    if (!mbtiService.isValidMBTIType(userType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '유효하지 않은 사용자 MBTI 타입입니다.'
+        },
+        { status: 400 }
+      );
+    }
+
     // 다중 멘토 타입과의 호환성 분석
-    const compatibilities = mentorTypes.map(mentorType => 
-      mbtiService.analyzeMBTICompatibility(userType, mentorType)
-    );
+    const compatibilities = mentorTypes
+      .filter(type => mbtiService.isValidMBTIType(type))
+      .map(mentorType => mbtiService.getMBTICompatibility(userType, mentorType));
 
     // 호환성 점수순으로 정렬
-    compatibilities.sort((a, b) => b.score - a.score);
+    compatibilities.sort((a, b) => b.compatibilityScore - a.compatibilityScore);
 
     return NextResponse.json({
       success: true,

@@ -11,12 +11,16 @@
       "Bash(curl:*)",
       "Bash(taskkill:*)",
       "Bash(cmd /c:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:ai.google.dev)"
     ],
     "deny": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "fetch",
+    "supabase",
+    "toolbox",
     "sequential-thinking",
     "Context7",
     "@21st-dev/magic"

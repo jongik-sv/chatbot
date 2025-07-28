@@ -1,29 +1,29 @@
 // app/api/mbti/types/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MBTIService } from '@/services/MBTIService';
+import { mbtiService } from '@/services/MBTIService';
 
 export async function GET(request: NextRequest) {
   try {
-    const mbtiService = new MBTIService();
-    const allTypes = mbtiService.getAllMBTITypes();
-
-    const formattedTypes = allTypes.map(type => ({
-      type: type.type,
-      name: type.name,
-      nickname: type.nickname,
-      description: type.description,
-      strengths: type.strengths,
-      weaknesses: type.weaknesses,
-      communicationStyle: type.communicationStyle,
-      mentorStyle: type.mentorStyle,
-      preferredTopics: type.preferredTopics,
-      avoidTopics: type.avoidTopics
+    const profiles = mbtiService.getAllMBTIProfiles();
+    
+    // 기존 컴포넌트 형식에 맞게 데이터 변환
+    const types = Object.values(profiles).map(profile => ({
+      type: profile.type,
+      name: profile.name,
+      nickname: profile.nickname,
+      description: profile.description,
+      strengths: profile.strengths,
+      weaknesses: profile.weaknesses,
+      communicationStyle: profile.communicationStyle,
+      mentorStyle: profile.learningPreferences.join(', ') + ' 중심의 멘토링',
+      preferredTopics: profile.motivations,
+      avoidTopics: profile.stressors
     }));
 
     return NextResponse.json({
       success: true,
-      types: formattedTypes,
-      total: formattedTypes.length
+      types: types,
+      total: types.length
     });
 
   } catch (error) {

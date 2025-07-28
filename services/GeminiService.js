@@ -44,24 +44,26 @@ class GeminiService {
       },
     ];
 
-    // 사용 가능한 모델들
+    // 사용 가능한 모델들 (최신 Gemini 2.5 시리즈)
     this.availableModels = [
       {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
+        id: 'gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
         provider: 'google',
+        description: 'Our most powerful thinking model with maximum response accuracy',
         capabilities: {
           text: true,
           multimodal: true,
           streaming: true,
-          maxTokens: 2097152, // 2M tokens
-          supportedFormats: ['text', 'image', 'audio', 'video']
+          maxTokens: 8192000, // 8M tokens
+          supportedFormats: ['text', 'image', 'audio', 'video', 'pdf']
         }
       },
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
         provider: 'google',
+        description: 'Best model in terms of price-performance, offering well-rounded capabilities',
         capabilities: {
           text: true,
           multimodal: true,
@@ -71,27 +73,16 @@ class GeminiService {
         }
       },
       {
-        id: 'gemini-pro',
-        name: 'Gemini Pro',
+        id: 'gemini-2.5-flash-lite',
+        name: 'Gemini 2.5 Flash Lite',
         provider: 'google',
-        capabilities: {
-          text: true,
-          multimodal: false,
-          streaming: true,
-          maxTokens: 32768,
-          supportedFormats: ['text']
-        }
-      },
-      {
-        id: 'gemini-pro-vision',
-        name: 'Gemini Pro Vision',
-        provider: 'google',
+        description: 'Optimized for cost efficiency and low latency',
         capabilities: {
           text: true,
           multimodal: true,
-          streaming: false,
-          maxTokens: 16384,
-          supportedFormats: ['text', 'image']
+          streaming: true,
+          maxTokens: 1048576, // 1M tokens
+          supportedFormats: ['text', 'image', 'audio', 'video']
         }
       }
     ];
@@ -111,7 +102,7 @@ class GeminiService {
       }
 
       // 간단한 텍스트 생성으로 연결 테스트
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const result = await model.generateContent('Test connection');
       
       return {
@@ -164,7 +155,7 @@ class GeminiService {
    */
   async generateText(prompt, options = {}) {
     const {
-      model = 'gemini-1.5-flash',
+      model = 'gemini-2.5-flash',
       temperature = 0.7,
       maxOutputTokens = 2048,
       topP = 0.8,
@@ -278,7 +269,7 @@ class GeminiService {
    */
   async generateWithImage(prompt, imageData, options = {}) {
     const {
-      model = 'gemini-1.5-flash',
+      model = 'gemini-2.5-flash',
       temperature = 0.7,
       maxOutputTokens = 2048,
       mimeType = 'image/jpeg',
@@ -389,7 +380,7 @@ class GeminiService {
    */
   async chat(messages, options = {}) {
     const {
-      model = 'gemini-1.5-flash',
+      model = 'gemini-2.5-flash',
       temperature = 0.7,
       maxOutputTokens = 2048,
       systemInstruction = '',
@@ -527,7 +518,7 @@ class GeminiService {
   /**
    * 지원되는 파일 형식 확인
    */
-  isSupportedFileType(mimeType, modelId = 'gemini-1.5-flash') {
+  isSupportedFileType(mimeType, modelId = 'gemini-2.5-flash') {
     const model = this.availableModels.find(m => m.id === modelId);
     if (!model || !model.capabilities.multimodal) {
       return false;
