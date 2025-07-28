@@ -20,9 +20,22 @@ interface Message {
 interface ChatInterfaceProps {
   className?: string;
   sessionId?: number;
+  initialMode?: string;
+  initialMentorId?: number;
+  mbtiContext?: {
+    userType: string;
+    mentorType: string;
+    compatibility?: any;
+  };
 }
 
-export default function ChatInterface({ className = '', sessionId }: ChatInterfaceProps) {
+export default function ChatInterface({ 
+  className = '', 
+  sessionId, 
+  initialMode,
+  initialMentorId,
+  mbtiContext 
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();

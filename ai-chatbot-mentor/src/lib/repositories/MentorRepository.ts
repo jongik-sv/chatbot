@@ -211,6 +211,34 @@ export class MentorRepository extends BaseRepository {
     return !!stmt.get(...params);
   }
   
+  // MBTI 타입별 멘토 조회
+  getByMBTIType(mbtiType: string): Mentor[] {
+    const stmt = this.prepare(`
+      SELECT * FROM mentors 
+      WHERE mbti_type = ?
+      ORDER BY created_at DESC
+    `);
+    
+    const rows = stmt.all(mbtiType) as any[];
+    return rows.map(row => this.mapRowToMentor(row));
+  }
+
+  // 모든 멘토 조회
+  getAll(): Mentor[] {
+    const stmt = this.prepare(`
+      SELECT * FROM mentors 
+      ORDER BY created_at DESC
+    `);
+    
+    const rows = stmt.all() as any[];
+    return rows.map(row => this.mapRowToMentor(row));
+  }
+
+  // 사용자별 멘토 목록 조회 (별명)
+  getByUserId(userId: number): Mentor[] {
+    return this.findByUserId(userId);
+  }
+
   // 검색
   search(query: string, userId?: number): Mentor[] {
     const searchTerm = `%${query}%`;

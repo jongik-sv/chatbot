@@ -115,9 +115,9 @@ export class LLMService {
 
       // Google 공식 문서 기준 권장 모델 순서 (상위 3개)
       const recommendedModels = [
-        'gemini-2.0-flash-exp',      // 1순위: 최신 실험 모델
-        'gemini-1.5-pro',            // 2순위: 강력한 Pro 모델  
-        'gemini-1.5-flash'           // 3순위: 빠른 Flash 모델
+        'gemini-2.5-pro',           // 1순위: 가장 강력한 thinking 모델
+        'gemini-2.5-flash',         // 2순위: 성능-가격 균형 최적 모델
+        'gemini-2.5-flash-lite'     // 3순위: 비용 효율성 및 저지연 최적화 모델
       ];
 
       const availableModels: LLMModel[] = [];
@@ -177,28 +177,28 @@ export class LLMService {
   private getDefaultGeminiModels(): LLMModel[] {
     return [
       {
-        id: 'gemini-2.0-flash-exp',
-        name: 'Gemini 2.0 Flash (Experimental)',
+        id: 'gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
         provider: 'gemini',
         multimodal: true,
         available: true,
-        description: 'Google의 최신 실험적 멀티모달 AI 모델'
+        description: 'Our most powerful thinking model with maximum response accuracy'
       },
       {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
+        id: 'gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
         provider: 'gemini',
         multimodal: true,
         available: true,
-        description: 'Google의 가장 강력한 멀티모달 AI 모델'
+        description: 'Best model in terms of price-performance, offering well-rounded capabilities'
       },
       {
-        id: 'gemini-1.5-flash',
-        name: 'Gemini 1.5 Flash',
+        id: 'gemini-2.5-flash-lite',
+        name: 'Gemini 2.5 Flash Lite',
         provider: 'gemini',
         multimodal: true,
         available: true,
-        description: '빠르고 효율적인 멀티모달 AI 모델'
+        description: 'Optimized for cost efficiency and low latency'
       }
     ];
   }
@@ -220,7 +220,9 @@ export class LLMService {
    */
   private isGeminiMultimodal(modelName: string): boolean {
     const multimodalGeminiModels = [
-      'gemini-2.0-flash-exp',      // 최신 실험 모델
+      'gemini-2.5-pro',            // 최신 Pro 모델
+      'gemini-2.5-flash',          // 최신 Flash 모델
+      'gemini-2.5-flash-lite',     // 최신 Flash Lite 모델
       'gemini-1.5-pro',
       'gemini-1.5-flash',
       'gemini-1.5-flash-8b',

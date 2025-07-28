@@ -7,7 +7,8 @@ import {
   ClockIcon,
   XMarkIcon,
   PlusIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
@@ -15,7 +16,8 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: '새 채팅', href: '/chat', icon: PlusIcon, current: false },
+  { name: '새 채팅', href: '/', icon: PlusIcon, current: false },
+  { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, current: false },
   { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, current: true },
   { name: '문서 분석', href: '/documents', icon: DocumentTextIcon, current: false },
   { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, current: false },

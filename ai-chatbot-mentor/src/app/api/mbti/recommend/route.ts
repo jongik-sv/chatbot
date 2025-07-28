@@ -1,6 +1,7 @@
 // app/api/mbti/recommend/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { MBTIService, MBTIType } from '@/services/MBTIService';
+import { mbtiService } from '@/services/MBTIService';
+import { MBTIType } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,14 +19,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const validTypes: MBTIType[] = [
-      'INTJ', 'INTP', 'ENTJ', 'ENTP',
-      'INFJ', 'INFP', 'ENFJ', 'ENFP', 
-      'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-      'ISTP', 'ISFP', 'ESTP', 'ESFP'
-    ];
-
-    if (!validTypes.includes(userType)) {
+    if (!mbtiService.isValidMBTIType(userType)) {
       return NextResponse.json(
         {
           success: false,
@@ -35,19 +29,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const mbtiService = new MBTIService();
     const recommendedTypes = mbtiService.getRecommendedMentorTypes(userType, Math.min(count, 10));
 
     // 추천된 멘토 타입들의 상세 정보와 호환성 분석
     const recommendations = recommendedTypes.map(mentorType => {
-      const characteristics = mbtiService.getMBTICharacteristics(mentorType);
-      const compatibility = mbtiService.analyzeMBTICompatibility(userType, mentorType);
+      const profile = mbtiService.getMBTIProfile(mentorType);
+      const compatibility = mbtiService.getMBTICompatibility(userType, mentorType);
+      const mentorData = mbtiService.createMBTIMentor(mentorType, {});
       
       return {
         mentorType,
-        characteristics,
+        profile,
         compatibility,
-        systemPrompt: mbtiService.generateMBTISystemPrompt(mentorType, userType)
+        systemPrompt: mentorData.systemPrompt,
+        mentorPersonality: mentorData.adaptedPersonality
       };
     });
 
