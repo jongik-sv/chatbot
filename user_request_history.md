@@ -128,3 +128,40 @@ window.alert = function(message) {
 - ✅ HTML과 JavaScript 모드 모두에서 alert 정상 작동
 
 **상태**: ✅ Alert 실행 문제 완전 해결
+
+------
+
+11. 외부 콘텐츠 통합 기능 구현 요청
+
+**요구사항**:
+- YouTube 콘텐츠 처리 서비스 구현 (11.1)
+  - YouTube URL 파싱 및 메타데이터 추출
+  - 자막 추출 및 텍스트 변환
+  - YouTube 콘텐츠 지식 베이스 추가
+- 웹페이지 스크래핑 서비스 구현 (11.2)
+  - 웹페이지 콘텐츠 추출
+  - HTML 파싱 및 텍스트 정제
+  - 웹 콘텐츠 지식 베이스 통합
+
+------
+
+코드를 보고 sqlite의 테이블을 다시 맞춰줘.
+
+**주요 작업 내용**:
+- 코드베이스 분석하여 init-db.js와 schema.sql 파일의 차이점 확인
+- ChatRepository 클래스에서 실제 사용되는 테이블 구조 파악
+- SQLite 스키마를 코드 요구사항에 맞춰 수정:
+  - users 테이블: password_hash 제거, updated_at 추가
+  - 모든 테이블에 적절한 FOREIGN KEY CASCADE 설정 추가
+  - NOT NULL 제약조건 및 DEFAULT 값 정리
+  - settings 테이블 추가
+  - 누락된 인덱스들 추가
+
+**수정된 파일**:
+- ai-chatbot-mentor/database/schema.sql
+
+------
+
+데이터베이스 경로 분석: `/data/chatbot.db` vs `ai-chatbot-mentor/database/chatbot.db` 사용 현황 파악
+
+------
