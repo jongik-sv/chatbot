@@ -7,8 +7,12 @@ export function toKoreanTime(date: string | Date): Date {
   const targetDate = typeof date === 'string' ? new Date(date) : date;
   
   // 한국 시간대 (UTC+9)로 변환
-  const koreanTime = new Date(targetDate.toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
-  return koreanTime;
+  // 현재 시스템의 시간대 오프셋을 고려하여 한국 시간으로 변환
+  const koreanOffset = 9 * 60; // 한국은 UTC+9 (분 단위)
+  const localOffset = targetDate.getTimezoneOffset(); // 현재 시스템의 UTC 오프셋 (분 단위, 음수)
+  const offsetDiff = koreanOffset + localOffset; // 한국 시간과의 차이 (분 단위)
+  
+  return new Date(targetDate.getTime() + (offsetDiff * 60 * 1000));
 }
 
 /**
@@ -56,9 +60,11 @@ export function formatKoreanDate(date: string | Date, options?: {
  * 상대적 시간 표시 (예: "방금 전", "5분 전", "2시간 전")
  */
 export function formatRelativeTime(date: string | Date, baseDate?: Date): string {
-  const targetDate = toKoreanTime(date);
-  const now = baseDate ? toKoreanTime(baseDate) : toKoreanTime(new Date());
+  const targetDate = typeof date === 'string' ? new Date(date) : date;
+  const now = baseDate || new Date();
   
+  // 데이터베이스에서 가져온 시간이 UTC라고 가정하고 처리
+  // SQLite의 CURRENT_TIMESTAMP는 UTC 시간을 저장함
   const diffMs = now.getTime() - targetDate.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMinutes / 60);
