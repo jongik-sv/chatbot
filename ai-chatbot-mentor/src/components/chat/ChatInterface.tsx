@@ -9,6 +9,7 @@ import { ApiClient } from '../../lib/api';
 import { LLMModel, Message as MessageType } from '../../types';
 import { useChatContext } from '../../contexts/ChatContext';
 import { getCurrentKoreanTime } from '../../utils/dateUtils';
+import { DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface Message {
   id: string;
@@ -42,6 +43,7 @@ export default function ChatInterface({
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<string>(initialMode || 'chat');
+  const [documentInfo, setDocumentInfo] = useState<{ name: string; id?: number } | null>(null);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();
 
   // 컴포넌트 마운트 시 모델 목록 로드
@@ -95,12 +97,79 @@ export default function ChatInterface({
       if (response.session.modelUsed) {
         switchModel(response.session.modelUsed);
       }
+
+      // 문서 기반 세션인 경우 문서 정보 추출
+      if (response.session.mode === 'document' || response.session.mode === 'rag') {
+        extractDocumentInfo(loadedMessages);
+      }
     } catch (error) {
       console.error('세션 로드 실패:', error);
       dispatch({ type: 'SET_ERROR', payload: '대화 기록을 불러올 수 없습니다.' });
       setError('대화 기록을 불러올 수 없습니다.');
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const extractDocumentInfo = (messages: Message[]) => {
+    // 메시지 메타데이터에서 문서 정보 추출
+    for (const message of messages) {
+      if (message.metadata) {
+        // RAG 메타데이터에서 문서 정보 찾기
+        if (message.metadata.documentIds && Array.isArray(message.metadata.documentIds)) {
+          fetchDocumentNames(message.metadata.documentIds);
+          return;
+        }
+        
+        // 소스 정보에서 문서 이름 추출
+        if (message.metadata.sources && Array.isArray(message.metadata.sources)) {
+          const source = message.metadata.sources[0];
+          if (source && source.documentTitle) {
+            setDocumentInfo({ name: source.documentTitle });
+            return;
+          }
+        }
+      }
+    }
+
+    // 메시지 내용에서 "선택된 문서:" 패턴 찾기
+    const documentPattern = /선택된 문서:\s*(.+?)(?:\n|$)/;
+    for (const message of messages) {
+      if (message.role === 'user' && message.content) {
+        const match = message.content.match(documentPattern);
+        if (match) {
+          setDocumentInfo({ name: match[1].trim() });
+          return;
+        }
+      }
+    }
+
+    // 첫 번째 사용자 메시지에서 문서 정보 추출 (fallback)
+    const firstUserMessage = messages.find(msg => msg.role === 'user');
+    if (firstUserMessage?.metadata?.documentIds) {
+      const documentIds = firstUserMessage.metadata.documentIds;
+      if (Array.isArray(documentIds) && documentIds.length > 0) {
+        fetchDocumentNames(documentIds);
+      }
+    }
+  };
+
+  const fetchDocumentNames = async (documentIds: number[]) => {
+    try {
+      // 첫 번째 문서의 정보만 가져오기 (대부분 하나의 문서만 사용)
+      const documentId = documentIds[0];
+      const response = await fetch(`/api/documents/${documentId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.document) {
+          setDocumentInfo({ 
+            name: data.document.filename, 
+            id: data.document.id 
+          });
+        }
+      }
+    } catch (error) {
+      console.error('문서 정보 가져오기 실패:', error);
     }
   };
 
@@ -210,6 +279,17 @@ export default function ChatInterface({
           disabled={state.isLoading}
         />
       </div>
+
+      {/* Document Info Banner */}
+      {documentInfo && (sessionMode === 'document' || sessionMode === 'rag') && (
+        <div className="flex-shrink-0 bg-blue-50 border-b border-blue-200 p-3">
+          <div className="flex items-center text-sm text-blue-800">
+            <DocumentTextIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+            <span className="font-medium">선택된 문서:</span>
+            <span className="ml-1 truncate">{documentInfo.name}</span>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
