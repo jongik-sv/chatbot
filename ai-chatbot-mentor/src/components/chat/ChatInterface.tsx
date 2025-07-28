@@ -132,10 +132,11 @@ export default function ChatInterface({
 
       // 세션 업데이트 콜백 호출
       if (onSessionUpdate && response.sessionId) {
+        const responseContent = response.content || response.response;
         onSessionUpdate(response.sessionId, {
           messageCount: messages.length + 2, // user + assistant message
           lastMessage: {
-            content: response.content.substring(0, 100) + (response.content.length > 100 ? '...' : ''),
+            content: responseContent.substring(0, 100) + (responseContent.length > 100 ? '...' : ''),
             role: 'assistant',
             createdAt: new Date().toISOString()
           },
@@ -146,7 +147,7 @@ export default function ChatInterface({
       const assistantMessage: Message = {
         id: response.messageId.toString(),
         role: 'assistant',
-        content: response.content,
+        content: response.content || response.response, // RAG 엔드포인트는 response 필드 사용
         timestamp: getCurrentKoreanTime(),
         metadata: {
           artifacts: response.artifacts,

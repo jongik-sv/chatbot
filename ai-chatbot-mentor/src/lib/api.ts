@@ -13,7 +13,10 @@ export class ApiClient {
       return this.sendMessageWithFiles(request);
     }
 
-    const response = await fetch(`${API_BASE_URL}/chat`, {
+    // 문서 기반 대화인 경우 RAG 엔드포인트 사용
+    const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,7 +54,10 @@ export class ApiClient {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}/chat`, {
+    // 문서 기반 대화인 경우 RAG 엔드포인트 사용
+    const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       body: formData, // Content-Type 헤더는 자동으로 설정됨
     });
