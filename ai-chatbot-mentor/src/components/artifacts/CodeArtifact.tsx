@@ -69,7 +69,7 @@ export function CodeArtifact({
   const codeStyle = theme === 'dark' ? vscDarkPlus : vs;
 
   const isExecutable = () => {
-    return ['javascript', 'typescript', 'jsx', 'tsx', 'html', 'css', 'js', 'ts'].includes(language?.toLowerCase() || '');
+    return ['javascript', 'typescript', 'jsx', 'tsx', 'html', 'css', 'js', 'ts', 'python', 'py'].includes(language?.toLowerCase() || '');
   };
 
   return (

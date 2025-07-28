@@ -23,7 +23,7 @@ export function CodeExecutor({
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const isExecutable = () => {
-    return ['javascript', 'typescript', 'jsx', 'tsx', 'html', 'css'].includes(language.toLowerCase());
+    return ['javascript', 'typescript', 'jsx', 'tsx', 'html', 'css', 'python', 'py'].includes(language.toLowerCase());
   };
 
   const executeCode = () => {
@@ -43,6 +43,8 @@ export function CodeExecutor({
         executeJavaScript();
       } else if (language.toLowerCase() === 'css') {
         executeCSS();
+      } else if (['python', 'py'].includes(language.toLowerCase())) {
+        executePython();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '실행 중 오류가 발생했습니다.');
@@ -117,7 +119,7 @@ export function CodeExecutor({
       window.alert = function(message) {
         const alertDiv = document.createElement('div');
         alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; padding: 10px; margin: 5px 0; border-radius: 4px; color: #1976d2;';
-        alertDiv.innerHTML = '<strong>Alert:</strong> ' + String(message);
+        alertDiv.innerHTML = '🚨 Alert: ' + String(message);
         outputDiv.appendChild(alertDiv);
         
         setTimeout(() => {alertDiv.remove();}, 3000);
@@ -295,13 +297,21 @@ ${code}
       const div = document.createElement('div');
       div.className = 'output';
       div.style.background = '#e3f2fd';
-      div.style.border = '1px solid #2196f3';
+      div.style.border = '2px solid #2196f3';
       div.style.color = '#1976d2';
-      div.innerHTML = '<strong>Alert:</strong> ' + String(message);
+      div.style.fontWeight = 'bold';
+      div.innerHTML = '🚨 Alert: ' + String(message);
       outputDiv.appendChild(div);
       
-      // 실제 alert도 호출 (사용자가 원한다면)
-      originalAlert.call(window, message);
+      // 콘솔에도 출력
+      console.log('Alert:', message);
+      
+      // 실제 alert도 호출하되, iframe에서는 보이지 않을 수 있음
+      try {
+        originalAlert.call(window, message);
+      } catch (e) {
+        console.log('Native alert blocked in iframe, showing custom alert instead');
+      }
     };
     
     try {
@@ -345,6 +355,130 @@ ${code}
     <button>버튼 예제</button>
     <div class="box">박스 예제</div>
   </div>
+</body>
+</html>`;
+
+    if (iframeRef.current) {
+      const iframe = iframeRef.current;
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      
+      if (doc) {
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+        setIsReady(true);
+        setIsRunning(false);
+      }
+    }
+  };
+
+  const executePython = () => {
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Python Output</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  <style>
+    body { 
+      font-family: monospace;
+      padding: 20px;
+      margin: 0;
+      background: #f8f8f8;
+    }
+    .output {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .error {
+      background: #fee;
+      border: 1px solid #fcc;
+      color: #c00;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">Python 환경을 로딩 중입니다...</div>
+  <div id="output" style="display: none;"></div>
+  
+  <script>
+    async function main() {
+      try {
+        // Pyodide 로드
+        let pyodide = await loadPyodide();
+        
+        const loadingDiv = document.getElementById('loading');
+        const outputDiv = document.getElementById('output');
+        
+        loadingDiv.style.display = 'none';
+        outputDiv.style.display = 'block';
+        
+        // Python 출력 가로채기
+        pyodide.runPython(\`
+import sys
+from io import StringIO
+
+class OutputCapture:
+    def __init__(self):
+        self.output = []
+    
+    def write(self, text):
+        if text.strip():
+            self.output.append(text.rstrip())
+    
+    def get_output(self):
+        return '\\n'.join(self.output)
+    
+    def flush(self):
+        pass
+
+# 표준 출력 캡처
+output_capture = OutputCapture()
+sys.stdout = output_capture
+        \`);
+        
+        try {
+          // 사용자 코드 실행
+          pyodide.runPython(\`${code.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`);
+          
+          // 출력 결과 가져오기
+          const output = pyodide.runPython('output_capture.get_output()');
+          
+          if (output) {
+            const div = document.createElement('div');
+            div.className = 'output';
+            div.textContent = output;
+            outputDiv.appendChild(div);
+          } else {
+            const div = document.createElement('div');
+            div.className = 'output';
+            div.textContent = '실행 완료 (출력 없음)';
+            outputDiv.appendChild(div);
+          }
+        } catch (error) {
+          const div = document.createElement('div');
+          div.className = 'output error';
+          div.textContent = 'Python 오류: ' + error.message;
+          outputDiv.appendChild(div);
+        }
+      } catch (error) {
+        document.getElementById('loading').innerHTML = 
+          '<div class="output error">Pyodide 로딩 실패: ' + error.message + '</div>';
+      }
+    }
+    
+    main();
+  </script>
 </body>
 </html>`;
 
@@ -415,7 +549,7 @@ ${code}
             <div className="text-center">
               <StopIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
               <p>이 언어는 브라우저에서 실행할 수 없습니다.</p>
-              <p className="text-xs mt-1">지원 언어: JavaScript, TypeScript, HTML, CSS, React</p>
+              <p className="text-xs mt-1">지원 언어: JavaScript, TypeScript, HTML, CSS, React, Python</p>
             </div>
           </div>
         ) : !isReady ? (
@@ -429,7 +563,7 @@ ${code}
           <iframe
             ref={iframeRef}
             className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
+            sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms"
             title="Code Execution Result"
           />
         )}
