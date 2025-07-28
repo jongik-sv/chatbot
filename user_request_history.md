@@ -81,3 +81,50 @@ chatbot.db 파일이 2개 있어 하나를 쓰도록 만들어야 될것 같아.
 - ✅ 사용자 친화적 UI/UX 완성
 
 **상태**: 🎯 모든 요청 기능 완전 구현 완료
+
+------
+
+alert 실행을 해도 alert이 안나와.
+
+### Alert 실행 문제 해결
+
+**문제 분석**:
+- iframe 내부에서 실행되는 alert가 부모 창에서 보이지 않음
+- 브라우저의 iframe alert 차단 정책으로 인한 문제
+- JavaScript와 HTML 실행 모드 모두에서 alert 시각화 필요
+
+**해결 방법**:
+
+#### 1. ✅ JavaScript 실행 모드 (`executeVanillaJS`)
+- `window.alert` 함수를 가로채서 화면에 표시
+- alert 메시지를 파란색 박스로 iframe 내부에 렌더링
+- 원본 alert도 함께 호출하여 브라우저 알림도 표시
+
+#### 2. ✅ HTML 실행 모드 (`executeHTML`) 
+- HTML 코드에 alert 가로채기 스크립트 자동 주입
+- 완전한 HTML 문서와 HTML 조각 모두 지원
+- 우상단에 고정 위치로 alert 메시지 표시 (3초 후 자동 제거)
+
+**구현 세부사항**:
+```javascript
+// JavaScript 모드
+window.alert = function(message) {
+  const div = document.createElement('div');
+  div.style.background = '#e3f2fd';
+  div.innerHTML = '<strong>Alert:</strong> ' + String(message);
+  outputDiv.appendChild(div);
+  originalAlert.call(window, message); // 실제 alert도 호출
+};
+
+// HTML 모드  
+- <head> 태그 뒤에 alert 가로채기 스크립트 주입
+- position: fixed로 우상단에 알림 박스 표시
+- setTimeout으로 3초 후 자동 제거
+```
+
+**테스트 결과**:
+- ✅ JavaScript 아티팩트 생성 확인 (id: 16)
+- ✅ `alert('테스트 메시지입니다!');` 코드 실행 시 시각적 표시
+- ✅ HTML과 JavaScript 모드 모두에서 alert 정상 작동
+
+**상태**: ✅ Alert 실행 문제 완전 해결

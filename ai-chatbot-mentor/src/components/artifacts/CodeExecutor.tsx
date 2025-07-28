@@ -57,8 +57,83 @@ export function CodeExecutor({
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     
     if (doc) {
+      // HTML 코드에 alert 가로채기 스크립트 주입
+      let enhancedCode = code;
+      
+      // HTML 문서인지 확인
+      if (code.includes('<html>') || code.includes('<!DOCTYPE')) {
+        // <head> 태그 뒤에 스크립트 추가
+        const alertScript = `
+<script>
+// Alert 가로채기 및 표시
+(function() {
+  const originalAlert = window.alert;
+  const outputDiv = document.createElement('div');
+  outputDiv.id = 'alert-output';
+  outputDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; max-width: 300px;';
+  document.body.appendChild(outputDiv);
+
+  window.alert = function(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; padding: 10px; margin: 5px 0; border-radius: 4px; color: #1976d2; font-family: Arial, sans-serif;';
+    alertDiv.innerHTML = '<strong>Alert:</strong> ' + String(message);
+    outputDiv.appendChild(alertDiv);
+    
+    // 3초 후 알림 제거
+    setTimeout(() => {
+      if (alertDiv.parentNode) {
+        alertDiv.parentNode.removeChild(alertDiv);
+      }
+    }, 3000);
+    
+    // 실제 alert도 호출
+    originalAlert.call(window, message);
+  };
+})();
+</script>`;
+        
+        if (code.includes('</head>')) {
+          enhancedCode = code.replace('</head>', alertScript + '</head>');
+        } else if (code.includes('<body>')) {
+          enhancedCode = code.replace('<body>', '<body>' + alertScript);
+        } else {
+          enhancedCode = alertScript + code;
+        }
+      } else {
+        // 단순 HTML 조각인 경우 전체 문서로 감싸기
+        enhancedCode = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Alert 가로채기
+    window.addEventListener('load', function() {
+      const originalAlert = window.alert;
+      const outputDiv = document.createElement('div');
+      outputDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; max-width: 300px;';
+      document.body.appendChild(outputDiv);
+
+      window.alert = function(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; padding: 10px; margin: 5px 0; border-radius: 4px; color: #1976d2;';
+        alertDiv.innerHTML = '<strong>Alert:</strong> ' + String(message);
+        outputDiv.appendChild(alertDiv);
+        
+        setTimeout(() => {alertDiv.remove();}, 3000);
+        originalAlert.call(window, message);
+      };
+    });
+  </script>
+</head>
+<body>
+${code}
+</body>
+</html>`;
+      }
+      
       doc.open();
-      doc.write(code);
+      doc.write(enhancedCode);
       doc.close();
       setIsReady(true);
       setIsRunning(false);
@@ -196,6 +271,7 @@ export function CodeExecutor({
     // console.log 가로채기
     const originalLog = console.log;
     const originalError = console.error;
+    const originalAlert = window.alert;
     const outputDiv = document.getElementById('output');
     
     console.log = function(...args) {
@@ -212,6 +288,20 @@ export function CodeExecutor({
       div.textContent = 'Error: ' + args.join(' ');
       outputDiv.appendChild(div);
       originalError.apply(console, args);
+    };
+
+    // alert 가로채기
+    window.alert = function(message) {
+      const div = document.createElement('div');
+      div.className = 'output';
+      div.style.background = '#e3f2fd';
+      div.style.border = '1px solid #2196f3';
+      div.style.color = '#1976d2';
+      div.innerHTML = '<strong>Alert:</strong> ' + String(message);
+      outputDiv.appendChild(div);
+      
+      // 실제 alert도 호출 (사용자가 원한다면)
+      originalAlert.call(window, message);
     };
     
     try {
