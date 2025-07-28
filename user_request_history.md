@@ -389,3 +389,70 @@ alert, console.log 다 안되는데 잘 확인하고 되게 해봐.
 4. alert 팝업 표시 여부 확인
 
 **결과**: iframe의 실제 작동 상태와 alert 차단 원인을 정확히 파악할 수 있는 디버깅 도구 완성
+
+------
+
+메시지를 입력하고 나면 포커스가 메시지 입력창에 가지 않아서 입력할 때 마다 메시지 입력창을 클릭해야해
+
+**문제 상황**:
+- 메시지 전송 후 입력창 포커스가 사라짐
+- 연속으로 메시지를 작성할 때마다 입력창을 다시 클릭해야 하는 불편함
+
+**해결 방법**:
+
+#### ✅ 메시지 전송 후 포커스 유지 기능 추가
+- `handleSubmit()` 함수에서 메시지 전송 완료 후 자동으로 텍스트 영역에 포커스 설정
+- `setTimeout()` 100ms 딜레이로 DOM 업데이트 완료 후 포커스 적용
+- 기존 텍스트 영역 높이 리셋과 함께 포커스 관리
+
+**구현 코드**:
+```javascript
+setTimeout(() => {
+  textareaRef.current?.focus();
+}, 100);
+```
+
+**수정된 파일**:
+- src/components/chat/MessageInput.tsx
+
+**결과**: 메시지 전송 후 자동으로 입력창에 포커스가 유지되어 연속 입력 가능
+
+------
+
+아티팩트 코드창을 monaco 로 바꿔줘.
+
+**작업 내용**:
+
+#### 1. ✅ Monaco Editor 패키지 설치
+- `@monaco-editor/react` 패키지 설치 완료
+- React 전용 Monaco Editor 래퍼 라이브러리 추가
+
+#### 2. ✅ MonacoCodeEditor 컴포넌트 생성
+- 새로운 Monaco Editor 전용 컴포넌트 구현
+- 다양한 프로그래밍 언어 지원 (JavaScript, TypeScript, Python, Java, C++, HTML, CSS 등)
+- 편집 모드와 읽기 전용 모드 지원
+- 복사, 편집, 저장, 취소 기능 구현
+
+#### 3. ✅ CodeArtifact에 Monaco Editor 통합
+- 기존 뷰 모드에 "Monaco" 탭 추가 (첫 번째 탭으로 설정)
+- Monaco, 미리보기, 원본, 실행 4가지 모드 제공
+- Monaco Editor가 기본 뷰로 설정됨
+
+#### 4. ✅ 언어별 문법 하이라이팅 설정
+- Monaco Editor의 내장 언어 지원 활용
+- 40여 개 프로그래밍 언어 매핑 구현
+- 라이트/다크 테마 지원
+
+**구현된 기능**:
+- **고급 코드 편집**: 자동완성, 문법 검사, 브래킷 매칭
+- **실시간 편집**: 편집 모드에서 코드 수정 가능
+- **테마 지원**: 라이트/다크 모드 전환
+- **상태 표시**: 편집 중 상태, 문자/줄 수 표시
+- **키보드 단축키**: Monaco Editor 기본 단축키 지원
+
+**수정된 파일**:
+- package.json: @monaco-editor/react 패키지 추가
+- MonacoCodeEditor.tsx: 새 컴포넌트 생성
+- CodeArtifact.tsx: Monaco Editor 통합
+
+**결과**: VS Code와 동일한 편집 경험을 제공하는 고품질 코드 에디터로 업그레이드
