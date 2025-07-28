@@ -41,6 +41,7 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [sessionMode, setSessionMode] = useState<string>(initialMode || 'chat');
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();
 
   // 컴포넌트 마운트 시 모델 목록 로드
@@ -85,6 +86,11 @@ export default function ChatInterface({
       setMessages(loadedMessages);
       dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
       
+      // 세션의 모드 설정
+      if (response.session.mode) {
+        setSessionMode(response.session.mode);
+      }
+      
       // 세션의 모델 설정
       if (response.session.modelUsed) {
         switchModel(response.session.modelUsed);
@@ -119,7 +125,7 @@ export default function ChatInterface({
       const response = await ApiClient.sendMessage({
         message: content,
         model: state.selectedModel,
-        mode: initialMode || 'chat',
+        mode: sessionMode,
         sessionId: state.currentSessionId,
         mentorId: initialMentorId,
         files
