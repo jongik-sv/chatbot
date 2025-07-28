@@ -76,7 +76,7 @@ export default function HistoryPage() {
                   </h1>
                   <p className="text-sm text-gray-500 mt-1">
                     {view === 'list' 
-                      ? '이전 대화를 찾아보고 이어서 채팅할 수 있습니다.'
+                      ? '검색, 필터링, 상세 분석으로 대화 기록을 체계적으로 관리하세요. (💡 빠른 접근은 채팅 목록 이용)'
                       : '대화 내용을 확인하고 이어서 채팅할 수 있습니다.'
                     }
                   </p>

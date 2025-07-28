@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS documents (
   filename TEXT NOT NULL,
   file_type TEXT,
   file_path TEXT,
+  file_size INTEGER DEFAULT 0,
   content TEXT,
   metadata TEXT DEFAULT '{}', -- JSON
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

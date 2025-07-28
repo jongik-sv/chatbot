@@ -39,6 +39,9 @@ function initializeSchema() {
     db.exec(schema);
     console.log('Database schema initialized successfully');
     
+    // 마이그레이션 실행
+    runMigrations();
+    
     // 기본 데이터 삽입
     const initDataPath = path.join(process.cwd(), 'database', 'init-data.sql');
     if (fs.existsSync(initDataPath)) {
@@ -49,6 +52,31 @@ function initializeSchema() {
   } catch (error) {
     console.error('Failed to initialize database schema:', error);
     throw error;
+  }
+}
+
+function runMigrations() {
+  if (!db) return;
+  
+  try {
+    // file_size 컬럼 추가 마이그레이션
+    const migrationPath = path.join(process.cwd(), 'database', 'migration-add-file-size.sql');
+    if (fs.existsSync(migrationPath)) {
+      // 컬럼이 이미 존재하는지 확인
+      const columnsQuery = db.prepare("PRAGMA table_info(documents)");
+      const columns = columnsQuery.all() as any[];
+      const hasFileSizeColumn = columns.some(col => col.name === 'file_size');
+      
+      if (!hasFileSizeColumn) {
+        console.log('Running migration: Add file_size column to documents table');
+        const migration = fs.readFileSync(migrationPath, 'utf8');
+        db.exec(migration);
+        console.log('Migration completed: file_size column added');
+      }
+    }
+  } catch (error) {
+    console.error('Migration failed:', error);
+    // 마이그레이션 실패는 치명적이지 않으므로 계속 진행
   }
 }
 

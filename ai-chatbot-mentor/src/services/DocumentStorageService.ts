@@ -365,7 +365,17 @@ export class DocumentStorageService {
     documentsByType: { [key: string]: number };
     documentsByLanguage: { [key: string]: number };
   } {
-    const totalQuery = this.db.prepare(`SELECT COUNT(*) as count, SUM(file_size) as totalSize FROM documents`);
+    // file_size 컬럼이 있는지 확인
+    const columnsQuery = this.db.prepare("PRAGMA table_info(documents)");
+    const columns = columnsQuery.all() as any[];
+    const hasFileSizeColumn = columns.some(col => col.name === 'file_size');
+    
+    let totalQuery;
+    if (hasFileSizeColumn) {
+      totalQuery = this.db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(file_size), 0) as totalSize FROM documents`);
+    } else {
+      totalQuery = this.db.prepare(`SELECT COUNT(*) as count, 0 as totalSize FROM documents`);
+    }
     const totalResult = totalQuery.get() as any;
 
     const typeQuery = this.db.prepare(`SELECT file_type, COUNT(*) as count FROM documents GROUP BY file_type`);

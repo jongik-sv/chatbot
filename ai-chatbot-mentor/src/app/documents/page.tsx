@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ChatInterface from '@/components/chat/ChatInterface';
-// import DocumentUpload from '@/components/documents/DocumentUpload';
-// import DocumentList from '@/components/documents/DocumentList';
+import DocumentUpload from '@/components/documents/DocumentUpload';
+import DocumentList from '@/components/documents/DocumentList';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { DocumentIcon, MagnifyingGlassIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
@@ -21,11 +21,11 @@ export default function DocumentsPage() {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/documents/upload');
+      const response = await fetch('/api/documents');
       const data = await response.json();
       
       if (data.success) {
-        setDocuments(data.documents || []);
+        setDocuments(data.data || []);
       }
     } catch (error) {
       console.error('문서 목록 로드 실패:', error);
@@ -34,8 +34,33 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDocumentUploaded = (document: any) => {
-    setDocuments(prev => [document, ...prev]);
+  const handleUploadComplete = (files: File[]) => {
+    // 업로드 완료 후 문서 목록 새로고침
+    loadDocuments();
+  };
+
+  const handleDocumentDelete = async (id: number) => {
+    try {
+      const response = await fetch(`/api/documents?id=${id}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setDocuments(prev => prev.filter((doc: any) => doc.id !== id));
+        setSelectedDocuments(prev => prev.filter(docId => docId !== id));
+      } else {
+        alert(result.error || '문서 삭제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('문서 삭제 오류:', error);
+      alert('문서 삭제에 실패했습니다.');
+    }
+  };
+
+  const handleDocumentView = (document: any) => {
+    // 문서 보기 기능 (향후 구현)
+    console.log('문서 보기:', document);
   };
 
   const handleDocumentSelect = (documentId: number, selected: boolean) => {
@@ -142,11 +167,11 @@ export default function DocumentsPage() {
             <div className="space-y-4">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">문서 업로드</h2>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <DocumentIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">문서 업로드 기능은 별도 구현 예정</p>
-                  <p className="text-sm text-gray-500 mt-2">현재는 RAG 시스템 백엔드만 구현됨</p>
-                </div>
+                <DocumentUpload 
+                  onUploadComplete={handleUploadComplete}
+                  maxFileSize={10}
+                  acceptedTypes={['.pdf', '.txt', '.docx', '.md']}
+                />
               </div>
 
               {/* RAG 시스템 설명 */}
@@ -173,39 +198,30 @@ export default function DocumentsPage() {
               </div>
 
               <div className="h-96 overflow-y-auto">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span className="ml-3 text-gray-600">문서 목록 로드 중...</span>
-                  </div>
-                ) : documents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                    <DocumentIcon className="w-12 h-12 mb-2" />
-                    <p className="text-center">
-                      아직 업로드된 문서가 없습니다.<br />
-                      문서를 업로드해서 AI와 대화해보세요.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {documents.map((doc: any) => (
-                      <div 
-                        key={doc.id}
-                        className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedDocuments.includes(doc.id)}
-                          onChange={(e) => handleDocumentSelect(doc.id, e.target.checked)}
-                          className="mr-3"
-                        />
-                        <DocumentIcon className="w-5 h-5 text-gray-400 mr-3" />
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-900">{doc.filename}</p>
-                          <p className="text-sm text-gray-500">{doc.fileType}</p>
-                        </div>
-                      </div>
-                    ))}
+                <DocumentList
+                  documents={documents}
+                  loading={loading}
+                  onDelete={handleDocumentDelete}
+                  onView={handleDocumentView}
+                />
+                
+                {/* 문서 선택 체크박스 (임시) */}
+                {!loading && documents.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">대화할 문서 선택:</h3>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {documents.map((doc: any) => (
+                        <label key={doc.id} className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={selectedDocuments.includes(doc.id)}
+                            onChange={(e) => handleDocumentSelect(doc.id, e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="truncate">{doc.filename}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

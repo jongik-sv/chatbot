@@ -6,6 +6,7 @@ import { Mentor } from '../../types';
 import { ApiClient } from '../../lib/api';
 import MentorForm, { MentorFormData } from './MentorForm';
 import MentorList from './MentorList';
+import InteractiveMentorCreator from './InteractiveMentorCreator';
 
 interface MentorManagerProps {
   currentUserId?: number;
@@ -13,7 +14,7 @@ interface MentorManagerProps {
   showSelectButton?: boolean;
 }
 
-type ViewMode = 'list' | 'create' | 'edit';
+type ViewMode = 'list' | 'create' | 'edit' | 'interactive';
 
 export default function MentorManager({ 
   currentUserId, 
@@ -131,6 +132,13 @@ export default function MentorManager({
     setViewMode('edit');
   };
 
+  // 대화형 멘토 생성 완료
+  const handleInteractiveMentorCreated = (mentor: Mentor) => {
+    setMentors(prev => [mentor, ...prev]);
+    setViewMode('list');
+    alert('대화형 멘토가 성공적으로 생성되었습니다!');
+  };
+
   // 취소
   const handleCancel = () => {
     setViewMode('list');
@@ -149,15 +157,26 @@ export default function MentorManager({
                 개인화된 AI 멘토를 생성하고 관리하세요.
               </p>
             </div>
-            <button
-              onClick={() => setViewMode('create')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              새 멘토 생성
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setViewMode('interactive')}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                대화형 생성
+              </button>
+              <button
+                onClick={() => setViewMode('create')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                직접 생성
+              </button>
+            </div>
           </div>
 
           {/* 통계 */}
@@ -237,6 +256,14 @@ export default function MentorManager({
           onSubmit={handleUpdateMentor}
           onCancel={handleCancel}
           isLoading={isSubmitting}
+        />
+      )}
+
+      {viewMode === 'interactive' && (
+        <InteractiveMentorCreator
+          userId={currentUserId}
+          onMentorCreated={handleInteractiveMentorCreated}
+          onCancel={handleCancel}
         />
       )}
     </div>
