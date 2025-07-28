@@ -6,7 +6,8 @@ import {
   CalendarIcon,
   UserIcon,
   SparklesIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
 import { formatRelativeTime } from '../utils/dateUtils';
@@ -29,6 +30,7 @@ export default function ChatsPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<number | null>(null);
 
   useEffect(() => {
     loadSessions();
@@ -47,6 +49,35 @@ export default function ChatsPage() {
       console.error('채팅 목록 로딩 오류:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (!confirm('이 대화를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      setDeletingSessionId(sessionId);
+      
+      const response = await fetch(`/api/sessions/${sessionId}?userId=1`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('대화 삭제에 실패했습니다.');
+      }
+
+      // 목록에서 삭제된 세션 제거
+      setSessions(prev => prev.filter(session => session.id !== sessionId));
+    } catch (err) {
+      console.error('세션 삭제 오류:', err);
+      alert(err instanceof Error ? err.message : '대화 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setDeletingSessionId(null);
     }
   };
 
@@ -141,44 +172,63 @@ export default function ChatsPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {sessions.map((session) => (
-              <a
+              <div
                 key={session.id}
-                href={`/chat/${session.id}`}
-                className="block bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-4"
+                className="relative block bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 p-4"
               >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center text-sm text-gray-500">
-                    {getModeIcon(session.mode)}
-                    <span className="ml-2">{getModeLabel(session.mode)}</span>
+                {/* 삭제 버튼 */}
+                <button
+                  onClick={(e) => handleDeleteSession(session.id, e)}
+                  disabled={deletingSessionId === session.id}
+                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                  title="대화 삭제"
+                >
+                  {deletingSessionId === session.id ? (
+                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <TrashIcon className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* 세션 링크 */}
+                <a
+                  href={`/chat/${session.id}`}
+                  className="block"
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-3 pr-8">
+                    <div className="flex items-center text-sm text-gray-500">
+                      {getModeIcon(session.mode)}
+                      <span className="ml-2">{getModeLabel(session.mode)}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-gray-400">
+                      <CalendarIcon className="h-4 w-4 mr-1" />
+                      {formatDate(session.updated_at)}
+                    </div>
                   </div>
-                  <div className="flex items-center text-xs text-gray-400">
-                    <CalendarIcon className="h-4 w-4 mr-1" />
-                    {formatDate(session.updated_at)}
+
+                  {/* Title */}
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    {session.title}
+                  </h3>
+
+                  {/* Last Message Preview */}
+                  {session.lastMessage && (
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      {session.lastMessage.content.replace(/\*\*/g, '').substring(0, 100)}
+                      {session.lastMessage.content.length > 100 ? '...' : ''}
+                    </p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{session.messageCount}개 메시지</span>
+                    <span className="px-2 py-1 bg-gray-100 rounded-full">
+                      {session.mode === 'chat' ? '일반' : session.mode.toUpperCase()}
+                    </span>
                   </div>
-                </div>
-
-                {/* Title */}
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {session.title}
-                </h3>
-
-                {/* Last Message Preview */}
-                {session.lastMessage && (
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                    {session.lastMessage.content.replace(/\*\*/g, '').substring(0, 100)}
-                    {session.lastMessage.content.length > 100 ? '...' : ''}
-                  </p>
-                )}
-
-                {/* Footer */}
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{session.messageCount}개 메시지</span>
-                  <span className="px-2 py-1 bg-gray-100 rounded-full">
-                    {session.mode === 'chat' ? '일반' : session.mode.toUpperCase()}
-                  </span>
-                </div>
-              </a>
+                </a>
+              </div>
             ))}
           </div>
         )}
