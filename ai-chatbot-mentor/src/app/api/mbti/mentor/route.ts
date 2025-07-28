@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
       userId: userId || 1,
       name: mbtiMentor.name,
       description: mbtiMentor.description,
-      personality: JSON.stringify(mbtiMentor.personality),
-      expertise: JSON.stringify(mbtiMentor.expertise),
+      personality: mbtiMentor.personality,
+      expertise: mbtiMentor.expertise,
       mbtiType: mbtiMentor.mbtiType,
       systemPrompt: mbtiMentor.systemPrompt,
       isPublic: false

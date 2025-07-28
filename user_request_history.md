@@ -287,3 +287,10 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - Ollama가 설치되지 않아서 모델 목록이 비어있는 상황
 - Google Gemini API 문서의 Model variants 섹션에서 상위 3개 모델을 가져오는 서비스 구현
 - https://ai.google.dev/gemini-api/docs/models 페이지 참고하여 구현
+
+------
+**요청 날짜**: 2025-07-28
+**요청 내용**: MBTI 멘토 생성 시 SQLite 바인딩 오류 해결
+- TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null 오류 발생
+- MentorRepository.create() 메서드에서 personality, expertise 필드 이중 JSON.stringify 문제
+- API 라우트에서 이미 JSON 문자열로 변환한 데이터를 다시 변환하려 시도하는 문제
