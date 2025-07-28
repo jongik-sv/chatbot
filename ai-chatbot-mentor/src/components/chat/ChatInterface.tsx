@@ -252,72 +252,79 @@ export default function ChatInterface({
     }
   };
 
+  // 아티팩트 배열 계산
+  const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []))
+    .filter(artifact => artifact && artifact.id);
+
   return (
-    <div className={`flex flex-col h-full overflow-hidden ${className}`}>
-      {/* Error Banner */}
-      {error && (
-        <div className="flex-shrink-0 bg-red-50 border-b border-red-200 p-3">
-          <div className="flex">
-            <div className="text-sm text-red-700">
-              {error}
+    <div className={`flex h-full overflow-hidden ${className}`}>
+      {/* 메인 채팅 영역 */}
+      <div className={`flex flex-col ${artifacts.length > 0 ? 'w-2/3' : 'w-full'} transition-all duration-300`}>
+        {/* Error Banner */}
+        {error && (
+          <div className="flex-shrink-0 bg-red-50 border-b border-red-200 p-3">
+            <div className="flex">
+              <div className="text-sm text-red-700">
+                {error}
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-600"
+              >
+                ✕
+              </button>
             </div>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-red-400 hover:text-red-600"
-            >
-              ✕
-            </button>
+          </div>
+        )}
+
+        {/* Model Selector */}
+        <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
+          <ModelSelector
+            models={state.availableModels}
+            selectedModel={state.selectedModel}
+            onModelChange={switchModel}
+            disabled={state.isLoading}
+          />
+        </div>
+
+        {/* Document Info Banner */}
+        {documentInfo && (sessionMode === 'document' || sessionMode === 'rag') && (
+          <div className="flex-shrink-0 bg-blue-50 border-b border-blue-200 p-3">
+            <div className="flex items-center text-sm text-blue-800">
+              <DocumentTextIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="font-medium">선택된 문서:</span>
+              <span className="ml-1 truncate">{documentInfo.name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <MessageList messages={messages} mentorId={initialMentorId} />
+          {state.isLoading && <TypingIndicator />}
+        </div>
+
+        {/* Input */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            disabled={state.isLoading}
+            placeholder="메시지를 입력하세요..."
+          />
+        </div>
+      </div>
+
+      {/* 오른쪽 아티팩트 패널 */}
+      {artifacts.length > 0 && (
+        <div className="w-1/3 border-l border-gray-200 bg-gray-50 flex flex-col">
+          <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 bg-white">
+            <h3 className="text-lg font-semibold text-gray-900">아티팩트</h3>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <ArtifactPanel artifacts={artifacts} className="h-full" />
           </div>
         </div>
       )}
-
-      {/* Model Selector */}
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-white">
-        <ModelSelector
-          models={state.availableModels}
-          selectedModel={state.selectedModel}
-          onModelChange={switchModel}
-          disabled={state.isLoading}
-        />
-      </div>
-
-      {/* Document Info Banner */}
-      {documentInfo && (sessionMode === 'document' || sessionMode === 'rag') && (
-        <div className="flex-shrink-0 bg-blue-50 border-b border-blue-200 p-3">
-          <div className="flex items-center text-sm text-blue-800">
-            <DocumentTextIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="font-medium">선택된 문서:</span>
-            <span className="ml-1 truncate">{documentInfo.name}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <MessageList messages={messages} mentorId={initialMentorId} />
-        {state.isLoading && <TypingIndicator />}
-      </div>
-
-      {/* Artifacts Panel */}
-      {(() => {
-        // 모든 메시지의 metadata.artifacts를 하나의 배열로 합침 (null 값 필터링)
-        const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []))
-          .filter(artifact => artifact && artifact.id);
-        return artifacts.length > 0 ? (
-          <div className="p-4 border-t border-gray-100 bg-gray-50">
-            <ArtifactPanel artifacts={artifacts} />
-          </div>
-        ) : null;
-      })()}
-
-      {/* Input */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          disabled={state.isLoading}
-          placeholder="메시지를 입력하세요..."
-        />
-      </div>
     </div>
   );
 }

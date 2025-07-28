@@ -339,7 +339,7 @@ export function CodeExecutor({
           <iframe
             ref={iframeRef}
             className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-modals allow-popups"
             title="Code Execution Result"
           />
         )}
