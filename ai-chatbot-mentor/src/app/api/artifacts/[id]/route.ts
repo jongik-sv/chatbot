@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/database';
+import { ArtifactService } from '@/services/ArtifactService';
 
 // GET /api/artifacts/[id] - 특정 아티팩트 조회
 export async function GET(
@@ -16,11 +16,7 @@ export async function GET(
       );
     }
 
-    const db = await getDatabase();
-    const artifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [id]
-    );
+    const artifact = ArtifactService.getArtifact(Number(id));
 
     if (!artifact) {
       return NextResponse.json(
@@ -31,7 +27,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: artifact
+      artifact: artifact
     });
 
   } catch (error) {
@@ -60,63 +56,30 @@ export async function PUT(
       );
     }
 
-    const db = await getDatabase();
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (content !== undefined) updateData.content = content;
+    if (language !== undefined) updateData.language = language;
 
-    // 아티팩트 존재 확인
-    const existingArtifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [id]
-    );
-
-    if (!existingArtifact) {
-      return NextResponse.json(
-        { success: false, error: '아티팩트를 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
-
-    // 업데이트할 필드들 준비
-    const updates: string[] = [];
-    const params: any[] = [];
-
-    if (title !== undefined) {
-      updates.push('title = ?');
-      params.push(title);
-    }
-
-    if (content !== undefined) {
-      updates.push('content = ?');
-      params.push(content);
-    }
-
-    if (language !== undefined) {
-      updates.push('language = ?');
-      params.push(language);
-    }
-
-    if (updates.length === 0) {
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { success: false, error: '업데이트할 필드가 없습니다.' },
         { status: 400 }
       );
     }
 
-    params.push(id);
+    const updatedArtifact = ArtifactService.updateArtifact(Number(id), updateData);
 
-    await db.run(
-      `UPDATE artifacts SET ${updates.join(', ')} WHERE id = ?`,
-      params
-    );
-
-    // 업데이트된 아티팩트 조회
-    const updatedArtifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [id]
-    );
+    if (!updatedArtifact) {
+      return NextResponse.json(
+        { success: false, error: '아티팩트를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: updatedArtifact
+      artifact: updatedArtifact
     });
 
   } catch (error) {
@@ -143,22 +106,14 @@ export async function DELETE(
       );
     }
 
-    const db = await getDatabase();
+    const deleted = ArtifactService.deleteArtifact(Number(id));
 
-    // 아티팩트 존재 확인
-    const existingArtifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [id]
-    );
-
-    if (!existingArtifact) {
+    if (!deleted) {
       return NextResponse.json(
         { success: false, error: '아티팩트를 찾을 수 없습니다.' },
         { status: 404 }
       );
     }
-
-    await db.run('DELETE FROM artifacts WHERE id = ?', [id]);
 
     return NextResponse.json({
       success: true,
