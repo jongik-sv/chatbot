@@ -118,8 +118,9 @@ export default function ChatInterface({
       const response = await ApiClient.sendMessage({
         message: content,
         model: state.selectedModel,
-        mode: 'chat',
+        mode: initialMode || 'chat',
         sessionId: state.currentSessionId,
+        mentorId: initialMentorId,
         files
       });
 

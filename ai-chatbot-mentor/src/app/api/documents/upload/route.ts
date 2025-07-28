@@ -5,6 +5,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentProcessingService } from '@/services/DocumentProcessingService';
 import { DocumentStorageService } from '@/services/DocumentStorageService';
+import { vectorSearchService } from '@/services/VectorSearchService';
 
 const TEMP_DIR = path.join(process.cwd(), 'data', 'temp');
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -82,6 +83,16 @@ export async function POST(request: NextRequest) {
       // 임시 파일 정리
       fs.unlinkSync(tempFilePath);
       
+      // 자동 임베딩 생성 (백그라운드에서 수행)
+      let embeddingStatus = 'pending';
+      try {
+        await vectorSearchService.processAndStoreDocument(documentId, processedDoc.content);
+        embeddingStatus = 'completed';
+      } catch (embeddingError) {
+        console.error(`문서 ${documentId} 임베딩 생성 실패:`, embeddingError);
+        embeddingStatus = 'failed';
+      }
+      
       // 응답 데이터 준비
       const responseData = {
         success: true,
@@ -94,7 +105,8 @@ export async function POST(request: NextRequest) {
           summary: processedDoc.metadata.summary,
           chunkCount: processedDoc.chunks.length,
           fileSize: processedDoc.metadata.fileSize,
-          createdAt: processedDoc.metadata.createdAt
+          createdAt: processedDoc.metadata.createdAt,
+          embeddingStatus
         }
       };
 

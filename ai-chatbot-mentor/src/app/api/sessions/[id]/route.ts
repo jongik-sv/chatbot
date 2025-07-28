@@ -7,10 +7,11 @@ const chatRepo = new ChatRepository();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = parseInt(params.id);
+    const { id } = await params;
+    const sessionId = parseInt(id);
     const searchParams = request.nextUrl.searchParams;
     const userId = parseInt(searchParams.get('userId') || '1');
     const includeMessages = searchParams.get('includeMessages') === 'true';
@@ -69,10 +70,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = parseInt(params.id);
+    const { id } = await params;
+    const sessionId = parseInt(id);
     const { title, userId } = await request.json();
 
     if (!sessionId) {
@@ -117,10 +119,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const sessionId = parseInt(params.id);
+    const { id } = await params;
+    const sessionId = parseInt(id);
     const searchParams = request.nextUrl.searchParams;
     const userId = parseInt(searchParams.get('userId') || '1');
 

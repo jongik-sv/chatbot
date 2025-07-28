@@ -4,6 +4,7 @@ import { ChatSessionRepository } from '../../../lib/repositories/ChatSessionRepo
 import { MessageRepository } from '../../../lib/repositories/MessageRepository';
 import { LLMService } from '../../../services/LLMService';
 import { MentorContextService } from '../../../services/MentorContextService';
+import { vectorSearchService } from '../../../services/VectorSearchService';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -157,8 +158,59 @@ export async function POST(request: NextRequest) {
     let llmResponse;
 
     try {
+      // RAG 모드 처리
+      if (mode === 'document' || mode === 'rag') {
+        // RAG 기반 답변 생성
+        const searchResults = await vectorSearchService.searchSimilarChunks(message, {
+          topK: 3,
+          threshold: 0.5,
+          includeMetadata: true
+        });
+
+        if (searchResults.length > 0) {
+          // 컨텍스트 구성
+          const contextParts = searchResults.map((result, index) => 
+            `[출처 ${index + 1}: ${result.documentTitle || '문서'}]\n${result.chunkText}`
+          );
+          const context = contextParts.join('\n\n');
+
+          // RAG 프롬프트 생성
+          const ragPrompt = `다음은 업로드된 문서에서 검색된 관련 정보입니다:
+
+${context}
+
+위 정보를 바탕으로 다음 질문에 답해주세요. 답변할 때는:
+1. 제공된 문서의 내용만을 기반으로 답변하세요
+2. 문서에 없는 내용은 추측하지 마세요
+3. 가능한 경우 어떤 출처에서 정보를 가져왔는지 언급하세요
+
+질문: ${message}`;
+
+          llmResponse = await llmService.chat([{ role: 'user', content: ragPrompt }], {
+            model,
+            temperature: 0.1,
+            maxTokens: 1000,
+            systemInstruction: systemInstruction || '당신은 업로드된 문서를 기반으로 정확한 답변을 제공하는 도우미입니다.'
+          });
+
+          // 출처 정보 추가
+          llmResponse.sources = searchResults.map((result, index) => ({
+            index: index + 1,
+            documentTitle: result.documentTitle,
+            similarity: Math.round(result.similarity * 1000) / 1000,
+            excerpt: result.chunkText.substring(0, 150) + '...'
+          }));
+        } else {
+          llmResponse = await llmService.chat(conversationHistory, {
+            model,
+            temperature: 0.7,
+            maxTokens: 1000,
+            systemInstruction: systemInstruction || '업로드된 문서에서 관련 정보를 찾을 수 없습니다. 일반적인 지식으로 답변하겠습니다.'
+          });
+        }
+      }
       // 멀티모달 처리 (파일이 있는 경우)
-      if (uploadedFiles.length > 0) {
+      else if (uploadedFiles.length > 0) {
         // 이미지 파일 찾기
         const imageFile = uploadedFiles.find(file => file.type.startsWith('image/'));
         

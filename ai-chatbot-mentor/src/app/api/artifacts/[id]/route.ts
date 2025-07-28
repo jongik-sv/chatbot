@@ -4,10 +4,10 @@ import { getDatabase } from '@/lib/database';
 // GET /api/artifacts/[id] - 특정 아티팩트 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id || isNaN(Number(id))) {
       return NextResponse.json(
@@ -46,10 +46,10 @@ export async function GET(
 // PUT /api/artifacts/[id] - 아티팩트 수정
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { title, content, language } = body;
 
@@ -131,10 +131,10 @@ export async function PUT(
 // DELETE /api/artifacts/[id] - 아티팩트 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id || isNaN(Number(id))) {
       return NextResponse.json(
