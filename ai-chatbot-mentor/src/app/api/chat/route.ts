@@ -5,6 +5,8 @@ const ChatRepository = require('../../../lib/repositories/ChatRepository');
 import { LLMService } from '../../../services/LLMService';
 import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
+import { ArtifactService } from '../../../services/ArtifactService';
+import { parseArtifactsFromContent } from '../../../utils/artifactParser';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -230,7 +232,7 @@ export async function POST(request: NextRequest) {
         throw new Error(llmResponse.error || 'LLM 응답 생성 실패');
       }
 
-      // AI 응답 저장
+      // AI 응답 저장 먼저 (메시지 ID 확보)
       const assistantMessage = chatRepo.createMessage({
         sessionId: currentSession.id,
         role: 'assistant',
@@ -244,6 +246,29 @@ export async function POST(request: NextRequest) {
           mentorName: mentorContext?.mentor.name
         }
       });
+
+      // AI 응답에서 아티팩트 추출 및 생성 (메시지 ID 포함)
+      const parsedArtifacts = parseArtifactsFromContent(
+        llmResponse.content,
+        currentSession.id,
+        assistantMessage.id
+      );
+
+      const createdArtifacts = [];
+      for (const artifactData of parsedArtifacts.artifacts) {
+        try {
+          const artifact = await ArtifactService.createArtifact(artifactData);
+          createdArtifacts.push(artifact);
+        } catch (error) {
+          console.error('아티팩트 생성 오류:', error);
+        }
+      }
+
+      // 메시지 메타데이터에 아티팩트 정보 추가 (필요시)
+      if (createdArtifacts.length > 0) {
+        // 메타데이터 업데이트 로직은 ChatRepository 구조에 따라 달라질 수 있음
+        // 현재는 응답에서 아티팩트를 전달하는 것으로 충분
+      }
 
       // 멘토 응답 후처리
       if (mentorId) {
@@ -263,7 +288,7 @@ export async function POST(request: NextRequest) {
         content: llmResponse.content,
         sessionId: currentSession.id,
         messageId: assistantMessage.id,
-        artifacts: [], // TODO: 아티팩트 처리 구현
+        artifacts: createdArtifacts,
         sources: [] // TODO: RAG 소스 처리 구현
       };
 

@@ -1499,3 +1499,20 @@ Requirements 9.2, 9.3 충족 완료
 
 **완료 시간:** 2025-01-28------
 AI가 소스를 출력하면 아티팩트가 실행 될 수 있는 환경을 만들어줘.
+------
+'간단한 alert을 출력하는 자바스크립트 코드를 만들어봐' 이렇게 명령을 내렸고 AI가 답변했는데 왜 아티팩트 실행을 할 수 없는지 확인 요청
+
+------
+
+### 세션 삭제 오류 해결 및 전체 삭제 기능 추가 요청
+
+**날짜**: 2025-07-28
+
+**요청 내용**:
+- 세션 삭제 시 발생하는 FOREIGN KEY constraint failed 오류 해결
+- 전체 세션 삭제 기능 추가
+
+**오류 상세**:
+- 파일: src\lib\repositories\ChatRepository.js:181:16
+- 에러 코드: SQLITE_CONSTRAINT_FOREIGNKEY
+- DELETE /api/sessions/17?userId=1 500 오류
