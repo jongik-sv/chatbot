@@ -24,3 +24,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Placeholder 색상 개선 */
+::placeholder {
+  color: #6b7280; /* gray-500 */
+  opacity: 1;
+}
+
+::-webkit-input-placeholder {
+  color: #6b7280;
+}
+
+::-moz-placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: #6b7280;
+}
