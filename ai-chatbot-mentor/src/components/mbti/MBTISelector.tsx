@@ -19,6 +19,7 @@ interface MBTIType {
 
 interface MBTISelectorProps {
   onMBTISelect?: (mbtiType: string) => void;
+  onTypeSelect?: (mbtiType: string) => void;
   selectedMBTI?: string;
   showRecommendations?: boolean;
   className?: string;
@@ -26,6 +27,7 @@ interface MBTISelectorProps {
 
 const MBTISelector: React.FC<MBTISelectorProps> = ({
   onMBTISelect,
+  onTypeSelect,
   selectedMBTI,
   showRecommendations = true,
   className = ''
@@ -65,6 +67,7 @@ const MBTISelector: React.FC<MBTISelectorProps> = ({
   const handleMBTISelect = (mbtiType: string) => {
     setSelectedType(mbtiType);
     onMBTISelect?.(mbtiType);
+    onTypeSelect?.(mbtiType);
   };
 
   const getMBTIGroupColor = (type: string): string => {
