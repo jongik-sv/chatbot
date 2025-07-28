@@ -460,3 +460,251 @@ setTimeout(() => {
 ------
 
 git 충돌이 일어났는데 원격 저장소에 있는 것으로 적용해줘.
+
+------
+
+아티팩트를 iframe으로 만들지 않는 방법을 찾아봐. 코드 수정하지말고 계획만 세워봐.
+
+● 아티팩트 iframe 없는 구현 계획
+
+  🎯 현재 iframe 사용 이유 분석
+
+  - 보안: 악성 코드로부터 부모 페이지 보호
+  - 격리: CSS/JavaScript 충돌 방지
+  - 제어: 독립적인 실행 환경 제공
+
+  🔄 대안적 접근법들
+
+  1. Shadow DOM + Sanitization (권장)
+
+  장점: CSS 격리 + 보안성 + 성능
+  단점: JavaScript 격리는 추가 구현 필요
+  구현: Web Components + DOMPurify
+
+  2. 코드 유형별 특화 렌더러
+
+  - HTML/CSS: 직접 DOM + CSS 스코핑
+  - JavaScript: 제한된 실행 환경 (js-interpreter)
+  - Charts: 전용 라이브러리 직접 사용 (Chart.js, Mermaid)
+  - React: babel-standalone + 안전한 렌더링
+
+  3. Virtual DOM + 제한된 실행
+
+  코드 파싱 → Sanitization → Virtual DOM → 안전한 렌더링
+  DOMPurify로 XSS 방지 + CSP 정책 강화
+
+  🚀 권장 구현 계획
+
+  Phase 1: 하이브리드 전환
+
+  1. 정적 콘텐츠 (HTML/CSS/Markdown) → 직접 렌더링
+  2. 동적 콘텐츠 (JavaScript) → 제한된 실행
+  3. 시각화 (Charts/Diagrams) → 전용 라이브러리
+
+  Phase 2: 보안 레이어 구축
+
+  // 보안 구성요소
+  - DOMPurify: HTML sanitization
+  - CSP 헤더: 스크립트 실행 제한
+  - Proxy Sandbox: JavaScript API 접근 제어
+  - CSS Scoping: 스타일 격리
+
+  Phase 3: 기술 스택 선정
+
+  // HTML 렌더링
+  const renderer = new ShadowDOMRenderer({
+    sanitizer: DOMPurify,
+    cssScoping: true
+  });
+
+  // JavaScript 실행 (옵션)
+  const jsRunner = new SafeJSRunner({
+    allowedAPIs: ['console.log'],
+    timeout: 5000
+  });
+
+  📊 장단점 비교
+
+  | 방식         | 보안성   | 성능    | 구현 복잡도 | 기능성   |
+  |------------|-------|-------|--------|-------|
+  | 현재 iframe  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐   | ⭐⭐     | ⭐⭐⭐⭐  |
+  | Shadow DOM | ⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐    | ⭐⭐⭐⭐⭐ |
+  | 직접 렌더링     | ⭐⭐    | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐ |
+
+  🎯 최종 권장사항
+
+  Shadow DOM + 코드별 특화 렌더러 조합:
+  - 보안성과 성능의 최적 균형
+  - 점진적 마이그레이션 가능
+  - 더 나은 사용자 경험 제공
+  - 실시간 편집 및 미리보기 지원
+
+  이 접근법으로 iframe의 제약 없이 더 빠르고 유연한 아티팩트 실행 환경을 구축할 수
+  있습니다.
+
+------
+
+Shadow DOM 방식으로 바꾸면 alert, console.log 다 될까?
+
+**완료된 조사**: 
+- ✅ Claude Desktop은 iframe 기반으로 구현됨
+- ✅ Shadow DOM이 아닌 `claudeusercontent.com` 도메인의 별도 iframe 사용
+- ✅ window.postMessage()로 부모창과 안전한 통신
+- ✅ 엄격한 CSP(Content Security Policy)와 sandbox 속성으로 보안 강화
+- ✅ DOMPurify 등 보안 라이브러리로 추가 보호
+- ✅ alert/console.log는 iframe 내부에서 처리되거나 부모창으로 메시지 전달
+
+------
+
+아티팩트 서버 저장 및 실행 환경 구축 요청
+
+**요구사항 분석**:
+- iframe 방식 유지하되 console.log/alert 기능보다는 실행 환경에 집중
+- 채팅방별 아티팩트들을 서버에 파일로 저장하여 HTML/CSS/JavaScript/Python 연동 실행
+- 채팅방 재진입 시 저장된 아티팩트 파일들 자동 로드
+- 채팅방 삭제 시 관련 파일들 자동 정리
+- 오래된 파일들 자동 삭제 정책
+
+**구현 완료**:
+
+#### ✅ Phase 1: 파일 시스템 저장 구조
+- **ArtifactFileManager**: 포괄적 파일 관리 서비스 구현
+  - 단일/다중 파일 아티팩트 저장 지원
+  - 언어별 파일 확장자 자동 결정 (40+ 언어)
+  - HTML/CSS/JavaScript 자동 링크 연결
+  - 보안 강화된 경로 검증
+- **데이터베이스 스키마**: file_path, files_info, is_project, updated_at 필드 추가
+- **CRUD API**: 파일 저장/수정/삭제 로직 완전 연동
+
+#### ✅ Phase 2: 웹 서버 실행 환경  
+- **파일 서빙 API**: `/api/artifacts/serve/[sessionId]/[artifactId]/[filename]`
+  - 다양한 MIME 타입 지원 (HTML, CSS, JS, Python 등)
+  - 보안 헤더 설정 (CSP, X-Frame-Options)
+  - 캐싱 및 성능 최적화
+- **iframe 연동**: CodeExecutor에서 파일 서버 URL 직접 로드 지원
+- **실행 모드**: 기존 인라인 실행 + 새로운 파일 서버 실행 모드
+
+#### ✅ Phase 3: Python 실행 환경
+- **PythonExecutor**: 안전한 Python 스크립트 실행 엔진
+  - 네트워크/파일시스템 접근 제한
+  - 실행 시간 제한 (기본 30초)
+  - 표준 출력/에러 캡처
+  - 아티팩트 파일 직접 실행 지원
+- **Python API**: `/api/python/execute` 엔드포인트
+  - 인라인 코드 실행
+  - 아티팩트 파일 실행
+  - 환경 상태 확인
+
+#### ✅ Phase 4: 파일 생명주기 관리
+- **ArtifactCleanupService**: 종합적 정리 시스템
+  - 날짜 기준 자동 정리 (기본 7일)
+  - 용량 기준 정리 (기본 5GB)
+  - 세션별 선택적 정리
+  - 빈 디렉토리 자동 제거
+- **정리 API**: `/api/artifacts/cleanup` 
+  - 실시간 정리 상태 모니터링
+  - 드라이 런 시뮬레이션 지원
+  - 정리 권장사항 제공
+
+**파일 구조**:
+```
+/data/artifacts/
+├── session_123/
+│   ├── artifact_456/
+│   │   ├── index.html
+│   │   ├── style.css
+│   │   └── script.js
+│   └── artifact_789/
+│       └── main.py
+└── session_456/
+    └── artifact_101/
+        ├── app.py
+        └── data.json
+```
+
+**핵심 기능**:
+- 🔗 **HTML/CSS/JS 연동**: 자동 링크 생성으로 완전한 웹 프로젝트 실행
+- 🐍 **Python 서버 실행**: 보안 샌드박스에서 안전한 Python 스크립트 실행  
+- 📁 **파일 기반 관리**: 현실적인 개발 환경과 동일한 파일 시스템
+- 🧹 **자동 정리**: 용량/날짜 기준 지능형 가비지 컬렉션
+- 🛡️ **보안 강화**: 경로 조작 방지, 실행 제한, CSP 헤더
+
+**상태**: 🎯 **아티팩트 서버 저장 및 실행 환경 구축 완료**
+
+------
+
+17. MCP (Model Context Protocol) 통합 기능 구현 요청
+
+**요구사항 분석**:
+- MCP 서버 자동 연결 및 관리 시스템
+- MCP 도구 목록 조회 및 실행 시스템  
+- MCP 실행 결과 표시 및 대화 컨텍스트 통합
+- MCP 서버 상태 모니터링
+- MCP 도구 사용 히스토리 관리
+
+------
+
+18. 보안 및 인증 시스템 구현
+
+**요구사항 분석**:
+- JWT 토큰 기반 사용자 인증 시스템
+- 비밀번호 해시 및 보안 강화
+- 세션 관리 및 로그인/로그아웃 기능
+- 사용자 등록 및 프로필 관리
+- 보안 미들웨어 및 권한 검증
+
+**구현 완료 사항**:
+
+#### ✅ Phase 1: 핵심 인증 시스템
+- **AuthService**: JWT 토큰 생성/검증, bcrypt 비밀번호 해시
+- **인증 미들웨어**: API 보호, Rate Limiting, 권한 검증
+- **데이터베이스 스키마**: users 테이블 확장, user_sessions 테이블 추가
+- **보안 기능**: 계정 잠금, 실패 시도 추적, 세션 관리
+
+#### ✅ Phase 2: 인증 API 엔드포인트
+- **회원가입 API**: `/api/auth/register` - 이메일/비밀번호 검증
+- **로그인 API**: `/api/auth/login` - JWT 토큰 발급, 쿠키 설정
+- **로그아웃 API**: `/api/auth/logout` - 세션 무효화
+- **사용자 정보 API**: `/api/auth/me` - 현재 로그인 사용자 조회
+- **세션 관리 API**: `/api/auth/sessions` - 활성 세션 목록/관리
+- **비밀번호 변경 API**: `/api/auth/change-password` - 보안 검증 후 변경
+
+#### ✅ Phase 3: 프론트엔드 인증 UI
+- **LoginForm**: 사용자명/이메일 로그인, 비밀번호 표시/숨김
+- **RegisterForm**: 실시간 비밀번호 강도 체크, MBTI 선택
+- **AuthModal**: 로그인/회원가입 모드 전환 다이얼로그
+- **useAuth Hook**: 인증 상태 관리, 자동 로그인 확인
+
+#### ✅ Phase 4: 보안 강화 기능
+- **비밀번호 정책**: 최소 8글자, 복잡도 검증 (대/소문자, 숫자, 특수문자)
+- **계정 보안**: 5회 실패 시 30분 잠금, 로그인 시도 추적
+- **세션 보안**: HttpOnly 쿠키, 토큰 해시 저장, 자동 만료
+- **Rate Limiting**: IP별 요청 제한 (로그인 5분에 10회)
+- **디바이스 추적**: User-Agent, IP 주소 기반 세션 식별
+
+**데이터베이스 스키마 확장**:
+```sql
+users 테이블 추가 필드:
+- password_hash: bcrypt 해시된 비밀번호
+- email_verified: 이메일 인증 여부  
+- last_login: 마지막 로그인 시간
+- failed_login_attempts: 실패 횟수
+- locked_until: 계정 잠금 해제 시간
+
+user_sessions 테이블:
+- token_hash: JWT 토큰 해시값
+- expires_at: 만료 시간
+- device_info: 디바이스 정보 (JSON)
+- ip_address: 접속 IP
+- is_active: 활성 상태
+```
+
+**보안 기능**:
+- 🔐 **JWT 인증**: 안전한 토큰 기반 인증
+- 🛡️ **비밀번호 보안**: bcrypt 해시, 강도 검증
+- 🚫 **계정 보호**: 브루트포스 공격 방지
+- 📱 **세션 관리**: 다중 기기 로그인 지원
+- ⚡ **Rate Limiting**: API 남용 방지
+- 🍪 **쿠키 보안**: HttpOnly, Secure 설정
+
+**상태**: 🎯 **보안 및 인증 시스템 구현 완료**
