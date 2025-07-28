@@ -38,8 +38,8 @@ export class MentorRepository extends BaseRepository {
       data.userId || null,
       data.name,
       data.description,
-      JSON.stringify(data.personality),
-      JSON.stringify(data.expertise),
+      typeof data.personality === 'string' ? data.personality : JSON.stringify(data.personality),
+      typeof data.expertise === 'string' ? data.expertise : JSON.stringify(data.expertise),
       data.mbtiType || null,
       data.systemPrompt,
       data.isPublic || false
@@ -127,12 +127,12 @@ export class MentorRepository extends BaseRepository {
     
     if (data.personality !== undefined) {
       updates.push('personality = ?');
-      params.push(JSON.stringify(data.personality));
+      params.push(typeof data.personality === 'string' ? data.personality : JSON.stringify(data.personality));
     }
     
     if (data.expertise !== undefined) {
       updates.push('expertise = ?');
-      params.push(JSON.stringify(data.expertise));
+      params.push(typeof data.expertise === 'string' ? data.expertise : JSON.stringify(data.expertise));
     }
     
     if (data.mbtiType !== undefined) {
