@@ -5,6 +5,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { DocumentDuplicateIcon, EyeIcon, CodeBracketIcon, PlayIcon } from '@heroicons/react/24/outline';
 import { CodeExecutor } from './CodeExecutor';
+import { MonacoCodeEditor } from './MonacoCodeEditor';
 
 interface CodeArtifactProps {
   content: string;
@@ -22,7 +23,7 @@ export function CodeArtifact({
   className = ''
 }: CodeArtifactProps) {
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'code' | 'raw' | 'execute'>('code');
+  const [viewMode, setViewMode] = useState<'monaco' | 'code' | 'raw' | 'execute'>('monaco');
 
   const handleCopy = async () => {
     try {
@@ -89,10 +90,19 @@ export function CodeArtifact({
         <div className="flex items-center space-x-2">
           <div className="flex rounded-md shadow-sm">
             <button
+              onClick={() => setViewMode('monaco')}
+              className={`px-3 py-1 text-xs font-medium rounded-l-md border ${
+                viewMode === 'monaco'
+                  ? 'bg-purple-50 border-purple-200 text-purple-700'
+                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <CodeBracketIcon className="h-3 w-3 inline mr-1" />
+              Monaco
+            </button>
+            <button
               onClick={() => setViewMode('code')}
-              className={`px-3 py-1 text-xs font-medium ${
-                isExecutable() ? 'rounded-l-md' : 'rounded-l-md'
-              } border ${
+              className={`px-3 py-1 text-xs font-medium border-t border-r border-b ${
                 viewMode === 'code'
                   ? 'bg-blue-50 border-blue-200 text-blue-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -145,7 +155,17 @@ export function CodeArtifact({
 
       {/* 코드 내용 */}
       <div className="relative">
-        {viewMode === 'code' ? (
+        {viewMode === 'monaco' ? (
+          <div className="p-4">
+            <MonacoCodeEditor
+              content={content}
+              language={language}
+              theme={theme}
+              height="400px"
+              className="rounded-lg"
+            />
+          </div>
+        ) : viewMode === 'code' ? (
           <SyntaxHighlighter
             language={language}
             style={codeStyle}
