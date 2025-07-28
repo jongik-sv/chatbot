@@ -1,7 +1,7 @@
 // app/api/sessions/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const ChatRepository = require('../../../../../../repositories/ChatRepository');
+const ChatRepository = require('../../../../lib/repositories/ChatRepository');
 
 const chatRepo = new ChatRepository();
 

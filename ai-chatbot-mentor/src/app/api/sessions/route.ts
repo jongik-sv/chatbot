@@ -1,9 +1,8 @@
 // app/api/sessions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-// 임시로 JavaScript 서비스 사용 (경로 수정)
-const LLMServiceJS = require('../../../../../services/LLMService');
-const ChatRepository = require('../../../../../repositories/ChatRepository');
+// 로컬 서비스 사용
+const ChatRepository = require('../../../lib/repositories/ChatRepository');
 
 const chatRepo = new ChatRepository();
 

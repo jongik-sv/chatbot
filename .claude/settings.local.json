@@ -12,7 +12,8 @@
       "Bash(taskkill:*)",
       "Bash(cmd /c:*)",
       "Bash(powershell:*)",
-      "WebFetch(domain:ai.google.dev)"
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(cp:*)"
     ],
     "deny": []
   },
