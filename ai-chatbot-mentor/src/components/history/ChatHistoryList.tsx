@@ -8,9 +8,14 @@ import {
   PencilIcon,
   CalendarDaysIcon,
   UserIcon,
-  CpuChipIcon
+  CpuChipIcon,
+  ArrowDownTrayIcon,
+  CloudArrowUpIcon,
+  CloudArrowDownIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '../../lib/api';
+import HistoryManagement from './HistoryManagement';
 
 interface ChatSession {
   id: number;
@@ -48,6 +53,7 @@ export default function ChatHistoryList({
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showManagement, setShowManagement] = useState(false);
 
   // 페이지네이션
   const [hasMore, setHasMore] = useState(true);
@@ -200,7 +206,16 @@ export default function ChatHistoryList({
     <div className={`bg-white rounded-lg shadow-sm border ${className} flex flex-col`}>
       {/* 헤더 */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">대화 히스토리</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">대화 히스토리</h2>
+          <button
+            onClick={() => setShowManagement(true)}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            title="히스토리 관리"
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
+          </button>
+        </div>
         
         {/* 검색 및 필터 */}
         <div className="space-y-3">
@@ -367,6 +382,13 @@ export default function ChatHistoryList({
           </div>
         )}
       </div>
+
+      {/* 히스토리 관리 모달 */}
+      <HistoryManagement
+        userId={userId}
+        isOpen={showManagement}
+        onClose={() => setShowManagement(false)}
+      />
     </div>
   );
 }

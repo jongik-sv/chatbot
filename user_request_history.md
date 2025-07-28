@@ -584,4 +584,56 @@ CONTEXT TRANSFER: 이전 세션에서 AI 챗봇 멘토 프로젝트의 10.1 작�
 - 컨텍스트 기반 답변 생성
 - 지식 소스 인용 기능
 
-Requirements 9.2, 9.3 충족 완료
+Requirements 9.2, 9.3 충족 완료---
+---
+## 요청: 14.3 히스토리 관리 기능 구현
+
+**작업 내용:**
+- 대화 세션 삭제 기능
+- 히스토리 내보내기 (JSON/텍스트)
+- 히스토리 백업 및 복원
+- Requirements: 8.4, 8.5
+
+**시작 시간:** 2025-01-28
+**완료된 작업:*
+*
+
+1. **대화 세션 삭제 기능**
+   - 기존 API에서 이미 구현되어 있음을 확인
+   - `/api/sessions/[id]` DELETE 엔드포인트
+   - 세션과 관련 메시지 모두 삭제
+   - 프론트엔드에서 삭제 버튼으로 사용 가능
+
+2. **히스토리 내보내기 기능**
+   - `/api/sessions/export` GET 엔드포인트 구현
+   - JSON 및 텍스트 형식 지원
+   - 전체 히스토리 또는 특정 세션 내보내기
+   - 메타데이터 포함 옵션
+   - 파일 다운로드 기능
+
+3. **히스토리 백업 및 복원 기능**
+   - `/api/sessions/backup` POST/GET 엔드포인트 구현
+   - `/api/sessions/restore` POST/GET 엔드포인트 구현
+   - 백업 생성, 목록 조회, 다운로드
+   - 복원 모드 지원 (병합/교체)
+   - 백업 메타데이터 관리
+
+4. **프론트엔드 히스토리 관리 컴포넌트**
+   - `HistoryManagement.tsx` 컴포넌트 구현
+   - `ChatHistoryList.tsx`에 관리 버튼 추가
+   - 내보내기, 백업, 복원 UI 제공
+   - 사용자 친화적인 인터페이스
+
+**구현된 파일:**
+- `ai-chatbot-mentor/src/app/api/sessions/export/route.ts`
+- `ai-chatbot-mentor/src/app/api/sessions/backup/route.ts`
+- `ai-chatbot-mentor/src/app/api/sessions/restore/route.ts`
+- `ai-chatbot-mentor/src/components/history/HistoryManagement.tsx`
+- `ai-chatbot-mentor/src/components/history/ChatHistoryList.tsx` (수정)
+
+**테스트 결과:**
+- 모든 기능 정상 작동 확인
+- 세션 삭제, 내보내기, 백업, 복원 기능 테스트 통과
+- Requirements 8.4, 8.5 충족
+
+**완료 시간:** 2025-01-28
