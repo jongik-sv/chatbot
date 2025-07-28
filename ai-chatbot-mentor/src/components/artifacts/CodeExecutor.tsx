@@ -59,74 +59,152 @@ export function CodeExecutor({
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     
     if (doc) {
-      // HTML 코드에 alert 가로채기 스크립트 주입
-      let enhancedCode = code;
-      
-      // HTML 문서인지 확인
-      if (code.includes('<html>') || code.includes('<!DOCTYPE')) {
-        // <head> 태그 뒤에 스크립트 추가
-        const alertScript = `
+      // 강화된 디버깅 스크립트
+      const debugScript = `
 <script>
-// Alert 가로채기 및 표시
 (function() {
-  const originalAlert = window.alert;
-  const outputDiv = document.createElement('div');
-  outputDiv.id = 'alert-output';
-  outputDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; max-width: 300px;';
-  document.body.appendChild(outputDiv);
-
-  window.alert = function(message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; padding: 10px; margin: 5px 0; border-radius: 4px; color: #1976d2; font-family: Arial, sans-serif;';
-    alertDiv.innerHTML = '<strong>Alert:</strong> ' + String(message);
-    outputDiv.appendChild(alertDiv);
+  function initDebugEnv() {
+    const originalAlert = window.alert;
+    const originalLog = console.log;
+    const originalError = console.error;
     
-    // 3초 후 알림 제거
-    setTimeout(() => {
-      if (alertDiv.parentNode) {
-        alertDiv.parentNode.removeChild(alertDiv);
+    // 디버그 패널 생성
+    const debugPanel = document.createElement('div');
+    debugPanel.id = 'debug-panel';
+    debugPanel.style.cssText = \`
+      position: fixed !important; 
+      top: 10px !important; 
+      right: 10px !important; 
+      z-index: 999999 !important; 
+      width: 300px !important; 
+      max-height: 350px !important; 
+      overflow-y: auto !important;
+      background: rgba(255,255,255,0.98) !important; 
+      border: 2px solid #2196f3 !important; 
+      border-radius: 8px !important; 
+      padding: 12px !important; 
+      font-family: 'Courier New', monospace !important; 
+      font-size: 11px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+    \`;
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'font-weight: bold !important; color: #2196f3 !important; margin-bottom: 8px !important; border-bottom: 1px solid #eee !important; padding-bottom: 4px !important;';
+    header.innerHTML = '🔍 Debug Output';
+    debugPanel.appendChild(header);
+    
+    function addDebugEntry(content, type = 'log') {
+      const entry = document.createElement('div');
+      entry.style.cssText = 'margin: 4px 0 !important; padding: 6px 8px !important; border-radius: 4px !important; word-wrap: break-word !important; border-left: 3px solid #ddd !important;';
+      
+      let prefix = '';
+      let styles = '';
+      switch(type) {
+        case 'alert':
+          styles = 'background: #e3f2fd !important; border-left-color: #2196f3 !important; color: #1565c0 !important;';
+          prefix = '🚨 ALERT: ';
+          break;
+        case 'error':
+          styles = 'background: #ffebee !important; border-left-color: #f44336 !important; color: #c62828 !important;';
+          prefix = '❌ ERROR: ';
+          break;
+        case 'log':
+        default:
+          styles = 'background: #f1f8e9 !important; border-left-color: #4caf50 !important; color: #2e7d32 !important;';
+          prefix = '📝 LOG: ';
+          break;
       }
-    }, 3000);
+      
+      entry.style.cssText += styles;
+      entry.innerHTML = prefix + String(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      debugPanel.appendChild(entry);
+      debugPanel.scrollTop = debugPanel.scrollHeight;
+    }
     
-    // 실제 alert도 호출
-    originalAlert.call(window, message);
-  };
+    // alert 완전 재정의
+    window.alert = function(message) {
+      addDebugEntry(message, 'alert');
+      try {
+        originalAlert.call(window, message);
+      } catch (e) {
+        addDebugEntry('Native alert blocked in iframe', 'log');
+      }
+    };
+    
+    // console.log 완전 재정의
+    console.log = function(...args) {
+      const message = args.map(arg => {
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg, null, 2);
+          } catch (e) {
+            return '[Object]';
+          }
+        }
+        return String(arg);
+      }).join(' ');
+      
+      addDebugEntry(message, 'log');
+      try {
+        originalLog.apply(console, args);
+      } catch (e) {}
+    };
+    
+    // console.error 완전 재정의
+    console.error = function(...args) {
+      const message = args.map(arg => String(arg)).join(' ');
+      addDebugEntry(message, 'error');
+      try {
+        originalError.apply(console, args);
+      } catch (e) {}
+    };
+    
+    // 패널을 body에 추가
+    const addPanel = () => {
+      if (document.body) {
+        document.body.appendChild(debugPanel);
+        addDebugEntry('Debug environment ready', 'log');
+      } else {
+        setTimeout(addPanel, 50);
+      }
+    };
+    addPanel();
+  }
+  
+  // 다양한 시점에서 초기화 시도
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDebugEnv);
+  } else {
+    initDebugEnv();
+  }
+  
+  // 백업 초기화
+  setTimeout(initDebugEnv, 100);
 })();
 </script>`;
-        
+      
+      let enhancedCode = code;
+      
+      // HTML 문서 여부 확인 및 스크립트 주입
+      if (code.includes('<html>') || code.includes('<!DOCTYPE')) {
         if (code.includes('</head>')) {
-          enhancedCode = code.replace('</head>', alertScript + '</head>');
+          enhancedCode = code.replace('</head>', debugScript + '</head>');
+        } else if (code.includes('<head>')) {
+          enhancedCode = code.replace('<head>', '<head>' + debugScript);
         } else if (code.includes('<body>')) {
-          enhancedCode = code.replace('<body>', '<body>' + alertScript);
+          enhancedCode = code.replace('<body>', '<head>' + debugScript + '</head><body>');
         } else {
-          enhancedCode = alertScript + code;
+          enhancedCode = debugScript + code;
         }
       } else {
-        // 단순 HTML 조각인 경우 전체 문서로 감싸기
+        // HTML 조각인 경우
         enhancedCode = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <script>
-    // Alert 가로채기
-    window.addEventListener('load', function() {
-      const originalAlert = window.alert;
-      const outputDiv = document.createElement('div');
-      outputDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; max-width: 300px;';
-      document.body.appendChild(outputDiv);
-
-      window.alert = function(message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.style.cssText = 'background: #e3f2fd; border: 2px solid #2196f3; padding: 10px; margin: 5px 0; border-radius: 4px; color: #1976d2;';
-        alertDiv.innerHTML = '🚨 Alert: ' + String(message);
-        outputDiv.appendChild(alertDiv);
-        
-        setTimeout(() => {alertDiv.remove();}, 3000);
-        originalAlert.call(window, message);
-      };
-    });
-  </script>
+  <title>HTML Preview</title>
+  ${debugScript}
 </head>
 <body>
 ${code}
@@ -238,7 +316,7 @@ ${code}
   };
 
   const executeVanillaJS = () => {
-    // 일반 JavaScript 실행
+    // 향상된 JavaScript 실행 환경
     const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -247,7 +325,7 @@ ${code}
   <title>JavaScript Output</title>
   <style>
     body { 
-      font-family: monospace;
+      font-family: 'Courier New', monospace;
       padding: 20px;
       margin: 0;
       background: #f8f8f8;
@@ -255,70 +333,108 @@ ${code}
     .output {
       background: white;
       border: 1px solid #ddd;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
       white-space: pre-wrap;
+      border-left: 4px solid #4caf50;
     }
     .error {
-      background: #fee;
-      border: 1px solid #fcc;
-      color: #c00;
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+    }
+    .alert {
+      background: #e3f2fd !important;
+      border: 1px solid #bbdefb !important;
+      border-left: 4px solid #2196f3 !important;
+      color: #1565c0 !important;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div id="output"></div>
   <script>
-    // console.log 가로채기
-    const originalLog = console.log;
-    const originalError = console.error;
-    const originalAlert = window.alert;
-    const outputDiv = document.getElementById('output');
-    
-    console.log = function(...args) {
-      const div = document.createElement('div');
-      div.className = 'output';
-      div.textContent = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
-      outputDiv.appendChild(div);
-      originalLog.apply(console, args);
-    };
-    
-    console.error = function(...args) {
-      const div = document.createElement('div');
-      div.className = 'output error';
-      div.textContent = 'Error: ' + args.join(' ');
-      outputDiv.appendChild(div);
-      originalError.apply(console, args);
-    };
-
-    // alert 가로채기
-    window.alert = function(message) {
-      const div = document.createElement('div');
-      div.className = 'output';
-      div.style.background = '#e3f2fd';
-      div.style.border = '2px solid #2196f3';
-      div.style.color = '#1976d2';
-      div.style.fontWeight = 'bold';
-      div.innerHTML = '🚨 Alert: ' + String(message);
-      outputDiv.appendChild(div);
+    (function() {
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalAlert = window.alert;
+      const outputDiv = document.getElementById('output');
       
-      // 콘솔에도 출력
-      console.log('Alert:', message);
-      
-      // 실제 alert도 호출하되, iframe에서는 보이지 않을 수 있음
-      try {
-        originalAlert.call(window, message);
-      } catch (e) {
-        console.log('Native alert blocked in iframe, showing custom alert instead');
+      function addOutput(content, className = 'output') {
+        const div = document.createElement('div');
+        div.className = className;
+        
+        if (typeof content === 'object' && content !== null) {
+          try {
+            div.textContent = JSON.stringify(content, null, 2);
+          } catch (e) {
+            div.textContent = String(content);
+          }
+        } else {
+          div.textContent = String(content);
+        }
+        
+        outputDiv.appendChild(div);
+        outputDiv.scrollTop = outputDiv.scrollHeight;
       }
-    };
-    
-    try {
-      ${code}
-    } catch (error) {
-      console.error(error.message);
-    }
+      
+      // console.log 재정의
+      console.log = function(...args) {
+        const content = args.map(arg => {
+          if (typeof arg === 'object' && arg !== null) {
+            try {
+              return JSON.stringify(arg, null, 2);
+            } catch (e) {
+              return String(arg);
+            }
+          }
+          return String(arg);
+        }).join(' ');
+        
+        addOutput('📝 ' + content);
+        
+        try {
+          originalLog.apply(console, args);
+        } catch (e) {}
+      };
+      
+      // console.error 재정의
+      console.error = function(...args) {
+        const content = args.map(arg => String(arg)).join(' ');
+        addOutput('❌ ' + content, 'output error');
+        
+        try {
+          originalError.apply(console, args);
+        } catch (e) {}
+      };
+
+      // alert 재정의
+      window.alert = function(message) {
+        const content = '🚨 Alert: ' + String(message);
+        addOutput(content, 'output alert');
+        
+        try {
+          originalAlert.call(window, message);
+        } catch (e) {
+          addOutput('(Native alert blocked in iframe)', 'output');
+        }
+      };
+      
+      // 환경 준비 완료 표시
+      addOutput('JavaScript execution environment ready');
+      
+      // 사용자 코드 실행
+      try {
+        ${code}
+        addOutput('Code execution completed');
+      } catch (error) {
+        console.error('Runtime error: ' + error.message);
+        console.error(error.stack);
+      }
+    })();
   </script>
 </body>
 </html>`;
