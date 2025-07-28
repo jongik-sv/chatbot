@@ -33,16 +33,20 @@ export class MentorRepository extends BaseRepository {
         mbti_type, system_prompt, is_public
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
+
+    // 데이터 타입 안전성 보장
+    const personalityValue = typeof data.personality === 'string' ? data.personality : JSON.stringify(data.personality);
+    const expertiseValue = typeof data.expertise === 'string' ? data.expertise : JSON.stringify(data.expertise);
     
     const result = stmt.run(
       data.userId || null,
       data.name,
       data.description,
-      typeof data.personality === 'string' ? data.personality : JSON.stringify(data.personality),
-      typeof data.expertise === 'string' ? data.expertise : JSON.stringify(data.expertise),
+      personalityValue,
+      expertiseValue,
       data.mbtiType || null,
       data.systemPrompt,
-      data.isPublic || false
+      (data.isPublic || false) ? 1 : 0  // Boolean을 정수로 변환
     );
     
     const mentor = this.findById(result.lastInsertRowid as number);
@@ -147,7 +151,7 @@ export class MentorRepository extends BaseRepository {
     
     if (data.isPublic !== undefined) {
       updates.push('is_public = ?');
-      params.push(data.isPublic);
+      params.push(data.isPublic ? 1 : 0);  // Boolean을 정수로 변환
     }
     
     if (updates.length === 0) {

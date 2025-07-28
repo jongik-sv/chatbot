@@ -302,3 +302,17 @@ npm run dev 실행 시 "Missing script: dev" 오류 해결 요청
 - typeof 검사를 통해 객체일 때만 JSON.stringify() 수행하도록 수정
 - MBTI 멘토 생성 플로우 정상 작동 확인
 - 빌드 성공 및 3단계 채팅 진행 가능
+
+------
+**요청 날짜**: 2025-07-28
+**요청 내용**: MBTI 멘토 생성 SQLite 바인딩 오류 재발 해결
+- 동일한 TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null 오류 재발
+- Boolean 값이 SQLite에서 지원되지 않는 문제 확인 및 해결
+- 빌드 과정에서 sessions API 경로 오류 수정
+------
+**완료 상태**: ✅ 성공적으로 완료
+**완료 내용**: 
+- MentorRepository에서 isPublic Boolean 값을 정수로 변환 (true: 1, false: 0)
+- create() 및 update() 메서드 모두 수정하여 일관성 확보
+- 잘못된 import 경로가 있는 sessions API 폴더 제거
+- 빌드 성공 및 MBTI 시스템 완전 작동 확인

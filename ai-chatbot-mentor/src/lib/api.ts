@@ -143,6 +143,207 @@ export class ApiClient {
     return response.json();
   }
 
+  // ===== 대화 히스토리 관리 API =====
+
+  /**
+   * 채팅 세션 목록 조회
+   */
+  static async getChatSessions(params: {
+    userId: number;
+    limit?: number;
+    offset?: number;
+    mode?: string;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    sessions: any[];
+    pagination: {
+      limit: number;
+      offset: number;
+      total: number;
+      hasMore: boolean;
+    };
+  }> {
+    const searchParams = new URLSearchParams({
+      userId: params.userId.toString(),
+      ...(params.limit && { limit: params.limit.toString() }),
+      ...(params.offset && { offset: params.offset.toString() }),
+      ...(params.mode && { mode: params.mode }),
+      ...(params.search && { search: params.search })
+    });
+
+    const response = await fetch(`${API_BASE_URL}/sessions?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '세션 목록 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 새 채팅 세션 생성
+   */
+  static async createChatSession(data: {
+    title?: string;
+    mode?: string;
+    modelUsed?: string;
+    mentorId?: number;
+    userId?: number;
+  }): Promise<{
+    success: boolean;
+    session: any;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/sessions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '세션 생성에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 특정 세션 상세 조회
+   */
+  static async getChatSessionDetail(sessionId: number, userId: number, includeMessages = true): Promise<{
+    success: boolean;
+    session: any;
+    messages?: any[];
+  }> {
+    const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}?userId=${userId}&includeMessages=${includeMessages}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '세션 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 세션 제목 수정
+   */
+  static async updateChatSession(sessionId: number, data: {
+    title: string;
+    userId: number;
+  }): Promise<{
+    success: boolean;
+    session: any;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '세션 수정에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 세션 삭제
+   */
+  static async deleteChatSession(sessionId: number, userId: number): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}?userId=${userId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '세션 삭제에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 세션의 메시지 목록 조회
+   */
+  static async getChatMessages(sessionId: number, params: {
+    userId: number;
+    limit?: number;
+    offset?: number;
+    before?: string;
+    search?: string;
+  }): Promise<{
+    success: boolean;
+    messages: any[];
+    pagination: {
+      limit: number;
+      offset: number;
+      total: number;
+      hasMore: boolean;
+    };
+  }> {
+    const searchParams = new URLSearchParams({
+      userId: params.userId.toString(),
+      ...(params.limit && { limit: params.limit.toString() }),
+      ...(params.offset && { offset: params.offset.toString() }),
+      ...(params.before && { before: params.before }),
+      ...(params.search && { search: params.search })
+    });
+
+    const response = await fetch(`${API_BASE_URL}/sessions/${sessionId}/messages?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '메시지 조회에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * 대화 내용 검색
+   */
+  static async searchConversations(userId: number, searchTerm: string, params: {
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{
+    success: boolean;
+    results: any[];
+    pagination: {
+      limit: number;
+      offset: number;
+      total: number;
+      hasMore: boolean;
+    };
+  }> {
+    const searchParams = new URLSearchParams({
+      userId: userId.toString(),
+      search: searchTerm,
+      ...(params.limit && { limit: params.limit.toString() }),
+      ...(params.offset && { offset: params.offset.toString() })
+    });
+
+    const response = await fetch(`${API_BASE_URL}/sessions/search?${searchParams}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || '검색에 실패했습니다.');
+    }
+
+    return response.json();
+  }
+
   // ===== 멘토 관련 API =====
 
   /**
