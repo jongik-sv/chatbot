@@ -43,6 +43,10 @@ export default function MessageInput({
       setShowVoiceToText(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
+        // 메시지 전송 후 텍스트 영역에 포커스 유지
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 100);
       }
     }
   };
