@@ -10,7 +10,7 @@ import {
   TrashIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
-import { formatRelativeTime } from '../utils/dateUtils';
+import { formatRelativeTime } from '@/utils/dateUtils';
 
 interface ChatSession {
   id: number;
