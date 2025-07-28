@@ -300,8 +300,9 @@ export default function ChatInterface({
 
       {/* Artifacts Panel */}
       {(() => {
-        // 모든 메시지의 metadata.artifacts를 하나의 배열로 합침
-        const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []));
+        // 모든 메시지의 metadata.artifacts를 하나의 배열로 합침 (null 값 필터링)
+        const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []))
+          .filter(artifact => artifact && artifact.id);
         return artifacts.length > 0 ? (
           <div className="p-4 border-t border-gray-100 bg-gray-50">
             <ArtifactPanel artifacts={artifacts} />

@@ -254,15 +254,21 @@ export async function POST(request: NextRequest) {
         assistantMessage.id
       );
 
+      console.log('파싱된 아티팩트:', parsedArtifacts.artifacts.length, '개');
+
       const createdArtifacts = [];
       for (const artifactData of parsedArtifacts.artifacts) {
         try {
+          console.log('아티팩트 생성 중:', artifactData.title, artifactData.type);
           const artifact = ArtifactService.createArtifact(artifactData);
           createdArtifacts.push(artifact);
+          console.log('아티팩트 생성 완료:', artifact.id);
         } catch (error) {
           console.error('아티팩트 생성 오류:', error);
         }
       }
+
+      console.log('총 생성된 아티팩트:', createdArtifacts.length, '개');
 
       // 메시지 메타데이터에 아티팩트 정보 추가 (필요시)
       if (createdArtifacts.length > 0) {

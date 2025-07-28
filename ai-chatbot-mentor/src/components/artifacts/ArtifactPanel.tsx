@@ -110,7 +110,7 @@ export function ArtifactPanel({
       {/* 아티팩트 탭 */}
       <div className="border-b border-gray-200">
         <div className="flex overflow-x-auto">
-          {artifacts.map((artifact) => (
+          {artifacts.filter(artifact => artifact && artifact.id).map((artifact) => (
             <button
               key={artifact.id}
               onClick={() => setSelectedArtifact(artifact)}

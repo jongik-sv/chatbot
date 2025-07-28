@@ -1522,3 +1522,5 @@ AI가 소스를 출력하면 아티팩트가 실행 될 수 있는 환경을 만
 아티팩트 생성 오류: TypeError: db.run is not a function 오류 해결 요청
 ------
 Hydration mismatch 오류 발생 - className 불일치 문제 해결 요청
+------
+ArtifactPanel에서 null id 참조 오류 발생 - Cannot read properties of null (reading 'id') 해결 요청
