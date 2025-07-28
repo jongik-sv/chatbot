@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ChatInterface from '@/components/chat/ChatInterface';
-import DocumentUpload from '@/components/documents/DocumentUpload';
-import DocumentList from '@/components/documents/DocumentList';
+// import DocumentUpload from '@/components/documents/DocumentUpload';
+// import DocumentList from '@/components/documents/DocumentList';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { DocumentIcon, MagnifyingGlassIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
@@ -142,7 +142,11 @@ export default function DocumentsPage() {
             <div className="space-y-4">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">문서 업로드</h2>
-                <DocumentUpload onDocumentUploaded={handleDocumentUploaded} />
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <DocumentIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">문서 업로드 기능은 별도 구현 예정</p>
+                  <p className="text-sm text-gray-500 mt-2">현재는 RAG 시스템 백엔드만 구현됨</p>
+                </div>
               </div>
 
               {/* RAG 시스템 설명 */}
@@ -183,12 +187,26 @@ export default function DocumentsPage() {
                     </p>
                   </div>
                 ) : (
-                  <DocumentList 
-                    documents={documents}
-                    selectedDocuments={selectedDocuments}
-                    onDocumentSelect={handleDocumentSelect}
-                    selectable={true}
-                  />
+                  <div className="space-y-2">
+                    {documents.map((doc: any) => (
+                      <div 
+                        key={doc.id}
+                        className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedDocuments.includes(doc.id)}
+                          onChange={(e) => handleDocumentSelect(doc.id, e.target.checked)}
+                          className="mr-3"
+                        />
+                        <DocumentIcon className="w-5 h-5 text-gray-400 mr-3" />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{doc.filename}</p>
+                          <p className="text-sm text-gray-500">{doc.fileType}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

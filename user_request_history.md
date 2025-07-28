@@ -396,3 +396,41 @@ AI 모델을 가져 오는 부분이 비어있어. 올라마가 설치가 안되
   - DELETE /api/sessions/[id] (세션 삭제)
   - GET /api/sessions/[id]/messages (메시지 조회)
   - GET /api/sessions/search (검색)
+
+------
+**요청 날짜**: 2025-07-28
+**요청 내용**: 8. RAG (Retrieval-Augmented Generation) 시스템 구현
+- 벡터 임베딩 서비스 구현 (Transformers.js 사용)
+- 문서 청킹 및 벡터화 로직 구현
+- 벡터 유사도 검색 서비스 구현
+- RAG API 엔드포인트 구현 (문서 인덱싱, 검색, 채팅)
+- 문서 기반 채팅 모드 통합
+------
+**완료 상태**: ✅ 성공적으로 완료
+**완료 내용**: 
+- **EmbeddingService**: Transformers.js를 활용한 벡터 임베딩 서비스 구현
+  - sentence-transformers/all-MiniLM-L6-v2 모델 사용
+  - 문서 청킹 (500자 단위, 50자 overlap)
+  - 코사인 유사도 계산 및 검색 기능
+- **VectorSearchService**: SQLite 기반 벡터 저장 및 검색 서비스 구현
+  - BLOB 형태로 Float32Array 벡터 저장
+  - 유사도 검색 및 랭킹 기능
+  - 임베딩 통계 및 관리 기능
+- **RAG API 엔드포인트**: 완전한 RAG 시스템 API 구현
+  - `/api/rag/index`: 문서 인덱싱 (POST/GET/DELETE)
+  - `/api/rag/search`: 벡터 검색 (POST/GET)
+  - `/api/rag/chat`: RAG 기반 채팅 (POST/GET)
+- **기존 시스템 통합**: 
+  - 채팅 API에 RAG 모드 추가 (document/rag 모드)
+  - 문서 업로드 시 자동 임베딩 생성
+  - ChatInterface에 RAG 모드 지원
+- **UI 구현**: 
+  - 문서 기반 대화 페이지 (/documents)
+  - 사이드바에 "문서 기반 대화" 메뉴 추가
+  - RAG 시스템 설명 및 안내
+- **핵심 기능**:
+  - 업로드된 문서 자동 분석 및 인덱싱
+  - 질문에 대한 관련 문서 청크 검색 (Top-K, threshold 기반)
+  - 검색된 컨텍스트 기반 정확한 답변 생성
+  - 출처 정보 및 유사도 점수 제공
+  - 문서에 없는 내용 추측 방지

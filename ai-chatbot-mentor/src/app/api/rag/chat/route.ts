@@ -2,8 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { vectorSearchService } from '@/services/VectorSearchService';
 
-// LLM 서비스 import (상대 경로 수정)
-const LLMServiceJS = require('../../../../../services/LLMService');
+// LLM 서비스 import
+import { LLMService } from '@/services/LLMService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,8 +64,8 @@ ${context}
 답변:`;
 
     // 4. LLM으로 답변 생성
-    const llmService = new LLMServiceJS();
-    const response = await llmService.generateResponse(ragPrompt, {
+    const llmService = new LLMService();
+    const response = await llmService.chat([{ role: 'user', content: ragPrompt }], {
       model,
       temperature: 0.1, // 정확성을 위해 낮은 temperature 사용
       maxTokens: 1000
@@ -83,7 +83,7 @@ ${context}
 
     return NextResponse.json({
       success: true,
-      response: response.content || response,
+      response: response.content || (typeof response === 'string' ? response : JSON.stringify(response)),
       sources,
       searchResults: searchResults.map(r => ({
         documentTitle: r.documentTitle,
