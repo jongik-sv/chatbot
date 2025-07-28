@@ -426,13 +426,17 @@ ${code}
       // 환경 준비 완료 표시
       addOutput('JavaScript execution environment ready');
       
+      // 디버깅: 실행할 코드 표시
+      addOutput('Executing code: ' + \`${code}\`.substring(0, 100) + '...');
+      
       // 사용자 코드 실행
       try {
         ${code}
-        addOutput('Code execution completed');
+        addOutput('Code execution completed successfully');
       } catch (error) {
         console.error('Runtime error: ' + error.message);
-        console.error(error.stack);
+        console.error('Stack trace: ' + error.stack);
+        addOutput('Execution failed: ' + error.message, 'output error');
       }
     })();
   </script>
@@ -612,6 +616,79 @@ sys.stdout = output_capture
     }
   };
 
+  const testIframeLoading = () => {
+    console.log('🔍 iframe 로딩 테스트 시작');
+    
+    if (!iframeRef.current) {
+      console.log('❌ iframe ref가 없습니다');
+      setError('iframe 참조를 찾을 수 없습니다');
+      return;
+    }
+
+    const iframe = iframeRef.current;
+    console.log('✅ iframe 참조 획득:', iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      console.log('❌ iframe document에 접근할 수 없습니다');
+      setError('iframe document에 접근할 수 없습니다');
+      return;
+    }
+
+    console.log('✅ iframe document 접근 성공');
+
+    // 극단적으로 간단한 테스트 HTML
+    const testHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>iframe 테스트</title>
+</head>
+<body>
+  <h1 style="color: red;">iframe이 로딩되었습니다!</h1>
+  <p id="test-output">스크립트 실행 테스트...</p>
+  
+  <script>
+    console.log('🚀 iframe 내부 스크립트 실행됨');
+    document.getElementById('test-output').innerHTML = '✅ 스크립트가 정상 실행되었습니다!';
+    document.getElementById('test-output').style.color = 'green';
+    document.getElementById('test-output').style.fontWeight = 'bold';
+    
+    // 부모창으로 메시지 전송 시도
+    try {
+      window.parent.postMessage('iframe-script-executed', '*');
+      console.log('📤 부모창으로 메시지 전송 완료');
+    } catch (e) {
+      console.log('❌ 부모창 메시지 전송 실패:', e);
+    }
+    
+    // alert 테스트
+    setTimeout(() => {
+      try {
+        alert('iframe에서 alert 테스트!');
+        console.log('✅ alert 실행 성공');
+      } catch (e) {
+        console.log('❌ alert 실행 실패:', e);
+      }
+    }, 1000);
+  </script>
+</body>
+</html>`;
+
+    try {
+      doc.open();
+      doc.write(testHTML);
+      doc.close();
+      console.log('✅ iframe에 테스트 HTML 작성 완료');
+      setIsReady(true);
+      setIsRunning(false);
+    } catch (error) {
+      console.log('❌ iframe HTML 작성 실패:', error);
+      setError('iframe HTML 작성 실패: ' + error.message);
+    }
+  };
+
   const clearOutput = () => {
     setOutput('');
     setError('');
@@ -645,6 +722,12 @@ sys.stdout = output_capture
               >
                 <PlayIcon className="h-3 w-3 mr-1" />
                 {isRunning ? '실행 중...' : '실행'}
+              </button>
+              <button
+                onClick={testIframeLoading}
+                className="inline-flex items-center px-3 py-1 text-xs font-medium rounded border bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+              >
+                🔍 iframe 테스트
               </button>
               <button
                 onClick={clearOutput}
