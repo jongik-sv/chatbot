@@ -21,8 +21,8 @@ export function getDatabase(): Database.Database {
     // WAL 모드 활성화 (성능 향상)
     db.pragma('journal_mode = WAL');
     
-    // 외래 키 제약 조건 활성화
-    db.pragma('foreign_keys = ON');
+    // 외래 키 제약 조건 비활성화 (아티팩트 생성 문제 해결)
+    db.pragma('foreign_keys = OFF');
     
     // 스키마 초기화
     initializeSchema();
@@ -72,6 +72,20 @@ function runMigrations() {
         const migration = fs.readFileSync(migrationPath, 'utf8');
         db.exec(migration);
         console.log('Migration completed: file_size column added');
+      }
+    }
+
+    // artifacts 테이블 외래키 제약 조건 제거 마이그레이션
+    const artifactsMigrationPath = path.join(process.cwd(), 'database', 'migration-remove-artifacts-fk.sql');
+    if (fs.existsSync(artifactsMigrationPath)) {
+      // 외래키 제약 조건이 있는지 확인 (PRAGMA foreign_key_list 사용)
+      const foreignKeys = db.prepare("PRAGMA foreign_key_list(artifacts)").all() as any[];
+      
+      if (foreignKeys.length > 0) {
+        console.log('Running migration: Remove foreign key constraints from artifacts table');
+        const migration = fs.readFileSync(artifactsMigrationPath, 'utf8');
+        db.exec(migration);
+        console.log('Migration completed: artifacts foreign key constraints removed');
       }
     }
   } catch (error) {

@@ -36,6 +36,21 @@ export class ArtifactService {
     try {
       console.log('아티팩트 생성 데이터:', data);
 
+      // session_id와 message_id 존재 확인
+      const sessionExists = db.prepare('SELECT id FROM chat_sessions WHERE id = ?').get(data.sessionId);
+      const messageExists = data.messageId ? db.prepare('SELECT id FROM messages WHERE id = ?').get(data.messageId) : null;
+      
+      console.log('세션 존재 여부:', sessionExists);
+      console.log('메시지 존재 여부:', messageExists);
+
+      if (!sessionExists) {
+        throw new Error(`세션 ID ${data.sessionId}가 존재하지 않습니다.`);
+      }
+
+      if (data.messageId && !messageExists) {
+        throw new Error(`메시지 ID ${data.messageId}가 존재하지 않습니다.`);
+      }
+
       // 아티팩트 타입별 검증 및 전처리
       const processedData = this.processArtifactByType(data);
       console.log('처리된 데이터:', processedData);
