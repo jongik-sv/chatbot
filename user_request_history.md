@@ -1378,6 +1378,15 @@ const mockResult = {
 - 다크 모드: `#9ca3af` (gray-400) - 다크 배경에서 적절한 대비
 - 모든 입력 필드에서 placeholder 텍스트가 더 읽기 쉬워짐
 
+#### ✅ 5. 입력된 텍스트 색상 정상화
+- 모든 입력 필드에 `text-gray-900` 클래스 추가
+- placeholder는 `gray-600`, 입력된 텍스트는 `gray-900`으로 명확히 구분
+- 사용자가 실제 입력한 내용이 정상적인 색상으로 표시되도록 개선
+
+**추가 수정된 파일**:
+- `ai-chatbot-mentor/src/components/ui/input.tsx`
+- `ai-chatbot-mentor/src/components/ui/textarea.tsx`
+
 ------
 ------
 
@@ -1397,4 +1406,16 @@ MCP 웹페이지 요약 기능 문제 해결 요청
 실제 MCP 서버 연결 구현 요청
 - 현재 mock 모드로 작동하는 MCP 기능을 실제 MCP 프로토콜 통신으로 변경
 - executeMockTool을 실제 MCP 서버와 통신하는 로직으로 교체
-- 웹페이지 요약 등 실제 MCP 도구 기능 활성화
+- 웹페이지 요약 등 실제 MCP 도구 기능 활성화--
+----
+
+fetch MCP 활성화 후 웹페이지 요약 기능 테스트 요청
+- mcp-fetch 서버만 활성화하여 웹페이지 요약 기능 테스트
+- 다른 MCP 서버들은 일시적으로 비활성화
+- 실제 MCP 연결 구현 완료 후 테스트------
+
+
+웹페이지 요약 테스트 결과 - 여전히 mock 콘텐츠 반환
+- mcp-server-fetch 패키지를 찾을 수 없음 (404 에러)
+- MCP fetch 서버 연결 실패로 인해 여전히 "This is mock content from the URL." 반환
+- 올바른 MCP fetch 서버 패키지명 확인 및 수정 필요

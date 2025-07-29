@@ -164,8 +164,8 @@ export class MCPClient extends EventEmitter {
     // 기본 MCP 서버 인수 매핑
     const serverArgs: Record<string, string[]> = {
       'mcp-fetch': process.platform === 'win32' 
-        ? ['-y', 'mcp-server-fetch'] 
-        : ['mcp-server-fetch'],
+        ? ['-y', '@modelcontextprotocol/server-fetch'] 
+        : ['@modelcontextprotocol/server-fetch'],
       'mcp-toolbox': process.platform === 'win32'
         ? ['-y', '@smithery/cli@latest', 'run', '@smithery/toolbox']
         : ['@smithery/cli@latest', 'run', '@smithery/toolbox'],

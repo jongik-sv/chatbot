@@ -22,8 +22,8 @@ import {
 
 export class MCPService extends EventEmitter {
   private servers: Map<string, MCPServer> = new Map();
+  private clients: Map<string, MCPClient> = new Map();
   private connections: Map<string, MCPConnection> = new Map();
-  private processes: Map<string, ChildProcess> = new Map();
   private tools: Map<string, MCPTool[]> = new Map();
   private executionHistory: MCPExecutionHistory[] = [];
   private serverStats: Map<string, MCPServerStats> = new Map();
@@ -36,13 +36,6 @@ export class MCPService extends EventEmitter {
     logLevel: 'info'
   };
 
-  private messageId = 0;
-  private pendingRequests: Map<string | number, {
-    resolve: (value: any) => void;
-    reject: (error: any) => void;
-    timeout: NodeJS.Timeout;
-  }> = new Map();
-
   constructor() {
     super();
     this.initializeDefaultServers();
@@ -52,59 +45,88 @@ export class MCPService extends EventEmitter {
    * 기본 MCP 서버 초기화
    */
   private initializeDefaultServers() {
-    // Claude Code에서 사용 가능한 MCP 서버들을 자동으로 감지하고 연결
-    this.discoverMCPServers();
+    // 설정 파일에서 MCP 서버들을 로드하고 연결
+    this.loadMCPServers();
   }
 
   /**
-   * 사용 가능한 MCP 서버 자동 감지
+   * 설정 파일에서 MCP 서버 로드
    */
-  private async discoverMCPServers() {
+  private async loadMCPServers() {
     try {
-      // Claude Code 환경에서 사용 가능한 MCP 서버들을 확인
-      const availableServers = [
+      // 내장 서버만 사용하도록 직접 설정
+      await this.loadFallbackServers();
+
+    } catch (error) {
+      this.log('error', 'Failed to load MCP servers:', error);
+      // 설정 파일 로드 실패 시 기본 서버들로 폴백
+      await this.loadFallbackServers();
+    }
+  }
+
+  /**
+   * 폴백 서버 로드 (설정 파일 로드 실패 시)
+   */
+  private async loadFallbackServers() {
+    const fallbackServers = [
+      {
+        id: 'mcp-fetch',
+        name: 'MCP Fetch',
+        description: 'Web content fetching and processing'
+      }
+    ];
+
+    for (const config of fallbackServers) {
+      await this.registerServer(config);
+    }
+
+    // 내장 fetch 서버는 즉시 연결 상태로 설정
+    await this.setupBuiltinFetchServer();
+
+    if (this.settings.autoConnect) {
+      await this.connectAllServers();
+    }
+  }
+
+  /**
+   * 내장 fetch 서버 설정
+   */
+  private async setupBuiltinFetchServer() {
+    const serverId = 'mcp-fetch';
+    const server = this.servers.get(serverId);
+    
+    if (server) {
+      server.status = 'connected';
+      server.lastConnected = new Date();
+      
+      this.connections.set(serverId, {
+        serverId,
+        status: 'connected',
+        lastPing: new Date(),
+        latency: 0
+      });
+
+      // 내장 fetch 도구 정의
+      const fetchTools = [
         {
-          id: 'mcp-toolbox',
-          name: 'MCP Toolbox',
-          command: 'mcp-toolbox',
-          description: 'MCP server management and tool discovery'
-        },
-        {
-          id: 'mcp-fetch',
-          name: 'MCP Fetch',
-          command: 'mcp-fetch',
-          description: 'Web content fetching and processing'
-        },
-        {
-          id: 'mcp-context7',
-          name: 'Context7',
-          command: 'mcp-context7',
-          description: 'Library documentation and context provider'
-        },
-        {
-          id: 'mcp-21st-dev-magic',
-          name: '21st.dev Magic',
-          command: 'mcp-21st-dev-magic',
-          description: 'UI component generation and magic tools'
-        },
-        {
-          id: 'mcp-sequential-thinking',
-          name: 'Sequential Thinking',
-          command: 'mcp-sequential-thinking',
-          description: 'Advanced reasoning and thinking tools'
+          name: 'fetch',
+          description: 'Fetch content from a URL',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              url: { type: 'string', description: 'URL to fetch' },
+              max_length: { type: 'number', description: 'Maximum content length' },
+              raw: { type: 'boolean', description: 'Return raw HTML instead of parsed content' }
+            },
+            required: ['url']
+          },
+          serverId
         }
       ];
 
-      for (const config of availableServers) {
-        await this.registerServer(config);
-      }
-
-      if (this.settings.autoConnect) {
-        await this.connectAllServers();
-      }
-
-    } catch (error) {
-      this.log('error', 'Failed to discover MCP servers:', error);
+      this.tools.set(serverId, fetchTools);
+      this.log('info', `Setup builtin fetch server with ${fetchTools.length} tools`);
+      this.emitEvent('server_connected', serverId);
     }
   }
 
@@ -166,22 +188,67 @@ export class MCPService extends EventEmitter {
         status: 'connecting'
       });
 
-      // 서버 상태를 연결됨으로 표시 (실제 Claude Code 환경에서는 자동 연결)
-      server.status = 'connected';
-      server.lastConnected = new Date();
+      // 기존 클라이언트가 있으면 연결 해제
+      const existingClient = this.clients.get(serverId);
+      if (existingClient) {
+        await existingClient.disconnect();
+      }
 
-      this.connections.set(serverId, {
-        serverId,
-        status: 'connected',
-        lastPing: new Date(),
-        latency: 0
+      // 새 MCP 클라이언트 생성
+      const config: MCPServerConfig = {
+        id: serverId,
+        name: server.name,
+        description: server.description
+      };
+
+      const client = new MCPClient(config, {
+        timeout: this.settings.timeout,
+        maxRetries: this.settings.maxRetries,
+        retryDelay: this.settings.retryDelay,
+        enableLogging: this.settings.enableLogging
       });
 
-      // 서버의 도구 목록 조회
+      // 클라이언트 이벤트 핸들러 설정
+      client.on('connected', () => {
+        server.status = 'connected';
+        server.lastConnected = new Date();
+        this.connections.set(serverId, {
+          serverId,
+          status: 'connected',
+          lastPing: new Date(),
+          latency: 0
+        });
+        this.emitEvent('server_connected', serverId);
+      });
+
+      client.on('disconnected', () => {
+        server.status = 'disconnected';
+        this.connections.set(serverId, {
+          serverId,
+          status: 'disconnected'
+        });
+        this.emitEvent('server_disconnected', serverId);
+      });
+
+      client.on('error', (error) => {
+        server.status = 'error';
+        server.error = error.message;
+        this.connections.set(serverId, {
+          serverId,
+          status: 'error',
+          error: error.message
+        });
+        this.emitEvent('server_error', serverId, { error: error.message });
+      });
+
+      // 클라이언트 저장 및 연결
+      this.clients.set(serverId, client);
+      await client.connect();
+
+      // 서버의 도구 목록 로드
       await this.loadServerTools(serverId);
 
       this.log('info', `Connected to MCP server: ${server.name}`);
-      this.emitEvent('server_connected', serverId);
 
     } catch (error) {
       server.status = 'error';
@@ -206,10 +273,10 @@ export class MCPService extends EventEmitter {
     const server = this.servers.get(serverId);
     if (!server) return;
 
-    const process = this.processes.get(serverId);
-    if (process) {
-      process.kill();
-      this.processes.delete(serverId);
+    const client = this.clients.get(serverId);
+    if (client) {
+      await client.disconnect();
+      this.clients.delete(serverId);
     }
 
     server.status = 'disconnected';
@@ -227,138 +294,22 @@ export class MCPService extends EventEmitter {
    */
   private async loadServerTools(serverId: string): Promise<void> {
     try {
-      // Claude Code 환경에서 사용 가능한 도구들을 하드코딩으로 정의
-      // 실제 환경에서는 MCP 프로토콜을 통해 동적으로 로드해야 함
-      const toolsByServer: Record<string, MCPTool[]> = {
-        'mcp-toolbox': [
-          {
-            name: 'search_servers',
-            description: 'Search for MCP servers in the registry',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                query: { type: 'string' },
-                n: { type: 'number' }
-              },
-              required: ['query']
-            },
-            serverId
-          },
-          {
-            name: 'use_tool',
-            description: 'Execute a tool on an MCP server',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                qualifiedName: { type: 'string' },
-                parameters: { type: 'object' }
-              },
-              required: ['qualifiedName', 'parameters']
-            },
-            serverId
-          }
-        ],
-        'mcp-fetch': [
-          {
-            name: 'fetch',
-            description: 'Fetch content from a URL',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                url: { type: 'string' },
-                max_length: { type: 'number' },
-                raw: { type: 'boolean' }
-              },
-              required: ['url']
-            },
-            serverId
-          }
-        ],
-        'mcp-context7': [
-          {
-            name: 'resolve-library-id',
-            description: 'Resolve a library name to Context7 ID',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                libraryName: { type: 'string' }
-              },
-              required: ['libraryName']
-            },
-            serverId
-          },
-          {
-            name: 'get-library-docs',
-            description: 'Get documentation for a library',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                context7CompatibleLibraryID: { type: 'string' },
-                tokens: { type: 'number' },
-                topic: { type: 'string' }
-              },
-              required: ['context7CompatibleLibraryID']
-            },
-            serverId
-          }
-        ],
-        'mcp-21st-dev-magic': [
-          {
-            name: '21st_magic_component_builder',
-            description: 'Build UI components using 21st.dev',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                message: { type: 'string' },
-                searchQuery: { type: 'string' },
-                absolutePathToCurrentFile: { type: 'string' },
-                absolutePathToProjectDirectory: { type: 'string' },
-                standaloneRequestQuery: { type: 'string' }
-              },
-              required: ['message', 'searchQuery']
-            },
-            serverId
-          },
-          {
-            name: 'logo_search',
-            description: 'Search for company logos',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                queries: { type: 'array', items: { type: 'string' } },
-                format: { type: 'string', enum: ['JSX', 'TSX', 'SVG'] }
-              },
-              required: ['queries', 'format']
-            },
-            serverId
-          }
-        ],
-        'mcp-sequential-thinking': [
-          {
-            name: 'sequentialthinking',
-            description: 'Advanced sequential thinking and reasoning',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                thought: { type: 'string' },
-                nextThoughtNeeded: { type: 'boolean' },
-                thoughtNumber: { type: 'number' },
-                totalThoughts: { type: 'number' }
-              },
-              required: ['thought', 'nextThoughtNeeded', 'thoughtNumber', 'totalThoughts']
-            },
-            serverId
-          }
-        ]
-      };
+      const client = this.clients.get(serverId);
+      if (!client) {
+        this.log('warn', `No client found for server ${serverId}`);
+        return;
+      }
 
-      const tools = toolsByServer[serverId] || [];
+      // 실제 MCP 클라이언트에서 도구 목록 가져오기
+      const tools = client.getTools();
       this.tools.set(serverId, tools);
 
       this.log('info', `Loaded ${tools.length} tools for server ${serverId}`);
 
     } catch (error) {
       this.log('error', `Failed to load tools for server ${serverId}:`, error);
+      // 실패 시 빈 배열로 설정
+      this.tools.set(serverId, []);
     }
   }
 
@@ -396,18 +347,22 @@ export class MCPService extends EventEmitter {
         throw new Error(`Tool ${toolName} not found on server ${serverId}`);
       }
 
-      // 실제 MCP 도구 실행은 Claude Code 환경에서 처리됨
-      // 여기서는 모의 실행 결과를 반환
-      const mockResult = await this.executeMockTool(serverId, toolName, args);
+      let result: MCPToolResult;
 
-      const result: MCPToolResult = {
-        id: `result_${toolCallId}`,
-        toolCallId,
-        success: true,
-        content: mockResult.content,
-        timestamp: new Date(),
-        executionTime: Date.now() - startTime
-      };
+      // 내장 fetch 서버 처리
+      if (serverId === 'mcp-fetch' && toolName === 'fetch') {
+        result = await this.executeBuiltinFetch(args, toolCallId);
+        result.executionTime = Date.now() - startTime;
+      } else {
+        // 실제 MCP 클라이언트를 통한 도구 실행
+        const client = this.clients.get(serverId);
+        if (!client) {
+          throw new Error(`MCP client for server ${serverId} not found`);
+        }
+
+        result = await client.executeTool(toolName, args);
+        result.executionTime = Date.now() - startTime;
+      }
 
       // 실행 히스토리 저장
       const historyEntry: MCPExecutionHistory = {
@@ -472,54 +427,75 @@ export class MCPService extends EventEmitter {
   }
 
   /**
-   * 모의 도구 실행 (실제 환경에서는 MCP 프로토콜 사용)
+   * 내장 fetch 도구 실행
    */
-  private async executeMockTool(
-    serverId: string,
-    toolName: string,
-    args: Record<string, any>
-  ): Promise<{ content: MCPContent[] }> {
-    // 실제 Claude Code 환경에서는 여기서 MCP 프로토콜을 통해 도구를 실행
-    // 현재는 모의 응답을 반환
+  private async executeBuiltinFetch(args: Record<string, any>, toolCallId: string): Promise<MCPToolResult> {
+    try {
+      const { url, max_length = 50000, raw = false } = args;
 
-    const mockResponses: Record<string, any> = {
-      'search_servers': {
-        content: [{
-          type: 'text',
-          text: `Found MCP servers for query: ${args.query}\n\nExample servers:\n- Server 1: Description\n- Server 2: Description`
-        }]
-      },
-      'fetch': {
-        content: [{
-          type: 'text',
-          text: `Fetched content from: ${args.url}\n\nContent preview: This is mock content from the URL.`
-        }]
-      },
-      'resolve-library-id': {
-        content: [{
-          type: 'text',
-          text: `Resolved library ID for: ${args.libraryName}\nLibrary ID: /example/library`
-        }]
-      },
-      'sequentialthinking': {
-        content: [{
-          type: 'text',
-          text: `Sequential thinking result:\nThought ${args.thoughtNumber}: ${args.thought}\nNext thought needed: ${args.nextThoughtNeeded}`
-        }]
+      if (!url || typeof url !== 'string') {
+        throw new Error('URL is required and must be a string');
       }
-    };
 
-    const response = mockResponses[toolName] || {
-      content: [{
-        type: 'text',
-        text: `Mock result for tool ${toolName} with arguments: ${JSON.stringify(args, null, 2)}`
-      }]
-    };
+      // WebScrapingService 동적 import
+      const { WebScrapingService } = await import('./WebScrapingService');
+      const webScraper = WebScrapingService.getInstance();
 
-    // 실행 시간 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+      if (raw) {
+        // Raw HTML 반환
+        const axios = await import('axios');
+        const response = await axios.default.get(url, {
+          timeout: 15000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
 
-    return response;
+        const content = response.data.length > max_length 
+          ? response.data.substring(0, max_length) + '...'
+          : response.data;
+
+        return {
+          id: `result_${toolCallId}`,
+          toolCallId,
+          success: true,
+          content: [{
+            type: 'text',
+            text: content
+          }],
+          timestamp: new Date()
+        };
+      } else {
+        // 파싱된 콘텐츠 반환
+        const scrapedContent = await webScraper.scrapeWebsite(url, {
+          maxContentLength: max_length,
+          removeElements: ['script', 'style', 'nav', 'header', 'footer', '.advertisement', '.ads', '#ads']
+        });
+
+        const contentText = `제목: ${scrapedContent.title}\n\n${scrapedContent.content}`;
+
+        return {
+          id: `result_${toolCallId}`,
+          toolCallId,
+          success: true,
+          content: [{
+            type: 'text',
+            text: contentText
+          }],
+          timestamp: new Date()
+        };
+      }
+
+    } catch (error) {
+      return {
+        id: `result_${toolCallId}`,
+        toolCallId,
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch URL',
+        isError: true,
+        timestamp: new Date()
+      };
+    }
   }
 
   /**
@@ -656,13 +632,6 @@ export class MCPService extends EventEmitter {
     for (const serverId of this.servers.keys()) {
       await this.disconnectFromServer(serverId);
     }
-
-    // 대기 중인 요청 정리
-    for (const [id, request] of this.pendingRequests) {
-      clearTimeout(request.timeout);
-      request.reject(new Error('Service shutting down'));
-    }
-    this.pendingRequests.clear();
 
     this.removeAllListeners();
   }

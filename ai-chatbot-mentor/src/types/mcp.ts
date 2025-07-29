@@ -96,13 +96,16 @@ export interface MCPExecutionContext {
 export interface MCPServerConfig {
   id: string;
   name: string;
-  command: string;
+  description?: string;
+  command?: string;
   args?: string[];
   env?: Record<string, string>;
   cwd?: string;
   autoRestart?: boolean;
   maxRestarts?: number;
   timeout?: number;
+  enabled?: boolean;
+  autoConnect?: boolean;
 }
 
 // MCP 메시지 타입들
