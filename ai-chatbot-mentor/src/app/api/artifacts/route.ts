@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const messageId = searchParams.get('messageId');
     const type = searchParams.get('type');
 
-    const db = await getDatabase();
+    const db = getDatabase();
     
     let query = 'SELECT * FROM artifacts WHERE 1=1';
     const params: any[] = [];
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     query += ' ORDER BY created_at DESC';
 
-    const artifacts = await db.all(query, params);
+    const artifacts = db.prepare(query).all(params);
 
     return NextResponse.json({
       success: true,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = await getDatabase();
+    const db = getDatabase();
     let filePath = null;
     let filesInfo = null;
     let isProject = false;
@@ -120,29 +120,24 @@ export async function POST(request: NextRequest) {
       filePath = artifactFileManager.getArtifactUrl(sessionId.toString(), artifactFile.artifactId);
     }
 
-    const result = await db.run(
+    const result = db.prepare(
       `INSERT INTO artifacts (session_id, message_id, type, title, content, language, file_path, files_info, is_project, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [sessionId, messageId, type, title, content, language || null, filePath, filesInfo, isProject]
-    );
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+    ).run([sessionId, messageId, type, title, content, language || null, filePath, filesInfo, isProject]);
 
     // 실제 아티팩트 ID로 파일 경로 업데이트
     const actualArtifactId = result.lastID.toString();
     if (filePath) {
       const newFilePath = filePath.replace(/temp_\d+/, actualArtifactId);
-      await db.run(
-        'UPDATE artifacts SET file_path = ? WHERE id = ?',
-        [newFilePath, actualArtifactId]
-      );
+      db.prepare('UPDATE artifacts SET file_path = ? WHERE id = ?')
+        .run([newFilePath, actualArtifactId]);
       
       // 파일 시스템에서도 디렉토리명 변경
       // TODO: 디렉토리 리네임 로직 추가 필요
     }
 
-    const artifact = await db.get(
-      'SELECT * FROM artifacts WHERE id = ?',
-      [result.lastID]
-    );
+    const artifact = db.prepare('SELECT * FROM artifacts WHERE id = ?')
+      .get([result.lastID]);
 
     return NextResponse.json({
       success: true,

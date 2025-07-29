@@ -1449,3 +1449,16 @@ Sequential Thinking MCP 서버 연결 문제
 - 아티팩트에서 Monaco Editor에 소스 코드가 표시되지 않는 문제 발생
 - 코드 에디터 컴포넌트의 렌더링 또는 데이터 로딩 문제로 추정
 - Monaco Editor 설정 및 아티팩트 데이터 연동 확인 필요
+---
+---
+
+kiro : React DOM 에러 수정 - "<p> cannot contain a nested <pre>" 에러 해결
+- 에러 내용: HTML DOM 구조에서 <p> 태그 안에 <pre> 태그가 중첩되어 발생하는 에러
+- 위치: localhost:3000 Next.js 애플리케이션
+- 해결 방법: <p> 태그를 <div>로 변경하거나 DOM 구조 재배치
+
+------
+
+아티팩트 조회 오류: TypeError: db.all is not a function 해결 요청
+- better-sqlite3 라이브러리의 동기 API 사용법과 async/await 충돌
+- artifacts API 라우트에서 데이터베이스 메서드 사용 방식 수정 필요
