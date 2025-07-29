@@ -201,7 +201,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="예: 프로그래밍 멘토"
                 required
               />
@@ -215,7 +215,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="이 멘토가 어떤 도움을 줄 수 있는지 설명해주세요."
                 required
               />
@@ -228,7 +228,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
               <select
                 value={formData.mbtiType}
                 onChange={(e) => setFormData(prev => ({ ...prev, mbtiType: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">선택하지 않음</option>
                 {MBTI_TYPES.map(type => (
@@ -390,7 +390,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, communicationStyle: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="예: 친근하고 이해하기 쉬운 방식으로 소통합니다"
               />
             </div>
@@ -406,7 +406,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, teachingApproach: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="예: 단계별로 차근차근 설명하며 실습을 통해 학습을 돕습니다"
               />
             </div>
@@ -422,7 +422,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, responseStyle: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="예: 명확하고 구체적인 답변을 제공합니다"
               />
             </div>
@@ -448,7 +448,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
               value={formData.systemPrompt}
               onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
               rows={12}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
               placeholder="멘토의 행동과 응답 방식을 정의하는 시스템 프롬프트를 입력하세요..."
               required
             />
