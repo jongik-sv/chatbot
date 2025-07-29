@@ -891,3 +891,20 @@ user_sessions 테이블:
 자바스크립트로 테트리스 코드 짜줘. 라고 채팅을 하면 아무 답변도 없음 - 채팅 응답 문제 해결 요청
 
 ------
+
+DocumentStorageService 모듈의 default export 오류 해결 요청
+
+**문제 상황**:
+- ExternalContentService에서 DocumentStorageService import 시 "Export default doesn't exist" 오류 발생
+- DocumentStorageService.ts 파일에 class는 있지만 default export 구문이 누락됨
+
+**해결 작업**:
+- ✅ DocumentStorageService.ts 파일 끝에 `export default DocumentStorageService;` 추가
+- ✅ Next.js 개발 서버 빌드 오류 해결
+
+**수정된 파일**:
+- ai-chatbot-mentor/src/services/DocumentStorageService.ts
+
+**결과**: 모듈 import 오류 해결 완료
+
+------

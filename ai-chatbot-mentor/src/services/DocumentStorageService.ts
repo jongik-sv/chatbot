@@ -398,3 +398,5 @@ export class DocumentStorageService {
     this.db.close();
   }
 }
+
+export default DocumentStorageService;
