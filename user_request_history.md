@@ -1442,4 +1442,10 @@ MCP fetch 도구 실행 실패 문제 보고
 Sequential Thinking MCP 서버 연결 문제
 - "Server mcp-sequential-thinking is not connected" 에러 발생
 - 복잡한 분석을 위한 순차적 사고 도구 사용 시도 실패
-- mcp-sequential-thinking 서버도 내장 서버로 구현하거나 연결 문제 해결 필요
+- mcp-sequential-thinking 서버도 내장 서버로 구현하거나 연결 문제 해결 필요---
+---
+
+아티팩트 Monaco Editor 소스 표시 문제
+- 아티팩트에서 Monaco Editor에 소스 코드가 표시되지 않는 문제 발생
+- 코드 에디터 컴포넌트의 렌더링 또는 데이터 로딩 문제로 추정
+- Monaco Editor 설정 및 아티팩트 데이터 연동 확인 필요

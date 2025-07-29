@@ -145,13 +145,13 @@ export function CodeArtifact({
       {/* 코드 내용 */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {viewMode === 'monaco' ? (
-          <div className="h-full p-4">
+          <div className="h-full">
             <MonacoCodeEditor
               content={content}
               language={language}
               theme={theme}
               height="100%"
-              className="rounded-lg h-full"
+              className="h-full"
             />
           </div>
         ) : (

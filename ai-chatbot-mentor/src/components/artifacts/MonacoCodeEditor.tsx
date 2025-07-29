@@ -29,6 +29,14 @@ export function MonacoCodeEditor({
   const [editedContent, setEditedContent] = useState(content);
   const [copied, setCopied] = useState(false);
 
+  // 디버깅을 위한 로그
+  console.log('MonacoCodeEditor props:', {
+    contentLength: content?.length || 0,
+    language,
+    height,
+    hasContent: !!content
+  });
+
   // Monaco Editor 언어 맵핑
   const getMonacoLanguage = (lang: string) => {
     const languageMap: Record<string, string> = {
@@ -199,9 +207,9 @@ export function MonacoCodeEditor({
       </div>
 
       {/* Monaco Editor */}
-      <div className="relative">
+      <div className="relative" style={{ height: height === '100%' ? 'calc(100% - 80px)' : height }}>
         <Editor
-          height={height}
+          height="100%"
           language={getMonacoLanguage(language || 'javascript')}
           value={isEditing ? editedContent : content}
           onChange={handleEditorChange}
@@ -212,6 +220,13 @@ export function MonacoCodeEditor({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           }
+          onMount={(editor, monaco) => {
+            console.log('Monaco Editor mounted:', {
+              editorValue: editor.getValue(),
+              language: editor.getModel()?.getLanguageId(),
+              hasContent: !!editor.getValue()
+            });
+          }}
         />
       </div>
 
