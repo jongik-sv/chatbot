@@ -86,6 +86,12 @@ export class MCPClient extends EventEmitter {
 
         this.log('info', `Starting server process: ${command} ${args.join(' ')}`);
         this.log('debug', `Full command: ${command} ${args.join(' ')}`);
+        
+        // 환경변수 로깅 (보안상 민감한 정보는 마스킹)
+        if (this.config.env && Object.keys(this.config.env).length > 0) {
+          const envKeys = Object.keys(this.config.env);
+          this.log('debug', `Environment variables set: ${envKeys.join(', ')}`);
+        }
 
         // 프로세스 시작
         this.process = spawn(command, args, {
