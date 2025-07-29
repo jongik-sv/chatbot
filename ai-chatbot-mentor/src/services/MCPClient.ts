@@ -85,6 +85,7 @@ export class MCPClient extends EventEmitter {
         const env = { ...process.env, ...this.config.env };
 
         this.log('info', `Starting server process: ${command} ${args.join(' ')}`);
+        this.log('debug', `Full command: ${command} ${args.join(' ')}`);
 
         // 프로세스 시작
         this.process = spawn(command, args, {
@@ -137,11 +138,12 @@ export class MCPClient extends EventEmitter {
    * 서버 명령어 가져오기
    */
   private getServerCommand(): string {
+    // 설정 파일에서 command가 지정된 경우 우선 사용
     if (this.config.command) {
       return this.config.command;
     }
 
-    // 기본 MCP 서버 명령어 매핑
+    // 기본 MCP 서버 명령어 매핑 (설정 파일에 command가 없는 경우만)
     const serverCommands: Record<string, string> = {
       'mcp-fetch': process.platform === 'win32' ? 'npx' : 'uvx',
       'mcp-toolbox': process.platform === 'win32' ? 'npx' : 'uvx',
@@ -157,11 +159,12 @@ export class MCPClient extends EventEmitter {
    * 서버 인수 가져오기
    */
   private getServerArgs(): string[] {
-    if (this.config.args) {
+    // 설정 파일에서 args가 지정된 경우 우선 사용
+    if (this.config.args && this.config.args.length > 0) {
       return this.config.args;
     }
 
-    // 기본 MCP 서버 인수 매핑
+    // 기본 MCP 서버 인수 매핑 (설정 파일에 args가 없는 경우만)
     const serverArgs: Record<string, string[]> = {
       'mcp-fetch': process.platform === 'win32' 
         ? ['-y', '@modelcontextprotocol/server-fetch'] 
