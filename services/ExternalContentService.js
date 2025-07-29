@@ -16,7 +16,29 @@ class ExternalContentService {
    */
   initDatabase() {
     try {
-      const dbPath = path.join(process.cwd(), 'data', 'chatbot.db');
+      // ai-chatbot-mentor 디렉토리 내에서 실행되는지 확인
+      let dbPath;
+      const currentDir = process.cwd();
+      console.log('현재 작업 디렉토리:', currentDir);
+      
+      if (currentDir.includes('ai-chatbot-mentor')) {
+        // ai-chatbot-mentor 내에서 실행되는 경우
+        dbPath = path.join(currentDir, '..', 'data', 'chatbot.db');
+      } else {
+        // 프로젝트 루트에서 실행되는 경우
+        dbPath = path.join(currentDir, 'data', 'chatbot.db');
+      }
+      
+      console.log('데이터베이스 경로:', dbPath);
+      
+      // 데이터베이스 디렉토리 확인 및 생성
+      const fs = require('fs');
+      const dbDir = path.dirname(dbPath);
+      if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+        console.log('데이터베이스 디렉토리 생성:', dbDir);
+      }
+      
       this.db = new Database(dbPath);
       
       // 외부 콘텐츠 테이블 생성

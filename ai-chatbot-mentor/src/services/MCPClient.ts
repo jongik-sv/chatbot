@@ -335,6 +335,8 @@ export class MCPClient extends EventEmitter {
    */
   private async loadTools(): Promise<void> {
     try {
+      this.log('info', `Starting to load tools for server ${this.config.name}...`);
+      
       const request: MCPRequest = {
         jsonrpc: '2.0',
         id: this.getNextMessageId(),
@@ -342,18 +344,27 @@ export class MCPClient extends EventEmitter {
         params: {}
       };
 
+      console.log(`[MCP DEBUG] Sending tools/list request:`, JSON.stringify(request));
       const response = await this.sendRequest(request);
+      console.log(`[MCP DEBUG] Received tools/list response:`, JSON.stringify(response));
       
       if (response.error) {
         throw new Error(`Failed to load tools: ${response.error.message}`);
       }
 
-      this.tools = (response.result?.tools || []).map((tool: any) => ({
+      const rawTools = response.result?.tools || [];
+      console.log(`[MCP DEBUG] Raw tools from server:`, JSON.stringify(rawTools));
+
+      this.tools = rawTools.map((tool: any) => ({
         ...tool,
         serverId: this.config.id
       }));
 
-      this.log('info', `Loaded ${this.tools.length} tools from server ${this.config.name}`);
+      console.log(`[MCP DEBUG] Successfully loaded ${this.tools.length} tools from server ${this.config.name}`);
+      console.log(`[MCP DEBUG] Final tools array:`, JSON.stringify(this.tools));
+      if (this.tools.length > 0) {
+        this.log('info', `Tool names: ${this.tools.map(t => t.name).join(', ')}`);
+      }
 
     } catch (error) {
       this.log('error', 'Failed to load tools:', error);

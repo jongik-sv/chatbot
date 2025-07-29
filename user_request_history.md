@@ -2066,3 +2066,27 @@ YouTube URL과 웹사이트 URL을 입력하면 실제로 콘텐츠가 추출되
 - 콘솔 오류 완전 해결
 
 ------
+------
+
+## MCP sequential-thinking 서버 연결 문제 진단 및 해결 작업 (2025-07-29)
+
+### 문제 상황
+- sequential-thinking MCP 서버가 연결은 되지만 도구(sequentialthinking)가 로드되지 않는 문제
+- 서버 상태는 "connected"로 표시되지만 toolCount: 0, tools: [] 상태
+- /api/mcp/execute에서 "서버가 연결되지 않았습니다" 오류 발생
+
+### 진행한 작업
+1. MCPClient.ts의 loadTools() 메서드에 상세한 디버그 로깅 추가
+2. MCP 서버 연결 상태 확인 및 수동 연결 시도
+3. tools/list JSON-RPC 요청/응답 로깅 강화
+4. 서버 프로세스 상태 및 통신 프로토콜 검증
+
+### 현재 상태
+- sequential-thinking 서버 연결 성공 (API 응답으로 확인)
+- 하지만 여전히 도구가 로드되지 않음 (toolCount: 0)
+- MCPClient의 디버그 로그 출력 대기 중
+
+### 추가 필요 작업
+- 서버 콘솔에서 MCP 디버그 로그 확인
+- tools/list JSON-RPC 응답 내용 분석
+- MCP 프로토콜 통신 오류 원인 파악

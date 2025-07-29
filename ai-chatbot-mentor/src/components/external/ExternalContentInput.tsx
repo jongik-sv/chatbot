@@ -30,6 +30,7 @@ export default function ExternalContentInput({
     type: null
   });
   const [useJavaScript, setUseJavaScript] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // URL 유형 감지
   const detectUrlType = async (inputUrl: string) => {
@@ -162,7 +163,27 @@ export default function ExternalContentInput({
 
     } catch (error) {
       console.error('콘텐츠 처리 실패:', error);
-      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      
+      let errorMessage = '알 수 없는 오류가 발생했습니다.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // 네트워크 오류 감지
+      if (errorMessage.toLowerCase().includes('network') || 
+          errorMessage.toLowerCase().includes('fetch')) {
+        errorMessage = '네트워크 연결을 확인해주세요.';
+      }
+      
+      // 서버 오류 감지
+      if (errorMessage.includes('서버') || errorMessage.includes('Server')) {
+        errorMessage = '서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.';
+      }
+      
+      console.error('처리된 오류 메시지:', errorMessage);
       
       setProcessing({
         isProcessing: false,
