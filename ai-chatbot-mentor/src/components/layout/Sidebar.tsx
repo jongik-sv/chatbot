@@ -11,7 +11,8 @@ import {
   Cog6ToothIcon,
   SparklesIcon,
   GlobeAltIcon,
-  ServerIcon
+  ServerIcon,
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
 
@@ -32,6 +33,7 @@ const navigation = [
   { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, current: false, description: '업로드한 문서로 대화' },
   { name: '외부 콘텐츠', href: '/external-content', icon: GlobeAltIcon, current: false, description: 'YouTube/웹사이트 콘텐츠 추가' },
   { name: 'MCP 관리', href: '/mcp-management', icon: ServerIcon, current: false, description: 'MCP 서버 상태 확인 및 관리' },
+  { name: '룰 관리', href: '/rules', icon: BookOpenIcon, current: false, description: '대화 룰 설정 및 관리' },
   { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, current: true, description: '최근 대화 빠른 보기' },
   { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, current: false, description: '커스텀 멘토 생성/관리' },
   { name: '히스토리', href: '/history', icon: ClockIcon, current: false, description: '대화 검색 및 상세 관리' },
