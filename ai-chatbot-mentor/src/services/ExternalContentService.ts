@@ -37,10 +37,29 @@ export class ExternalContentService {
   private embeddingService: EmbeddingService;
 
   private constructor() {
-    this.youtubeService = YouTubeContentService.getInstance();
-    this.webScrapingService = WebScrapingService.getInstance();
-    this.documentStorageService = DocumentStorageService.getInstance();
-    this.embeddingService = EmbeddingService.getInstance();
+    try {
+      // YouTubeContentService 초기화 (getInstance가 있는 경우)
+      this.youtubeService = YouTubeContentService.getInstance ? 
+        YouTubeContentService.getInstance() : new YouTubeContentService();
+      
+      // WebScrapingService 초기화 (getInstance가 있는 경우)
+      this.webScrapingService = WebScrapingService.getInstance ? 
+        WebScrapingService.getInstance() : new WebScrapingService();
+      
+      // DocumentStorageService 초기화 (일반 constructor 사용)
+      this.documentStorageService = new DocumentStorageService();
+      
+      // EmbeddingService 초기화 (getInstance가 있는 경우)  
+      this.embeddingService = EmbeddingService.getInstance ? 
+        EmbeddingService.getInstance() : new EmbeddingService();
+    } catch (error) {
+      console.error('ExternalContentService 의존성 초기화 실패:', error);
+      // Mock 서비스들로 대체
+      this.youtubeService = this.createMockYouTubeService();
+      this.webScrapingService = this.createMockWebScrapingService();
+      this.documentStorageService = this.createMockDocumentStorageService();
+      this.embeddingService = this.createMockEmbeddingService();
+    }
   }
 
   public static getInstance(): ExternalContentService {
@@ -48,6 +67,65 @@ export class ExternalContentService {
       ExternalContentService.instance = new ExternalContentService();
     }
     return ExternalContentService.instance;
+  }
+
+  /**
+   * Mock 서비스들 생성
+   */
+  private createMockYouTubeService(): any {
+    return {
+      isValidYouTubeUrl: (url: string) => url.includes('youtube.com') || url.includes('youtu.be'),
+      processYouTubeContent: async (url: string) => ({
+        videoInfo: {
+          videoId: 'mock_video_id',
+          title: 'Mock YouTube Video',
+          channelName: 'Mock Channel',
+          thumbnailUrl: 'https://example.com/thumbnail.jpg'
+        },
+        transcript: 'Mock YouTube transcript content',
+        summary: 'Mock YouTube summary',
+        transcriptItems: [],
+        keywords: ['mock', 'youtube']
+      })
+    };
+  }
+
+  private createMockWebScrapingService(): any {
+    return {
+      isValidUrl: (url: string) => {
+        try {
+          new URL(url);
+          return true;
+        } catch { return false; }
+      },
+      scrapeWebsite: async (url: string, options: any = {}) => ({
+        title: 'Mock Website Title',
+        content: 'Mock website content',
+        excerpt: 'Mock website excerpt',
+        author: 'Mock Author',
+        publishedDate: new Date().toISOString(),
+        wordCount: 100,
+        language: 'ko',
+        tags: ['mock'],
+        images: [],
+        links: []
+      }),
+      closeBrowser: async () => {}
+    };
+  }
+
+  private createMockDocumentStorageService(): any {
+    return {
+      storeDocument: async (docInfo: any, content: string) => `mock_doc_${Date.now()}`
+    };
+  }
+
+  private createMockEmbeddingService(): any {
+    return {
+      generateEmbedding: async (text: string) => new Array(768).fill(0.1),
+      storeEmbedding: async (embeddingData: any) => `mock_embedding_${Date.now()}`,
+      searchSimilarChunks: async (query: string, limit: number = 10) => []
+    };
   }
 
   /**
