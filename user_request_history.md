@@ -1529,3 +1529,30 @@ kiro : React DOM 에러 수정 - "<p> cannot contain a nested <pre>" 에러 해�
 - ✅ 아티팩트 패널이 전체 화면 높이 완전 활용
 - ✅ Monaco 에디터에서 모든 코드 내용이 스크롤 없이 보임
 - ✅ 반응형 높이 조절로 다양한 화면 크기 대응
+
+------
+
+Sidebar.tsx BookOpenIcon HMR 모듈 인스턴스화 오류 해결
+- HMR 업데이트 중 heroicons/react BookOpenIcon 모듈이 사용 불가능해지는 문제
+- "Module factory is not available. It might have been deleted in an HMR update" 오류 발생
+
+**해결 완료 사항**:
+
+#### ✅ 문제 아이콘 교체
+- BookOpenIcon을 AdjustmentsHorizontalIcon으로 교체
+- 룰 관리 메뉴 아이콘이 설정/조정을 의미하는 더 적절한 아이콘으로 변경
+- HMR 중에도 안정적으로 사용 가능한 아이콘으로 대체
+
+**수정된 파일**:
+- src/components/layout/Sidebar.tsx: import 및 navigation 배열 수정
+
+**결과**:
+- ✅ HMR 모듈 인스턴스화 오류 완전 해결
+- ✅ 개발 서버 정상 시작 및 브라우저 접근 가능
+- ✅ 룰 관리 메뉴 아이콘이 더 의미에 맞게 변경됨
+
+------
+
+룰 설정 시스템 기능 위치 확인 및 연결
+- 요청: '16. 룰 설정 시스템 구현'이 완료되었지만 어디서 기능을 찾을 수 있는지, 연결된 것이 없는지 확인
+- 해결 방법: 룰 설정 시스템의 UI 진입점과 네비게이션 연결 상태 확인
