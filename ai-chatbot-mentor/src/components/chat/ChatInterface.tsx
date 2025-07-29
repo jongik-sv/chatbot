@@ -26,6 +26,7 @@ interface ChatInterfaceProps {
   sessionId?: number;
   initialMode?: string;
   initialMentorId?: number;
+  selectedDocumentIds?: number[];
   mbtiContext?: {
     userType: string;
     mentorType: string;
@@ -39,6 +40,7 @@ export default function ChatInterface({
   sessionId, 
   initialMode,
   initialMentorId,
+  selectedDocumentIds,
   mbtiContext,
   onSessionUpdate
 }: ChatInterfaceProps) {
@@ -223,6 +225,7 @@ export default function ChatInterface({
         mode: sessionMode,
         sessionId: state.currentSessionId,
         mentorId: initialMentorId,
+        documentIds: selectedDocumentIds,
         files
       });
 

@@ -201,6 +201,7 @@ export interface ChatRequest {
   sessionId?: number;
   mentorId?: number;
   userId?: number;
+  documentIds?: number[];
   files?: File[];
 }
 

@@ -13,6 +13,9 @@ export default function DocumentsPage() {
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
   const [showChat, setShowChat] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [viewDocument, setViewDocument] = useState<any>(null);
+  const [viewDocumentLoading, setViewDocumentLoading] = useState(false);
+  const [viewDocumentError, setViewDocumentError] = useState<string>('');
 
   useEffect(() => {
     loadDocuments();
@@ -58,9 +61,30 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDocumentView = (document: any) => {
-    // 문서 보기 기능 (향후 구현)
-    console.log('문서 보기:', document);
+  const handleDocumentView = async (document: any) => {
+    try {
+      setViewDocumentLoading(true);
+      setViewDocumentError('');
+      
+      const response = await fetch(`/api/documents/${document.id}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setViewDocument(data);
+      } else {
+        setViewDocumentError(data.error || '문서를 불러오는데 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('문서 조회 오류:', error);
+      setViewDocumentError('문서를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setViewDocumentLoading(false);
+    }
+  };
+
+  const handleCloseDocumentView = () => {
+    setViewDocument(null);
+    setViewDocumentError('');
   };
 
   const handleDocumentSelect = (documentId: number, selected: boolean) => {
@@ -121,6 +145,7 @@ export default function DocumentsPage() {
               <ChatInterface 
                 className="h-full"
                 initialMode="document"
+                selectedDocumentIds={selectedDocuments}
               />
             </ChatProvider>
           </div>
@@ -247,6 +272,87 @@ export default function DocumentsPage() {
           </div>
         </div>
       </div>
+
+      {/* 문서 뷰어 모달 */}
+      {(viewDocument || viewDocumentLoading || viewDocumentError) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {viewDocument?.filename || '문서 보기'}
+              </h2>
+              <button
+                onClick={handleCloseDocumentView}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 모달 내용 */}
+            <div className="flex-1 overflow-hidden">
+              {viewDocumentLoading && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">문서를 불러오는 중...</span>
+                </div>
+              )}
+
+              {viewDocumentError && (
+                <div className="p-6">
+                  <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                    <p className="text-red-800">{viewDocumentError}</p>
+                  </div>
+                </div>
+              )}
+
+              {viewDocument && !viewDocumentLoading && !viewDocumentError && (
+                <div className="h-full overflow-y-auto p-6">
+                  {/* 문서 메타데이터 */}
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">파일 타입:</span>
+                        <p className="text-gray-900">{viewDocument.fileType?.toUpperCase()}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">파일 크기:</span>
+                        <p className="text-gray-900">
+                          {viewDocument.metadata?.fileSize ? 
+                            `${Math.round(viewDocument.metadata.fileSize / 1024)} KB` : 
+                            'N/A'
+                          }
+                        </p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">단어 수:</span>
+                        <p className="text-gray-900">{viewDocument.metadata?.wordCount || 0}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">언어:</span>
+                        <p className="text-gray-900">{viewDocument.metadata?.language || 'unknown'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 문서 내용 */}
+                  <div className="prose max-w-none">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">문서 내용</h3>
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                        {viewDocument.content || '문서 내용이 없습니다.'}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

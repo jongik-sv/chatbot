@@ -5,7 +5,9 @@
       "description": "Web content fetching and processing",
       "type": "builtin",
       "disabled": false,
-      "tools": ["fetch"],
+      "tools": [
+        "fetch"
+      ],
       "autoApprove": []
     },
     "supabase": {
