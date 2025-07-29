@@ -48,6 +48,7 @@ export default function ChatInterface({
   const [documentInfo, setDocumentInfo] = useState<{ name: string; id?: number } | null>(null);
   const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState<boolean>(true);
   const [artifactPanelWidth, setArtifactPanelWidth] = useState<number>(33); // percentage
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();
 
   // 컴포넌트 마운트 시 모델 목록 로드
@@ -106,6 +107,9 @@ export default function ChatInterface({
       if (response.session.mode === 'document' || response.session.mode === 'rag') {
         extractDocumentInfo(loadedMessages);
       }
+
+      // 세션의 아티팩트 로드
+      await loadSessionArtifacts(sessionId);
     } catch (error) {
       console.error('세션 로드 실패:', error);
       dispatch({ type: 'SET_ERROR', payload: '대화 기록을 불러올 수 없습니다.' });
@@ -177,6 +181,24 @@ export default function ChatInterface({
     }
   };
 
+  const loadSessionArtifacts = async (sessionId: number) => {
+    try {
+      const response = await fetch(`/api/artifacts?sessionId=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setArtifacts(data.data);
+          // 아티팩트가 있으면 패널을 열어둠
+          if (data.data.length > 0) {
+            setIsArtifactPanelOpen(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('아티팩트 로드 실패:', error);
+    }
+  };
+
   const handleSendMessage = async (content: string, files?: File[]) => {
     if (!content.trim()) return;
 
@@ -236,6 +258,21 @@ export default function ChatInterface({
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // 새로 생성된 아티팩트가 있으면 artifacts 상태에 추가
+      if (response.artifacts && Array.isArray(response.artifacts)) {
+        setArtifacts(prev => {
+          const newArtifacts = response.artifacts.filter((newArtifact: Artifact) => 
+            !prev.some(existing => existing.id === newArtifact.id)
+          );
+          return [...prev, ...newArtifacts];
+        });
+        
+        // 아티팩트가 새로 생성되면 패널을 열어둠
+        if (response.artifacts.length > 0) {
+          setIsArtifactPanelOpen(true);
+        }
+      }
     } catch (error) {
       console.error('메시지 전송 실패:', error);
       const errorMsg = error instanceof Error ? error.message : '메시지 전송에 실패했습니다.';
@@ -254,10 +291,6 @@ export default function ChatInterface({
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
-
-  // 아티팩트 배열 계산
-  const artifacts = messages.flatMap(m => (m.metadata?.artifacts ? m.metadata.artifacts : []))
-    .filter(artifact => artifact && artifact.id);
 
   // 아티팩트 관련 콜백 함수들
   const handleArtifactCopy = async (content: string) => {
@@ -320,7 +353,12 @@ export default function ChatInterface({
       });
 
       if (response.ok) {
-        // 로컬 메시지 상태 업데이트
+        // artifacts 상태 업데이트
+        setArtifacts(prev => prev.map(artifact =>
+          artifact.id === artifactId ? { ...artifact, ...updates } : artifact
+        ));
+        
+        // 메시지 메타데이터도 함께 업데이트
         setMessages(prev => prev.map(message => ({
           ...message,
           metadata: {
@@ -345,7 +383,10 @@ export default function ChatInterface({
       });
 
       if (response.ok) {
-        // 로컬 메시지 상태에서 아티팩트 제거
+        // artifacts 상태에서 제거
+        setArtifacts(prev => prev.filter(artifact => artifact.id !== artifactId));
+        
+        // 메시지 메타데이터에서도 제거
         setMessages(prev => prev.map(message => ({
           ...message,
           metadata: {
