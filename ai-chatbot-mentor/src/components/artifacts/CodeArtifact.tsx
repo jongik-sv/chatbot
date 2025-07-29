@@ -29,7 +29,7 @@ export function CodeArtifact({
   useFileServer = false
 }: CodeArtifactProps) {
   const [copied, setCopied] = useState(false);
-  const [viewMode, setViewMode] = useState<'monaco' | 'code' | 'raw' | 'execute'>('monaco');
+  const [viewMode, setViewMode] = useState<'monaco' | 'preview'>('monaco');
 
   const handleCopy = async () => {
     try {
@@ -107,42 +107,25 @@ export function CodeArtifact({
               Monaco
             </button>
             <button
-              onClick={() => setViewMode('code')}
-              className={`px-3 py-1 text-xs font-medium border-t border-r border-b ${
-                viewMode === 'code'
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+              onClick={() => setViewMode('preview')}
+              className={`px-3 py-1 text-xs font-medium rounded-r-md border-t border-r border-b ${
+                viewMode === 'preview'
+                  ? 'bg-green-50 border-green-200 text-green-700'
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <EyeIcon className="h-3 w-3 inline mr-1" />
-              미리보기
+              {isExecutable() ? (
+                <>
+                  <PlayIcon className="h-3 w-3 inline mr-1" />
+                  미리보기
+                </>
+              ) : (
+                <>
+                  <EyeIcon className="h-3 w-3 inline mr-1" />
+                  미리보기
+                </>
+              )}
             </button>
-            <button
-              onClick={() => setViewMode('raw')}
-              className={`px-3 py-1 text-xs font-medium ${
-                isExecutable() ? 'border-t border-r border-b' : 'rounded-r-md border-t border-r border-b'
-              } ${
-                viewMode === 'raw'
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <CodeBracketIcon className="h-3 w-3 inline mr-1" />
-              원본
-            </button>
-            {isExecutable() && (
-              <button
-                onClick={() => setViewMode('execute')}
-                className={`px-3 py-1 text-xs font-medium rounded-r-md border-t border-r border-b ${
-                  viewMode === 'execute'
-                    ? 'bg-green-50 border-green-200 text-green-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                <PlayIcon className="h-3 w-3 inline mr-1" />
-                실행
-              </button>
-            )}
           </div>
           
           <button

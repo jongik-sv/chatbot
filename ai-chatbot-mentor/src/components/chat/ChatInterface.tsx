@@ -46,7 +46,7 @@ export default function ChatInterface({
   const [error, setError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<string>(initialMode || 'chat');
   const [documentInfo, setDocumentInfo] = useState<{ name: string; id?: number } | null>(null);
-  const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState<boolean>(true);
+  const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState<boolean>(false);
   const [artifactPanelWidth, setArtifactPanelWidth] = useState<number>(33); // percentage
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();

@@ -1085,3 +1085,16 @@ message.role === 'assistant'
 **결과**: AI 답변이 기존보다 1.5배 넓어져 더 많은 내용을 한 번에 볼 수 있음
 
 ------
+--
+----
+
+## MCP API 엔드포인트 구현 요청
+
+사용자가 .kiro/specs/ai-chatbot-with-multimodal-mentor/tasks.md의 작업 17.2 "MCP API 엔드포인트 구현"을 요청했습니다.
+
+구현해야 할 API:
+- MCP 서버 상태 조회 API (/api/mcp/servers)
+- MCP 도구 실행 API (/api/mcp/execute)
+- MCP 히스토리 조회 API (/api/mcp/history)
+
+Requirements: 4.2, 4.4

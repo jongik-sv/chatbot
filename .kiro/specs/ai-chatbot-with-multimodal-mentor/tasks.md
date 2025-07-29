@@ -272,7 +272,11 @@
   - MCP 서버 상태 모니터링
   - _Requirements: 4.1_
 
-- [ ] 17.2 MCP API 엔드포인트 구현
+- [x] 17.2 MCP API 엔드포인트 구현
+
+
+
+
   - MCP 서버 상태 조회 API (/api/mcp/servers)
   - MCP 도구 실행 API (/api/mcp/execute)
   - MCP 히스토리 조회 API (/api/mcp/history)
