@@ -1107,3 +1107,10 @@ Requirements: 4.2, 4.4-
 - Requirements: 4.3
 
 **날짜**: 2025-01-29
+-
+-----
+
+MCP 설정하는 부분이 어딨지?---
+---
+
+search:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)이 오류 이해하기hook.js:608 검색 오류: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON

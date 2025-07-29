@@ -154,48 +154,45 @@ export function CodeArtifact({
               className="rounded-lg h-full"
             />
           </div>
-        ) : viewMode === 'code' ? (
-          <div className="h-full overflow-auto">
-            <SyntaxHighlighter
-              language={language}
-              style={codeStyle}
-              showLineNumbers={showLineNumbers}
-              customStyle={{
-                margin: 0,
-                padding: '1rem',
-                background: theme === 'dark' ? '#1e1e1e' : '#fafafa',
-                fontSize: '14px',
-                lineHeight: '1.5',
-                height: '100%',
-                minHeight: '100%'
-              }}
-              lineNumberStyle={{
-                color: theme === 'dark' ? '#6e7681' : '#656d76',
-                paddingRight: '1rem',
-                minWidth: '2.5rem'
-              }}
-            >
-              {content}
-            </SyntaxHighlighter>
-          </div>
-        ) : viewMode === 'raw' ? (
-          <div className="h-full overflow-auto">
-            <pre className="h-full p-4 text-sm font-mono text-gray-800 bg-gray-50 whitespace-pre-wrap">
-              {content}
-            </pre>
-          </div>
         ) : (
-          <div className="h-full p-4">
-            <CodeExecutor 
-              code={content} 
-              language={language || 'javascript'} 
-              title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
-              artifactId={artifactId}
-              sessionId={sessionId}
-              useFileServer={useFileServer}
-              className="h-full"
-            />
-          </div>
+          // 미리보기 모드: 실행 가능한 코드는 실행 결과, 아니면 하이라이트된 코드
+          isExecutable() ? (
+            <div className="h-full p-4">
+              <CodeExecutor 
+                code={content} 
+                language={language || 'javascript'} 
+                title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
+                artifactId={artifactId}
+                sessionId={sessionId}
+                useFileServer={useFileServer}
+                className="h-full"
+              />
+            </div>
+          ) : (
+            <div className="h-full overflow-auto">
+              <SyntaxHighlighter
+                language={language}
+                style={codeStyle}
+                showLineNumbers={showLineNumbers}
+                customStyle={{
+                  margin: 0,
+                  padding: '1rem',
+                  background: theme === 'dark' ? '#1e1e1e' : '#fafafa',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  height: '100%',
+                  minHeight: '100%'
+                }}
+                lineNumberStyle={{
+                  color: theme === 'dark' ? '#6e7681' : '#656d76',
+                  paddingRight: '1rem',
+                  minWidth: '2.5rem'
+                }}
+              >
+                {content}
+              </SyntaxHighlighter>
+            </div>
+          )
         )}
       </div>
 

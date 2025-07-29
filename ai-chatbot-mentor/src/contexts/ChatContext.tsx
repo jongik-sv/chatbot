@@ -39,7 +39,7 @@ const initialState: ChatState = {
 
 const defaultModelSettings: ModelSettings = {
   temperature: 0.7,
-  maxTokens: 2048,
+  maxTokens: 10000,
   systemPrompt: '',
 };
 

@@ -22,7 +22,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
     const settings = getModelSettings(state.selectedModel);
     return {
       ...settings,
-      maxTokens: settings.maxTokens && settings.maxTokens > 0 ? settings.maxTokens : 200000,
+      maxTokens: settings.maxTokens && settings.maxTokens > 0 ? settings.maxTokens : 10000,
     };
   });
 
@@ -36,7 +36,7 @@ export default function ModelSettings({ isOpen, onClose }: ModelSettingsProps) {
   const handleReset = () => {
     const defaultSettings = {
       temperature: 0.7,
-      maxTokens: 200000,
+      maxTokens: 10000,
       systemPrompt: '',
     };
     setLocalSettings(defaultSettings);
