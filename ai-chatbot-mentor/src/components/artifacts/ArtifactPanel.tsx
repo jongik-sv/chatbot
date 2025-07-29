@@ -211,7 +211,7 @@ export function ArtifactPanel({
           </div>
 
           {/* 아티팩트 내용 */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
             {isEditing ? (
               <div className="h-full">
                 <textarea
@@ -222,11 +222,15 @@ export function ArtifactPanel({
                 />
               </div>
             ) : (
-              <div className="h-full overflow-auto">
+              <div className="h-full overflow-hidden">
                 {selectedArtifact.type === 'code' && (
                   <CodeArtifact
                     content={selectedArtifact.content}
                     language={selectedArtifact.language}
+                    className="h-full"
+                    artifactId={selectedArtifact.id.toString()}
+                    sessionId={selectedArtifact.sessionId?.toString()}
+                    useFileServer={true}
                   />
                 )}
                 {selectedArtifact.type === 'document' && (

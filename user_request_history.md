@@ -892,18 +892,22 @@ user_sessions 테이블:
 
 ------
 
-DocumentStorageService 모듈의 default export 오류 해결 요청
+아티팩트의 높이를 전체 다 활용하도록 해줘. 그리고 실행은 어떻게 하는거지? 실행이 안되는데.
+
+------
+
+EmbeddingService 모듈의 default export 오류 해결 요청
 
 **문제 상황**:
-- ExternalContentService에서 DocumentStorageService import 시 "Export default doesn't exist" 오류 발생
-- DocumentStorageService.ts 파일에 class는 있지만 default export 구문이 누락됨
+- ExternalContentService에서 EmbeddingService import 시 "Export default doesn't exist" 오류 발생
+- EmbeddingService.ts 파일에 class와 instance는 있지만 default export 구문이 누락됨
 
 **해결 작업**:
-- ✅ DocumentStorageService.ts 파일 끝에 `export default DocumentStorageService;` 추가
-- ✅ Next.js 개발 서버 빌드 오류 해결
+- ✅ EmbeddingService.ts 파일 끝에 `export default EmbeddingService;` 추가
+- ✅ ExternalContentService의 import 오류 해결
 
 **수정된 파일**:
-- ai-chatbot-mentor/src/services/DocumentStorageService.ts
+- ai-chatbot-mentor/src/services/EmbeddingService.ts
 
 **결과**: 모듈 import 오류 해결 완료
 

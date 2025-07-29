@@ -270,3 +270,4 @@ export class EmbeddingService {
 }
 
 export const embeddingService = EmbeddingService.getInstance();
+export default EmbeddingService;

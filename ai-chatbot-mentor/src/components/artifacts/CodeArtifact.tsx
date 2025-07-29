@@ -80,9 +80,9 @@ export function CodeArtifact({
   };
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+    <div className={`flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
       {/* 코드 헤더 */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <CodeBracketIcon className="h-4 w-4 text-gray-500" />
           <span className="text-sm font-medium text-gray-700">
@@ -160,43 +160,49 @@ export function CodeArtifact({
       </div>
 
       {/* 코드 내용 */}
-      <div className="relative">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {viewMode === 'monaco' ? (
-          <div className="p-4">
+          <div className="h-full p-4">
             <MonacoCodeEditor
               content={content}
               language={language}
               theme={theme}
-              height="400px"
-              className="rounded-lg"
+              height="100%"
+              className="rounded-lg h-full"
             />
           </div>
         ) : viewMode === 'code' ? (
-          <SyntaxHighlighter
-            language={language}
-            style={codeStyle}
-            showLineNumbers={showLineNumbers}
-            customStyle={{
-              margin: 0,
-              padding: '1rem',
-              background: theme === 'dark' ? '#1e1e1e' : '#fafafa',
-              fontSize: '14px',
-              lineHeight: '1.5'
-            }}
-            lineNumberStyle={{
-              color: theme === 'dark' ? '#6e7681' : '#656d76',
-              paddingRight: '1rem',
-              minWidth: '2.5rem'
-            }}
-          >
-            {content}
-          </SyntaxHighlighter>
+          <div className="h-full overflow-auto">
+            <SyntaxHighlighter
+              language={language}
+              style={codeStyle}
+              showLineNumbers={showLineNumbers}
+              customStyle={{
+                margin: 0,
+                padding: '1rem',
+                background: theme === 'dark' ? '#1e1e1e' : '#fafafa',
+                fontSize: '14px',
+                lineHeight: '1.5',
+                height: '100%',
+                minHeight: '100%'
+              }}
+              lineNumberStyle={{
+                color: theme === 'dark' ? '#6e7681' : '#656d76',
+                paddingRight: '1rem',
+                minWidth: '2.5rem'
+              }}
+            >
+              {content}
+            </SyntaxHighlighter>
+          </div>
         ) : viewMode === 'raw' ? (
-          <pre className="p-4 text-sm font-mono text-gray-800 bg-gray-50 overflow-auto whitespace-pre-wrap">
-            {content}
-          </pre>
+          <div className="h-full overflow-auto">
+            <pre className="h-full p-4 text-sm font-mono text-gray-800 bg-gray-50 whitespace-pre-wrap">
+              {content}
+            </pre>
+          </div>
         ) : (
-          <div className="p-4">
+          <div className="h-full p-4">
             <CodeExecutor 
               code={content} 
               language={language || 'javascript'} 
@@ -204,13 +210,14 @@ export function CodeArtifact({
               artifactId={artifactId}
               sessionId={sessionId}
               useFileServer={useFileServer}
+              className="h-full"
             />
           </div>
         )}
       </div>
 
       {/* 코드 통계 */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
+      <div className="flex-shrink-0 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
         <div className="flex items-center justify-between">
           <span>
             {content.length} 문자, {content.split('\n').length} 줄
