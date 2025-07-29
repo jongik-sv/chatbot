@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
+import { MCPClient } from './MCPClient';
 import {
   MCPServer,
   MCPTool,
