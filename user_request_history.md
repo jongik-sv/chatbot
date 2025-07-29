@@ -1556,3 +1556,41 @@ Sidebar.tsx BookOpenIcon HMR 모듈 인스턴스화 오류 해결
 룰 설정 시스템 기능 위치 확인 및 연결
 - 요청: '16. 룰 설정 시스템 구현'이 완료되었지만 어디서 기능을 찾을 수 있는지, 연결된 것이 없는지 확인
 - 해결 방법: 룰 설정 시스템의 UI 진입점과 네비게이션 연결 상태 확인
+
+------
+
+AI 답변 Markdown 렌더링 인라인 코드 블록 과다 적용 문제 해결
+- AI 답변에서 `.html` 같은 단순 파일 확장자가 인라인 코드 블록으로 잘못 렌더링되는 문제
+- react-markdown의 remarkGfm 플러그인이 너무 적극적으로 인라인 코드를 인식하는 부작용
+
+**해결 완료 사항**:
+
+#### ✅ 인라인 코드 블록 처리 로직 개선
+- 파일 확장자만 있는 경우 (`.html`, `.js`, `.css` 등) 일반 텍스트로 처리
+- 3글자 이하의 단순 텍스트는 특수문자 포함 시에만 코드 블록 적용
+- 실제 코드 구문 `(){}=;` 포함 시에만 인라인 코드 스타일 적용
+- 그 외 모든 경우는 일반 `<span>` 태그로 렌더링
+
+#### ✅ 코드 인식 조건 세분화
+```javascript
+// 파일 확장자 패턴 제외
+if (/^\.[a-zA-Z0-9]+$/.test(childrenStr)) {
+  return <span>{children}</span>;
+}
+
+// 실제 코드 구문이 있는 경우만 코드 스타일 적용
+if (childrenStr.includes('(') || childrenStr.includes('{') || 
+    childrenStr.includes('=') || childrenStr.includes(';')) {
+  return <code className="bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm">
+    {children}
+  </code>;
+}
+```
+
+**수정된 파일**:
+- src/components/chat/MessageList.tsx: ReactMarkdown code 컴포넌트 처리 로직 개선
+
+**결과**:
+- ✅ `.html`, `.js` 등 파일 확장자가 일반 텍스트로 정상 표시
+- ✅ 실제 코드만 인라인 코드 블록으로 스타일링됨
+- ✅ AI 답변의 자연스러운 텍스트 가독성 향상

@@ -129,16 +129,37 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                           // 코드 블록 스타일링
                           code: ({ node, inline, className, children, ...props }) => {
                             const match = /language-(\w+)/.exec(className || '');
-                            return !inline ? (
+                            const childrenStr = String(children).trim();
+                            
+                            // 인라인 코드에서 단순 파일 확장자나 짧은 텍스트는 일반 텍스트로 처리
+                            if (inline) {
+                              // 파일 확장자만 있는 경우 (예: .html, .js, .css)
+                              if (/^\.[a-zA-Z0-9]+$/.test(childrenStr)) {
+                                return <span>{children}</span>;
+                              }
+                              // 3글자 이하의 단순 텍스트는 일반 텍스트로 처리
+                              if (childrenStr.length <= 3 && !/[{}();=]/.test(childrenStr)) {
+                                return <span>{children}</span>;
+                              }
+                              // 실제 코드처럼 보이는 경우만 코드 스타일 적용
+                              if (childrenStr.includes('(') || childrenStr.includes('{') || childrenStr.includes('=') || childrenStr.includes(';')) {
+                                return (
+                                  <code className="bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              }
+                              // 그 외는 일반 텍스트
+                              return <span>{children}</span>;
+                            }
+                            
+                            // 블록 코드는 기존대로 처리
+                            return (
                               <pre className="bg-gray-800 text-gray-100 rounded-lg p-4 overflow-x-auto my-2">
                                 <code className={className} {...props}>
                                   {children}
                                 </code>
                               </pre>
-                            ) : (
-                              <code className="bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
-                                {children}
-                              </code>
                             );
                           },
                           // 인용문 스타일링
