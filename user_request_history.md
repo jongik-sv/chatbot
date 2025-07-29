@@ -1288,6 +1288,11 @@ function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
 - `ModelSettings.tsx`: `placeholder-gray-700` → `placeholder-gray-600` (2곳)
 - `Input.tsx`: `placeholder-gray-600` 유지 (이미 적절함)
 - `Textarea.tsx`: `placeholder-gray-600` 유지 (이미 적절함)
+- `ExternalContentInput.tsx`: placeholder 색상 클래스 추가
+- `ChatHistoryList.tsx`: 대화 검색 입력 필드 색상 추가
+- `MentorList.tsx`: 멘토 검색 입력 필드 색상 추가
+- `MentorForm.tsx`: 모든 입력 필드 일괄 색상 통일 (8개 필드)
+- `MCPToolSelector.tsx`: 도구 검색 입력 필드 색상 추가
 
 #### ✅ 4. 적용 범위
 - 메시지 입력창
@@ -1301,6 +1306,11 @@ function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
 - `ai-chatbot-mentor/src/app/globals.css`
 - `ai-chatbot-mentor/src/components/chat/MessageInput.tsx`
 - `ai-chatbot-mentor/src/components/chat/ModelSettings.tsx`
+- `ai-chatbot-mentor/src/components/external/ExternalContentInput.tsx`
+- `ai-chatbot-mentor/src/components/history/ChatHistoryList.tsx`
+- `ai-chatbot-mentor/src/components/mentor/MentorList.tsx`
+- `ai-chatbot-mentor/src/components/mentor/MentorForm.tsx`
+- `ai-chatbot-mentor/src/components/mcp/MCPToolSelector.tsx`
 
 ### 결과
 - 라이트 모드: `#4b5563` (gray-600) - 기존보다 더 진하고 선명함
@@ -1314,4 +1324,10 @@ function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
 MCP 웹페이지 요약 기능 문제 해결 요청
 - 웹페이지 요약 요청 시 "This is mock content from the URL." 가상 콘텐츠만 반환되는 문제
 - URL: https://apidog.com/kr/blog/a-comprehensive-guide-to-the-claude-code-sdk-kr/
-- MCP 설정 확인 및 문제 해결 필요
+- MCP 설정 확인 및 문제 해결 필요-
+-----
+
+개발 중인 챗봇 시스템의 MCP 기능 문제 파악 및 설정 확인 요청
+- 챗봇에서 웹페이지 요약 요청 시 "This is mock content from the URL." 가상 콘텐츠만 반환
+- 챗봇 시스템의 MCP 설정 위치 및 확인 방법 문의
+- 정확한 문제 진단 필요
