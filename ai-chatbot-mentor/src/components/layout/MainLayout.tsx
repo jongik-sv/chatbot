@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
-import Header from './Header';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -33,8 +32,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        {/* Mobile menu button - only visible on mobile when sidebar is closed */}
+        <div className="lg:hidden">
+          <button
+            type="button"
+            className="fixed top-4 left-4 z-30 p-2 rounded-md bg-white shadow-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
+        </div>
         
         {/* Page content */}
         <main className="flex-1 overflow-hidden">
