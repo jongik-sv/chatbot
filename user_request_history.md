@@ -1418,4 +1418,11 @@ fetch MCP 활성화 후 웹페이지 요약 기능 테스트 요청
 웹페이지 요약 테스트 결과 - 여전히 mock 콘텐츠 반환
 - mcp-server-fetch 패키지를 찾을 수 없음 (404 에러)
 - MCP fetch 서버 연결 실패로 인해 여전히 "This is mock content from the URL." 반환
-- 올바른 MCP fetch 서버 패키지명 확인 및 수정 필요
+- 올바른 MCP fetch 서버 패키지명 확인 및 수정 필요-
+-----
+
+MCP 서버 연결 구현 완료 후 테스트 결과
+- 내장 fetch 서버 성공적으로 실행됨 (로그 확인: "Executed tool fetch on server mcp-fetch")
+- 외부 MCP 패키지 의존성 없이 웹페이지 요약 기능 활성화
+- "This is mock content from the URL." 문제 해결
+- 실제 WebScrapingService를 활용한 콘텐츠 추출 구현
