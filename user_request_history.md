@@ -1462,3 +1462,32 @@ kiro : React DOM 에러 수정 - "<p> cannot contain a nested <pre>" 에러 해�
 아티팩트 조회 오류: TypeError: db.all is not a function 해결 요청
 - better-sqlite3 라이브러리의 동기 API 사용법과 async/await 충돌
 - artifacts API 라우트에서 데이터베이스 메서드 사용 방식 수정 필요
+
+------
+
+아티팩트 Monaco 에디터 소스 표시 문제 및 iframe 테스트 오류 해결 요청
+- Monaco 에디터에서 아티팩트 소스 코드가 표시되지 않는 문제
+- iframe 테스트 버튼 클릭 시 "오류: iframe 참조를 찾을 수 없습니다" 에러 발생
+- 두 가지 문제 모두 컴포넌트 렌더링 및 참조 관리 문제로 확인됨
+
+**해결 완료 사항**:
+
+#### ✅ 1. Monaco 에디터 소스 표시 문제 해결
+- content prop 변경 시 editedContent 상태가 동기화되지 않는 문제 해결
+- useEffect를 통한 content 변경 감지 및 자동 업데이트 구현
+- 디버깅 로그 강화로 content 전달 상태 모니터링
+
+#### ✅ 2. iframe 테스트 버튼 오류 해결
+- iframe이 조건부 렌더링으로 인해 DOM에 존재하지 않는 문제 해결
+- iframe을 항상 렌더링하되 invisible/visible 클래스로 가시성 제어
+- 오버레이 방식으로 시작 화면 구현하여 iframe 참조 유지
+- 상세한 디버깅 로그 추가로 iframe 상태 추적
+
+**수정된 파일**:
+- MonacoCodeEditor.tsx: useEffect 추가, content 동기화 개선
+- CodeExecutor.tsx: iframe 렌더링 방식 변경, 항상 DOM에 유지
+
+**결과**:
+- ✅ Monaco 에디터에서 아티팩트 소스 코드 정상 표시
+- ✅ iframe 테스트 버튼 정상 작동, 참조 오류 해결
+- ✅ 아티팩트 실행 환경 안정성 개선

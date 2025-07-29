@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
 import { DocumentDuplicateIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
@@ -29,12 +29,19 @@ export function MonacoCodeEditor({
   const [editedContent, setEditedContent] = useState(content);
   const [copied, setCopied] = useState(false);
 
-  // 디버깅을 위한 로그
+  // content가 변경되면 editedContent도 업데이트
+  useEffect(() => {
+    setEditedContent(content);
+  }, [content]);
+
+  // 디버깅을 위한 로그 - content가 없으면 더 자세히 로그
   console.log('MonacoCodeEditor props:', {
     contentLength: content?.length || 0,
+    contentPreview: content?.substring(0, 100) || 'NO CONTENT',
     language,
     height,
-    hasContent: !!content
+    hasContent: !!content,
+    isContentEmpty: !content || content.trim() === ''
   });
 
   // Monaco Editor 언어 맵핑

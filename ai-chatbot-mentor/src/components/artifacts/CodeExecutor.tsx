@@ -630,10 +630,12 @@ sys.stdout = output_capture
 
   const testIframeLoading = () => {
     console.log('🔍 iframe 로딩 테스트 시작');
+    console.log('iframeRef:', iframeRef);
+    console.log('iframeRef.current:', iframeRef.current);
     
-    if (!iframeRef.current) {
-      console.log('❌ iframe ref가 없습니다');
-      setError('iframe 참조를 찾을 수 없습니다');
+    if (!iframeRef || !iframeRef.current) {
+      console.log('❌ iframe ref가 없습니다. iframeRef:', iframeRef);
+      setError('오류: iframe 참조를 찾을 수 없습니다');
       return;
     }
 
@@ -783,7 +785,7 @@ sys.stdout = output_capture
       </div>
 
       {/* 실행 결과 */}
-      <div className="h-64 bg-white">
+      <div className="h-64 bg-white relative">
         {!isExecutable() ? (
           <div className="h-full flex items-center justify-center text-gray-500">
             <div className="text-center">
@@ -792,21 +794,26 @@ sys.stdout = output_capture
               <p className="text-xs mt-1">지원 언어: JavaScript, TypeScript, HTML, CSS, React, Python</p>
             </div>
           </div>
-        ) : !isReady ? (
-          <div className="h-full flex items-center justify-center text-gray-500">
-            <div className="text-center">
-              <PlayIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-              <p>실행 버튼을 클릭하여 코드를 실행하세요.</p>
-            </div>
-          </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            className="w-full h-full border-none"
-            sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms"
-            title="Code Execution Result"
-            src={useFileServer ? undefined : 'about:blank'}
-          />
+          <>
+            {/* iframe은 항상 렌더링하되, 가시성만 제어 */}
+            <iframe
+              ref={iframeRef}
+              className={`w-full h-full border-none ${!isReady ? 'invisible' : 'visible'}`}
+              sandbox="allow-scripts allow-same-origin allow-modals allow-popups allow-forms"
+              title="Code Execution Result"
+              src={useFileServer ? undefined : 'about:blank'}
+            />
+            {/* 시작 화면 오버레이 */}
+            {!isReady && (
+              <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-white">
+                <div className="text-center">
+                  <PlayIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p>실행 버튼을 클릭하여 코드를 실행하세요.</p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
