@@ -44,6 +44,27 @@ body {
   color: #4b5563;
 }
 
+/* 다크 모드에서의 placeholder 색상 */
+@media (prefers-color-scheme: dark) {
+  ::placeholder {
+    color: #9ca3af; /* gray-400 - 다크 모드에서는 더 밝게 */
+    opacity: 1;
+  }
+
+  ::-webkit-input-placeholder {
+    color: #9ca3af;
+  }
+
+  ::-moz-placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  :-ms-input-placeholder {
+    color: #9ca3af;
+  }
+}
+
 /* Markdown 콘텐츠 스타일링 */
 .markdown-content {
   line-height: 1.6;
