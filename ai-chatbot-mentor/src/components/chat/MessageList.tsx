@@ -6,6 +6,8 @@ import { UserIcon, CpuChipIcon } from '@heroicons/react/24/outline';
 import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useChatContext } from '@/contexts/ChatContext';
 import { formatChatTime } from '../../utils/dateUtils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   id: string;
@@ -117,14 +119,116 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                 }`}
               >
                 <div className="relative">
-  <div className="whitespace-pre-wrap break-words flex-1 pr-10 min-w-[6rem] max-w-[40vw] sm:max-w-[36rem]" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
-    {message.content}
-  </div>
-  {/* 복사 버튼을 메시지 박스 오른쪽 아래에 고정 */}
-  <div className="absolute bottom-1 right-2 z-10">
-    <CopyButton text={message.content} />
-  </div>
-</div>
+                  <div className="flex-1 pr-10 min-w-[6rem] max-w-[40vw] sm:max-w-[36rem]" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
+                    {message.role === 'assistant' ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        className="markdown-content"
+                        components={{
+                          // 코드 블록 스타일링
+                          code: ({ node, inline, className, children, ...props }) => {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline ? (
+                              <pre className="bg-gray-800 text-gray-100 rounded-lg p-4 overflow-x-auto my-2">
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              </pre>
+                            ) : (
+                              <code className="bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm" {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
+                          // 인용문 스타일링
+                          blockquote: ({ children }) => (
+                            <blockquote className="border-l-4 border-blue-400 pl-4 italic my-2 text-gray-700">
+                              {children}
+                            </blockquote>
+                          ),
+                          // 리스트 스타일링
+                          ul: ({ children }) => (
+                            <ul className="list-disc ml-6 my-2">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal ml-6 my-2">
+                              {children}
+                            </ol>
+                          ),
+                          // 링크 스타일링
+                          a: ({ href, children }) => (
+                            <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
+                              {children}
+                            </a>
+                          ),
+                          // 헤딩 스타일링
+                          h1: ({ children }) => (
+                            <h1 className="text-xl font-bold my-3 text-gray-900">
+                              {children}
+                            </h1>
+                          ),
+                          h2: ({ children }) => (
+                            <h2 className="text-lg font-bold my-2 text-gray-900">
+                              {children}
+                            </h2>
+                          ),
+                          h3: ({ children }) => (
+                            <h3 className="text-md font-semibold my-2 text-gray-900">
+                              {children}
+                            </h3>
+                          ),
+                          // 테이블 스타일링
+                          table: ({ children }) => (
+                            <div className="overflow-x-auto my-4">
+                              <table className="min-w-full border border-gray-300">
+                                {children}
+                              </table>
+                            </div>
+                          ),
+                          th: ({ children }) => (
+                            <th className="border border-gray-300 px-4 py-2 bg-gray-100 font-semibold text-left">
+                              {children}
+                            </th>
+                          ),
+                          td: ({ children }) => (
+                            <td className="border border-gray-300 px-4 py-2">
+                              {children}
+                            </td>
+                          ),
+                          // 강조 텍스트
+                          strong: ({ children }) => (
+                            <strong className="font-bold text-gray-900">
+                              {children}
+                            </strong>
+                          ),
+                          em: ({ children }) => (
+                            <em className="italic text-gray-700">
+                              {children}
+                            </em>
+                          ),
+                          // 단락 스타일링
+                          p: ({ children }) => (
+                            <p className="my-2 leading-relaxed">
+                              {children}
+                            </p>
+                          )
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    ) : (
+                      <div className="whitespace-pre-wrap break-words">
+                        {message.content}
+                      </div>
+                    )}
+                  </div>
+                  {/* 복사 버튼을 메시지 박스 오른쪽 아래에 고정 */}
+                  <div className="absolute bottom-1 right-2 z-10">
+                    <CopyButton text={message.content} />
+                  </div>
+                </div>
                 <div
                   className={`text-xs mt-1 ${
                     message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
