@@ -392,6 +392,63 @@ export class DocumentStorageService {
   }
 
   /**
+   * 외부 콘텐츠를 문서로 저장 (파일 없이 텍스트만)
+   */
+  async storeDocument(metadata: {
+    filename: string;
+    originalName: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: Date;
+    customGptId?: string | null;
+  }, content: string): Promise<string> {
+    const transaction = this.db.transaction((meta: typeof metadata, contentText: string) => {
+      // 파일 확장자 추출
+      const fileExtension = path.extname(meta.filename) || '.txt';
+      const fileType = fileExtension.substring(1); // 점 제거
+      
+      // 임시 파일 경로 생성 (실제 파일은 생성하지 않음)  
+      const virtualFilePath = path.join(DocumentStorageService.UPLOAD_DIR, meta.filename);
+      
+      // 문서 정보 저장
+      const insertDoc = this.db.prepare(`
+        INSERT INTO documents (
+          filename, file_type, file_path, content, metadata, file_size
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      const documentMetadata = {
+        originalName: meta.originalName,
+        mimeType: meta.mimeType,
+        uploadedAt: meta.uploadedAt.toISOString(),
+        customGptId: meta.customGptId,
+        wordCount: contentText.split(/\s+/).length,
+        language: 'auto-detect',
+        summary: contentText.length > 200 ? contentText.substring(0, 200) + '...' : contentText,
+        isExternalContent: true
+      };
+
+      const result = insertDoc.run(
+        meta.filename,
+        fileType,
+        virtualFilePath,
+        contentText,
+        JSON.stringify(documentMetadata),
+        meta.size
+      );
+
+      return result.lastInsertRowid.toString();
+    });
+
+    try {
+      return transaction(metadata, content);
+    } catch (error) {
+      console.error('외부 콘텐츠 저장 중 오류:', error);
+      throw new Error(`외부 콘텐츠 저장 실패: ${error.message}`);
+    }
+  }
+
+  /**
    * 데이터베이스 연결 종료
    */
   close(): void {
