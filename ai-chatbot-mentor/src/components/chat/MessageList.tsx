@@ -6,10 +6,7 @@ import { UserIcon, CpuChipIcon } from '@heroicons/react/24/outline';
 import { FeedbackButton } from '@/components/feedback/FeedbackButton';
 import { useChatContext } from '@/contexts/ChatContext';
 import { formatChatTime } from '../../utils/dateUtils';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeHighlight from 'rehype-highlight';
-import 'highlight.js/styles/github.css';
+import { marked } from 'marked';
 import MCPToolsDisplay from './MCPToolsDisplay';
 
 interface Message {
@@ -124,103 +121,15 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                 <div className="relative">
                   <div className={`flex-1 pr-10 min-w-[6rem] ${message.role === 'assistant' ? 'max-w-[60vw] sm:max-w-[54rem]' : 'max-w-[40vw] sm:max-w-[36rem]'}`} style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
                     {message.role === 'assistant' ? (
-                      <div className="markdown-content prose prose-sm max-w-none">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeHighlight]}
-                          components={{
-                            // 코드 블록 스타일링
-                            code: ({ node, inline, className, children, ...props }) => {
-                              const match = /language-(\w+)/.exec(className || '');
-                              const childrenStr = String(children).replace(/\n$/, '');
-                              
-                              if (inline) {
-                                // 인라인 코드 처리 - 기술 용어와 실제 코드 구분
-                                // 기술 용어나 라이브러리 이름 (밑줄 포함, 알파벳+숫자+밑줄 조합)
-                                if (/^[a-zA-Z][a-zA-Z0-9_]*$/.test(childrenStr) && childrenStr.length > 2) {
-                                  return <span className="font-semibold text-blue-600">{children}</span>;
-                                }
-                                // 실제 코드나 명령어
-                                return (
-                                  <code
-                                    className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </code>
-                                );
-                              }
-                              
-                              return (
-                                <pre className="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto">
-                                  <code className={className} {...props}>
-                                    {children}
-                                  </code>
-                                </pre>
-                              );
-                            },
-                            // 제목 스타일링
-                            h1: ({ children }) => (
-                              <h1 className="text-2xl font-bold text-gray-900 mb-4 mt-6 first:mt-0">{children}</h1>
-                            ),
-                            h2: ({ children }) => (
-                              <h2 className="text-xl font-bold text-gray-900 mb-3 mt-5 first:mt-0">{children}</h2>
-                            ),
-                            h3: ({ children }) => (
-                              <h3 className="text-lg font-semibold text-gray-900 mb-2 mt-4 first:mt-0">{children}</h3>
-                            ),
-                            // 리스트 스타일링
-                            ul: ({ children }) => (
-                              <ul className="list-disc list-inside space-y-1 mb-4">{children}</ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol className="list-decimal list-inside space-y-1 mb-4">{children}</ol>
-                            ),
-                            li: ({ children }) => (
-                              <li className="text-gray-700">{children}</li>
-                            ),
-                            // 링크 스타일링  
-                            a: ({ href, children }) => (
-                              <a 
-                                href={href} 
-                                className="text-blue-600 hover:text-blue-800 underline"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {children}
-                              </a>
-                            ),
-                            // 블록쿼트 스타일링
-                            blockquote: ({ children }) => (
-                              <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50 italic text-gray-700">
-                                {children}
-                              </blockquote>
-                            ),
-                            // 테이블 스타일링
-                            table: ({ children }) => (
-                              <div className="overflow-x-auto mb-4">
-                                <table className="min-w-full border-collapse border border-gray-300">
-                                  {children}
-                                </table>
-                              </div>
-                            ),
-                            th: ({ children }) => (
-                              <th className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold">
-                                {children}
-                              </th>
-                            ),
-                            td: ({ children }) => (
-                              <td className="border border-gray-300 px-4 py-2">{children}</td>
-                            ),
-                            // 단락 스타일링
-                            p: ({ children }) => (
-                              <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>
-                            )
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
+                      <div 
+                        className="markdown-content prose prose-sm max-w-none"
+                        dangerouslySetInnerHTML={{ 
+                          __html: marked(message.content, {
+                            gfm: true,
+                            breaks: true
+                          })
+                        }}
+                      />
                     ) : (
                       <div className="whitespace-pre-wrap break-words">
                         {message.content}

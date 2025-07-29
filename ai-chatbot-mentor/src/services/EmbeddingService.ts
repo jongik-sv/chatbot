@@ -1,5 +1,7 @@
 // services/EmbeddingService.ts
 import { pipeline, env } from '@xenova/transformers';
+import sqlite3 from 'sqlite3';
+import path from 'path';
 
 // 브라우저에서 로컬 모델 사용 설정
 env.allowLocalModels = false;
@@ -17,12 +19,24 @@ export interface DocumentChunk {
   metadata?: Record<string, any>;
 }
 
+export interface EmbeddingData {
+  documentId: string;
+  chunkIndex: number;
+  chunkText: string;
+  embedding: number[];
+  metadata?: Record<string, any>;
+}
+
 export class EmbeddingService {
   private static instance: EmbeddingService;
   private embeddingPipeline: any = null;
   private isInitialized = false;
+  private db: sqlite3.Database;
 
-  private constructor() {}
+  private constructor() {
+    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    this.db = new sqlite3.Database(dbPath);
+  }
 
   static getInstance(): EmbeddingService {
     if (!EmbeddingService.instance) {
@@ -61,6 +75,35 @@ export class EmbeddingService {
    */
   async generateEmbedding(text: string): Promise<number[]> {
     return this.embedText(text);
+  }
+
+  /**
+   * 임베딩을 데이터베이스에 저장
+   */
+  async storeEmbedding(data: EmbeddingData): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const stmt = this.db.prepare(`
+        INSERT INTO embeddings (
+          document_id, chunk_index, chunk_text, embedding, metadata
+        ) VALUES (?, ?, ?, ?, ?)
+      `);
+
+      stmt.run([
+        data.documentId,
+        data.chunkIndex,
+        data.chunkText,
+        JSON.stringify(data.embedding),
+        JSON.stringify(data.metadata || {})
+      ], function(err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+
+      stmt.finalize();
+    });
   }
 
   /**
