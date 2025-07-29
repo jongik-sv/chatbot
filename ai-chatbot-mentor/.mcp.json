@@ -1,52 +1,82 @@
 {
   "mcpServers": {
-    "mcp-fetch": {
-      "name": "MCP Fetch",
-      "description": "Web content fetching and processing",
-      "type": "builtin",
-      "enabled": true,
-      "tools": ["fetch"]
+    "fetch": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-fetch"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": []
+    },
+    "supabase": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=bifocdkfviqeonfmfwvs"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_b6dc12f28750977c5a939f8ccc0dc6a34f49ec5d"
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "toolbox": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@smithery/toolbox",
+        "--key",
+        "edd85a01-7988-4db5-8783-a1bc1ad22265",
+        "--profile",
+        "medical-krill-r0NdS4"
+      ],
+      "disabled": false,
+      "autoApprove": []
     },
     "sequential-thinking": {
-      "name": "Sequential Thinking",
-      "description": "Advanced reasoning and problem-solving tool",
-      "command": "uvx",
-      "args": ["mcp-sequential-thinking"],
-      "enabled": false,
-      "env": {
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      },
-      "autoApprove": ["sequentialthinking"]
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "sequentialthinking"
+      ]
     },
-    "context7": {
-      "name": "Context7 Documentation",
-      "description": "Access to library documentation and code examples",
-      "command": "uvx",
-      "args": ["mcp-context7"],
-      "enabled": false,
-      "env": {
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      },
-      "autoApprove": ["resolve-library-id", "get-library-docs"]
+    "Context7": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "disabled": false,
+      "autoApprove": []
     },
-    "21st-devmagic": {
-      "name": "21st DevMagic",
-      "description": "UI component generation and logo search tools",
-      "command": "uvx", 
-      "args": ["mcp-21st-devmagic"],
-      "enabled": false,
-      "env": {
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      },
-      "autoApprove": ["21st_magic_component_builder", "logo_search", "21st_magic_component_inspiration", "21st_magic_component_refiner"]
+    "@21st-dev/magic": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@21st-dev/magic@latest",
+        "API_KEY=\"5a2851de36b1edb88a791501330cd242686723563bbe7c625aa3a3317a467b51\""
+      ],
+      "disabled": false,
+      "autoApprove": []
     }
-  },
-  "settings": {
-    "autoConnect": true,
-    "timeout": 30000,
-    "maxRetries": 3,
-    "retryDelay": 1000,
-    "enableLogging": true,
-    "logLevel": "info"
   }
 }
