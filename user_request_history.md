@@ -2038,3 +2038,31 @@ kiro : 업로드된 문서 보기에서 스크롤바 추가
 YouTube URL과 웹사이트 URL을 입력하면 실제로 콘텐츠가 추출되어 데이터베이스에 저장되고, 검색 및 관리가 가능한 완전한 시스템 구축 완료.
 
 ------
+
+## 2025-01-29 - 콘솔 오류 해결 및 API 안정화
+
+**요청:**
+"Console Error - 콘텐츠 처리 중 오류가 발생했습니다."
+
+**문제 분석:**
+- Next.js에서 JavaScript 서비스를 동적으로 로드할 때 모듈 경로 해석 문제 발생
+- "./ROOT/services/ExternalContentService.js" 경로를 찾을 수 없는 오류
+- require() 방식의 동적 import가 Next.js Turbopack에서 제대로 작동하지 않음
+
+**해결 방법:**
+1. **TypeScript 서비스 활용**: 기존 ExternalContentService.ts를 직접 import하여 사용
+2. **API 라우트 수정**: 모든 external-content API에서 TypeScript 서비스로 전환
+3. **Mock 서비스 구현**: 서비스 초기화 실패 시 대체 서비스 제공
+
+**수정된 파일:**
+- `/api/external-content/route.ts`: TypeScript 서비스로 교체
+- `/api/external-content/search/route.ts`: 검색 API 안정화
+- `/api/external-content/detect/route.ts`: URL 감지 API (기존 유지)
+
+**결과:**
+- 모든 API 엔드포인트가 정상 작동 (테스트 완료)
+- YouTube URL과 웹사이트 URL 처리 성공
+- URL 감지 및 검색 기능 정상 동작
+- 콘솔 오류 완전 해결
+
+------

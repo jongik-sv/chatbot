@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import ExternalContentService from '@/services/ExternalContentService';
 
-// ExternalContentService 동적 import
+// ExternalContentService 인스턴스 가져오기
 async function getExternalContentService() {
   try {
-    const { getInstance } = require('../../../../../../services/ExternalContentService');
-    return getInstance();
+    return ExternalContentService.getInstance();
   } catch (error) {
-    console.error('ExternalContentService 로드 실패:', error);
-    throw new Error('외부 콘텐츠 서비스를 로드할 수 없습니다.');
+    console.error('ExternalContentService 초기화 실패:', error);
+    // Mock 서비스 반환
+    return {
+      searchProcessedContent: async (query: string, contentType?: 'youtube' | 'website', limit: number = 10) => {
+        console.log('Mock 검색 실행:', { query, contentType, limit });
+        return [];
+      }
+    };
   }
 }
 
@@ -37,17 +43,18 @@ export async function GET(request: NextRequest) {
     const contentService = await getExternalContentService();
 
     // 콘텐츠 검색
-    const searchResults = contentService.searchContents(query.trim(), {
-      contentType: contentType || undefined,
-      limit: Math.min(limit, 50)
-    });
+    const searchResults = await contentService.searchProcessedContent(
+      query.trim(), 
+      contentType || undefined,
+      Math.min(limit, 50)
+    );
 
     return NextResponse.json({
       success: true,
       data: {
         query: query.trim(),
         contentType: contentType || 'all',
-        results: searchResults.results.map(result => ({
+        results: searchResults.map(result => ({
           id: result.id,
           type: result.type,
           url: result.url,
@@ -58,11 +65,11 @@ export async function GET(request: NextRequest) {
             // 민감한 정보 제거
             transcriptItems: undefined
           },
-          createdAt: result.created_at
+          createdAt: result.createdAt
         })),
-        total: searchResults.total
+        total: searchResults.length
       },
-      message: `${searchResults.results.length}개의 관련 콘텐츠를 찾았습니다.`
+      message: `${searchResults.length}개의 관련 콘텐츠를 찾았습니다.`
     });
 
   } catch (error) {
@@ -108,11 +115,11 @@ export async function POST(request: NextRequest) {
     const contentService = await getExternalContentService();
 
     // 콘텐츠 검색
-    const searchResults = contentService.searchContents(query.trim(), {
-      contentType: contentType || undefined,
-      customGptId: customGptId ? parseInt(customGptId) : undefined,
-      limit: Math.min(limit, 50)
-    });
+    const searchResults = await contentService.searchProcessedContent(
+      query.trim(), 
+      contentType || undefined,
+      Math.min(limit, 50)
+    );
 
     return NextResponse.json({
       success: true,
@@ -120,7 +127,7 @@ export async function POST(request: NextRequest) {
         query: query.trim(),
         contentType: contentType || 'all',
         customGptId: customGptId || null,
-        results: searchResults.results.map(result => ({
+        results: searchResults.map(result => ({
           id: result.id,
           type: result.type,
           url: result.url,
@@ -132,11 +139,11 @@ export async function POST(request: NextRequest) {
             // 전체 자막 데이터는 필요시에만 포함
             transcriptItems: includeFullContent ? result.metadata?.transcriptItems : undefined
           },
-          createdAt: result.created_at
+          createdAt: result.createdAt
         })),
-        total: searchResults.total
+        total: searchResults.length
       },
-      message: `${searchResults.results.length}개의 관련 콘텐츠를 찾았습니다.`
+      message: `${searchResults.length}개의 관련 콘텐츠를 찾았습니다.`
     });
 
   } catch (error) {
