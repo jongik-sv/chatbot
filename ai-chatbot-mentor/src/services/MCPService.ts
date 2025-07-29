@@ -86,7 +86,14 @@ export class MCPService extends EventEmitter {
         }
       }
 
+      // 내장 fetch 서버 설정
+      await this.setupBuiltinFetchServer();
+
       this.log('info', 'MCP servers loaded from .mcp.json');
+
+      if (this.settings.autoConnect) {
+        await this.connectAllServers();
+      }
 
     } catch (error) {
       this.log('error', 'Failed to load .mcp.json, using fallback servers:', error);

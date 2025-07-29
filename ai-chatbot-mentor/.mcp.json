@@ -1,12 +1,11 @@
 {
   "mcpServers": {
-    "fetch": {
-      "command": "uvx",
-      "args": [
-        "mcp-server-fetch"
-      ],
-      "env": {},
+    "mcp-fetch": {
+      "name": "MCP Fetch",
+      "description": "Web content fetching and processing",
+      "type": "builtin",
       "disabled": false,
+      "tools": ["fetch"],
       "autoApprove": []
     },
     "supabase": {
