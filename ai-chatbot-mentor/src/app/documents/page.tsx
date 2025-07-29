@@ -310,9 +310,9 @@ export default function DocumentsPage() {
               )}
 
               {viewDocument && !viewDocumentLoading && !viewDocumentError && (
-                <div className="h-full overflow-y-auto p-6">
+                <div className="flex flex-col h-full p-6">
                   {/* 문서 메타데이터 */}
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg flex-shrink-0">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="font-medium text-gray-700">파일 타입:</span>
@@ -339,12 +339,39 @@ export default function DocumentsPage() {
                   </div>
 
                   {/* 문서 내용 */}
-                  <div className="prose max-w-none">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">문서 내용</h3>
-                    <div className="bg-white border border-gray-200 rounded-lg p-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
-                        {viewDocument.content || '문서 내용이 없습니다.'}
-                      </pre>
+                  <div className="flex flex-col flex-1 min-h-0">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4 flex-shrink-0">문서 내용</h3>
+                    <div className="flex-1 bg-white border border-gray-200 rounded-lg min-h-0">
+                      <div 
+                        className="p-6 overflow-y-scroll"
+                        style={{
+                          height: '400px',
+                          maxHeight: '60vh',
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#9CA3AF #F3F4F6'
+                        }}
+                      >
+                        <style jsx>{`
+                          div::-webkit-scrollbar {
+                            width: 12px;
+                          }
+                          div::-webkit-scrollbar-track {
+                            background: #F3F4F6;
+                            border-radius: 6px;
+                          }
+                          div::-webkit-scrollbar-thumb {
+                            background: #9CA3AF;
+                            border-radius: 6px;
+                            border: 2px solid #F3F4F6;
+                          }
+                          div::-webkit-scrollbar-thumb:hover {
+                            background: #6B7280;
+                          }
+                        `}</style>
+                        <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                          {viewDocument.content || '문서 내용이 없습니다.'}
+                        </pre>
+                      </div>
                     </div>
                   </div>
                 </div>
