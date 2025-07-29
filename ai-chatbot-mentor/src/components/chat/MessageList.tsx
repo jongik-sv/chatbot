@@ -211,9 +211,9 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                           ),
                           // 단락 스타일링
                           p: ({ children }) => (
-                            <p className="my-2 leading-relaxed">
+                            <div className="my-2 leading-relaxed">
                               {children}
-                            </p>
+                            </div>
                           )
                         }}
                         >
