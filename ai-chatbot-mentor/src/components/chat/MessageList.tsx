@@ -88,7 +88,7 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
           className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
         >
           <div
-            className={`flex max-w-3xl ${
+            className={`flex ${message.role === 'assistant' ? 'max-w-5xl' : 'max-w-3xl'} ${
               message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
             }`}
           >
@@ -119,7 +119,7 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                 }`}
               >
                 <div className="relative">
-                  <div className="flex-1 pr-10 min-w-[6rem] max-w-[40vw] sm:max-w-[36rem]" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
+                  <div className={`flex-1 pr-10 min-w-[6rem] ${message.role === 'assistant' ? 'max-w-[60vw] sm:max-w-[54rem]' : 'max-w-[40vw] sm:max-w-[36rem]'}`} style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
                     {message.role === 'assistant' ? (
                       <div className="markdown-content">
                         <ReactMarkdown

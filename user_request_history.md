@@ -1055,3 +1055,33 @@ ReactMarkdown className prop 오류 해결
 **결과**: ReactMarkdown 오류 해결, AI 답변의 Markdown 렌더링 정상 작동
 
 ------
+
+AI 답변 폭 확대 요청
+
+**요구사항**:
+- AI 답변의 폭을 현재보다 1.5배 정도 더 크게 만들기
+- 사용자 메시지는 기존 크기 유지
+
+**해결 작업**:
+- ✅ AI 답변 메시지 컨테이너 폭 확대: `max-w-3xl` → `max-w-5xl`
+- ✅ AI 답변 내용 영역 폭 확대: `max-w-[40vw] sm:max-w-[36rem]` → `max-w-[60vw] sm:max-w-[54rem]`
+- ✅ 사용자 메시지는 기존 크기 유지
+- ✅ 반응형 디자인 고려 (모바일/데스크톱)
+
+**수정된 크기**:
+```javascript
+// 메시지 컨테이너
+message.role === 'assistant' ? 'max-w-5xl' : 'max-w-3xl'
+
+// 내용 영역  
+message.role === 'assistant' 
+  ? 'max-w-[60vw] sm:max-w-[54rem]'  // AI 답변: 60% 뷰포트 또는 54rem
+  : 'max-w-[40vw] sm:max-w-[36rem]'  // 사용자: 40% 뷰포트 또는 36rem
+```
+
+**수정된 파일**:
+- ai-chatbot-mentor/src/components/chat/MessageList.tsx
+
+**결과**: AI 답변이 기존보다 1.5배 넓어져 더 많은 내용을 한 번에 볼 수 있음
+
+------
