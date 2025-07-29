@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { 
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
@@ -29,20 +30,30 @@ interface RecentChat {
 }
 
 const navigation = [
-  { name: '새 채팅', href: '/', icon: PlusIcon, current: false, description: '새로운 대화 시작' },
-  { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, current: false, description: 'MBTI 기반 맞춤 멘토' },
-  { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, current: false, description: '업로드한 문서로 대화' },
-  { name: '외부 콘텐츠', href: '/external-content', icon: GlobeAltIcon, current: false, description: 'YouTube/웹사이트 콘텐츠 추가' },
-  { name: 'MCP 관리', href: '/mcp-management', icon: ServerIcon, current: false, description: 'MCP 서버 상태 확인 및 관리' },
-  { name: '룰 관리', href: '/rules', icon: AdjustmentsHorizontalIcon, current: false, description: '대화 룰 설정 및 관리' },
-  { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, current: true, description: '최근 대화 빠른 보기' },
-  { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, current: false, description: '커스텀 멘토 생성/관리' },
-  { name: '히스토리', href: '/history', icon: ClockIcon, current: false, description: '대화 검색 및 상세 관리' },
+  { name: '새 채팅', href: '/', icon: PlusIcon, description: '새로운 대화 시작' },
+  { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, description: 'MBTI 기반 맞춤 멘토' },
+  { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, description: '업로드한 문서로 대화' },
+  { name: '외부 콘텐츠', href: '/external-content', icon: GlobeAltIcon, description: 'YouTube/웹사이트 콘텐츠 추가' },
+  { name: 'MCP 관리', href: '/mcp-management', icon: ServerIcon, description: 'MCP 서버 상태 확인 및 관리' },
+  { name: '룰 관리', href: '/rules', icon: AdjustmentsHorizontalIcon, description: '대화 룰 설정 및 관리' },
+  { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, description: '최근 대화 빠른 보기' },
+  { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, description: '커스텀 멘토 생성/관리' },
+  { name: '히스토리', href: '/history', icon: ClockIcon, description: '대화 검색 및 상세 관리' },
+  { name: '설정', href: '/settings', icon: Cog6ToothIcon, description: '시스템 설정 및 환경 구성' },
+  { name: '사용자 프로필', href: '/profile', icon: UserCircleIcon, description: '프로필 정보 및 계정 관리' },
 ];
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
   const [loadingRecentChats, setLoadingRecentChats] = useState(true);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return pathname === '/' || pathname.startsWith('/chat/');
+    }
+    return pathname.startsWith(href);
+  };
 
   useEffect(() => {
     loadRecentChats();
@@ -94,27 +105,30 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {navigation.map((item) => (
-          <a
-            key={item.name}
-            href={item.href}
-            className={`
-              group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
-              ${item.current
-                ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-              }
-            `}
-          >
-            <item.icon
+        {navigation.map((item) => {
+          const active = isActive(item.href);
+          return (
+            <a
+              key={item.name}
+              href={item.href}
               className={`
-                mr-3 h-5 w-5 flex-shrink-0
-                ${item.current ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
+                ${active
+                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }
               `}
-            />
-            {item.name}
-          </a>
-        ))}
+            >
+              <item.icon
+                className={`
+                  mr-3 h-5 w-5 flex-shrink-0
+                  ${active ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                `}
+              />
+              {item.name}
+            </a>
+          );
+        })}
       </nav>
 
       {/* Recent Chats */}
