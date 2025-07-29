@@ -126,6 +126,9 @@ export default function DocumentUpload({
           )
         );
 
+        // 개별 파일 업로드 성공 시 콜백 호출
+        onUploadComplete?.([file]);
+
       } catch (error) {
         setUploadedFiles(prev =>
           prev.map(uploadedFile =>
@@ -142,14 +145,6 @@ export default function DocumentUpload({
     });
 
     await Promise.all(uploadPromises);
-    
-    const successfulFiles = files.filter((file, index) => 
-      uploadedFiles.find(uf => uf.file === file)?.status === 'success'
-    );
-    
-    if (successfulFiles.length > 0) {
-      onUploadComplete?.(successfulFiles);
-    }
   };
 
   const removeFile = (fileToRemove: File) => {

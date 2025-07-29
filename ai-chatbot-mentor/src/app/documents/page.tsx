@@ -205,23 +205,41 @@ export default function DocumentsPage() {
                   onView={handleDocumentView}
                 />
                 
-                {/* 문서 선택 체크박스 (임시) */}
+                {/* 문서 선택 체크박스 */}
                 {!loading && documents.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h3 className="text-sm font-medium text-gray-900 mb-2">대화할 문서 선택:</h3>
-                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3">대화할 문서 선택:</h3>
+                    <div className="space-y-3 max-h-32 overflow-y-auto">
                       {documents.map((doc: any) => (
-                        <label key={doc.id} className="flex items-center space-x-2 text-sm">
+                        <label 
+                          key={doc.id} 
+                          className="flex items-center space-x-3 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                        >
                           <input
                             type="checkbox"
                             checked={selectedDocuments.includes(doc.id)}
                             onChange={(e) => handleDocumentSelect(doc.id, e.target.checked)}
-                            className="rounded border-gray-300"
+                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                           />
-                          <span className="truncate">{doc.filename}</span>
+                          <span className="text-gray-900 font-medium truncate flex-1">
+                            {doc.filename}
+                          </span>
+                          {selectedDocuments.includes(doc.id) && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              선택됨
+                            </span>
+                          )}
                         </label>
                       ))}
                     </div>
+                    
+                    {selectedDocuments.length > 0 && (
+                      <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                        <p className="text-xs text-blue-700">
+                          <strong>{selectedDocuments.length}개 문서</strong>가 선택되었습니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
