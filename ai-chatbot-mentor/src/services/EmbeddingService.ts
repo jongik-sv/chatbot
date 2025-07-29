@@ -92,9 +92,9 @@ export class EmbeddingService {
   }
 
   /**
-   * 문서를 청크로 분할
+   * 문서를 청크로 분할 (문자 기반)
    */
-  chunkDocument(text: string, chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+  chunkDocumentByCharacter(text: string, chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
     const sentences = this.splitIntoSentences(text);
     
@@ -116,6 +116,7 @@ export class EmbeddingService {
             text: currentChunk.trim(),
             index: chunkIndex++,
             metadata: {
+              chunkType: 'character',
               sentenceStart: Math.max(0, i - this.countSentencesInText(currentChunk)),
               sentenceEnd: i - 1
             }
@@ -138,6 +139,7 @@ export class EmbeddingService {
         text: currentChunk.trim(),
         index: chunkIndex,
         metadata: {
+          chunkType: 'character',
           sentenceStart: sentences.length - this.countSentencesInText(currentChunk),
           sentenceEnd: sentences.length - 1
         }
@@ -148,13 +150,104 @@ export class EmbeddingService {
   }
 
   /**
+   * 문서를 페이지 단위로 청크 분할
+   */
+  chunkDocumentByPage(text: string): DocumentChunk[] {
+    const chunks: DocumentChunk[] = [];
+    
+    // 페이지 구분자들을 찾아서 분할
+    const pagePatterns = [
+      /\f/g,                           // Form Feed (페이지 구분자)
+      /Page\s+\d+/gi,                  // "Page 1", "페이지 1" 등
+      /페이지\s*\d+/gi,                // "페이지 1", "페이지1" 등
+      /^-+\s*페이지\s*-+$/gim,         // "--- 페이지 ---" 형태
+      /^=+\s*Page\s*=+$/gim,          // "=== Page ===" 형태
+      /^\d+\s*\/\s*\d+$/gm,           // "1/10" 형태의 페이지 번호
+    ];
+    
+    let pages: string[] = [];
+    let remainingText = text;
+    
+    // 각 패턴으로 페이지 분할 시도
+    for (const pattern of pagePatterns) {
+      if (pattern.test(remainingText)) {
+        pages = remainingText.split(pattern);
+        console.log(`페이지 패턴 발견: ${pattern}, ${pages.length}개 페이지로 분할`);
+        break;
+      }
+    }
+    
+    // 패턴이 없으면 대략적인 페이지 크기로 분할 (일반적으로 3000-5000자 정도)
+    if (pages.length <= 1) {
+      const averagePageSize = 3500; // 평균 페이지 크기
+      const textLength = text.length;
+      const estimatedPages = Math.ceil(textLength / averagePageSize);
+      
+      console.log(`페이지 구분자가 없어서 추정 분할: ${estimatedPages}개 페이지`);
+      
+      pages = [];
+      for (let i = 0; i < estimatedPages; i++) {
+        const start = i * averagePageSize;
+        const end = Math.min((i + 1) * averagePageSize, textLength);
+        let pageText = text.slice(start, end);
+        
+        // 문장이 중간에 잘리지 않도록 조정
+        if (end < textLength && !pageText.match(/[.!?]\s*$/)) {
+          const nextSentenceEnd = text.slice(end).search(/[.!?]\s/);
+          if (nextSentenceEnd > 0 && nextSentenceEnd < 200) { // 200자 이내에서만 조정
+            pageText += text.slice(end, end + nextSentenceEnd + 1);
+          }
+        }
+        
+        pages.push(pageText);
+      }
+    }
+    
+    // 각 페이지를 청크로 변환
+    pages.forEach((page, index) => {
+      const cleanPage = page.trim();
+      if (cleanPage.length > 0) {
+        chunks.push({
+          text: cleanPage,
+          index: index,
+          metadata: {
+            chunkType: 'page',
+            pageNumber: index + 1,
+            totalPages: pages.length,
+            characterCount: cleanPage.length,
+            wordCount: cleanPage.split(/\s+/).length
+          }
+        });
+      }
+    });
+    
+    console.log(`총 ${chunks.length}개의 페이지 청크 생성 완료`);
+    return chunks;
+  }
+
+  /**
+   * 문서를 청크로 분할 (통합 메서드)
+   */
+  chunkDocument(text: string, mode: 'character' | 'page' = 'page', chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+    if (mode === 'page') {
+      return this.chunkDocumentByPage(text);
+    } else {
+      return this.chunkDocumentByCharacter(text, chunkSize, overlap);
+    }
+  }
+
+  /**
    * 문서 전체를 청크로 분할하고 벡터화
    */
-  async embedDocument(text: string, chunkSize: number = 500): Promise<EmbeddingResult[]> {
-    const chunks = this.chunkDocument(text, chunkSize);
+  async embedDocument(
+    text: string, 
+    mode: 'character' | 'page' = 'page', 
+    chunkSize: number = 500
+  ): Promise<EmbeddingResult[]> {
+    const chunks = this.chunkDocument(text, mode, chunkSize);
     const results: EmbeddingResult[] = [];
     
-    console.log(`Processing ${chunks.length} chunks for embedding...`);
+    console.log(`Processing ${chunks.length} ${mode} chunks for embedding...`);
     
     for (const chunk of chunks) {
       try {
@@ -165,16 +258,22 @@ export class EmbeddingService {
           chunkIndex: chunk.index
         });
         
-        // 진행률 표시
-        if ((chunk.index + 1) % 10 === 0 || chunk.index === chunks.length - 1) {
-          console.log(`Embedded ${chunk.index + 1}/${chunks.length} chunks`);
+        // 진행률 표시 (페이지 모드에서는 더 자주 표시)
+        const progressInterval = mode === 'page' ? 1 : 10;
+        if ((chunk.index + 1) % progressInterval === 0 || chunk.index === chunks.length - 1) {
+          if (mode === 'page') {
+            console.log(`Embedded page ${chunk.index + 1}/${chunks.length} (${chunk.metadata?.characterCount || 0} chars)`);
+          } else {
+            console.log(`Embedded ${chunk.index + 1}/${chunks.length} chunks`);
+          }
         }
       } catch (error) {
-        console.error(`Failed to embed chunk ${chunk.index}:`, error);
+        console.error(`Failed to embed ${mode} chunk ${chunk.index}:`, error);
         // 실패한 청크는 건너뛰고 계속 진행
       }
     }
     
+    console.log(`Embedding completed: ${results.length}/${chunks.length} ${mode} chunks processed`);
     return results;
   }
 

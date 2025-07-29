@@ -81,12 +81,17 @@ export class VectorSearchService extends BaseRepository {
   /**
    * 문서 전체를 처리하여 임베딩 생성 및 저장
    */
-  async processAndStoreDocument(documentId: number, documentText: string, chunkSize: number = 500): Promise<void> {
+  async processAndStoreDocument(
+    documentId: number, 
+    documentText: string, 
+    mode: 'character' | 'page' = 'page',
+    chunkSize: number = 500
+  ): Promise<void> {
     try {
-      console.log(`Processing document ${documentId} for embeddings...`);
+      console.log(`Processing document ${documentId} for embeddings using ${mode} mode...`);
       
       // 문서를 청크로 분할하고 임베딩 생성
-      const embeddings = await embeddingService.embedDocument(documentText, chunkSize);
+      const embeddings = await embeddingService.embedDocument(documentText, mode, chunkSize);
       
       // 기존 임베딩 삭제 (재처리 시)
       await this.deleteDocumentEmbeddings(documentId);
@@ -94,7 +99,7 @@ export class VectorSearchService extends BaseRepository {
       // 새 임베딩 저장
       await this.storeDocumentEmbeddings(documentId, embeddings);
       
-      console.log(`Document ${documentId} processing completed`);
+      console.log(`Document ${documentId} processing completed with ${embeddings.length} ${mode} chunks`);
     } catch (error) {
       console.error(`Failed to process document ${documentId}:`, error);
       throw error;

@@ -1905,6 +1905,42 @@ kiro : 업로드된 문서 보기에서 스크롤바 추가
 
 ------
 
+임베딩 청킹 방식을 500자 기반에서 페이지 기반으로 변경:
+
+요청: 현재 500자 단위로 문서를 청킹하는 방식을 페이지 단위로 변경
+
+구현 내용:
+1. EmbeddingService에 페이지 기반 청킹 기능 추가
+   - chunkDocumentByPage() 메서드: 페이지 구분자 패턴 감지
+   - 페이지 패턴: "페이지 N", "Page N", form feed 등
+   - 패턴이 없으면 3500자 기준으로 추정 분할
+   - 문장 중간 분할 방지 로직
+
+2. 통합 청킹 인터페이스 구현
+   - chunkDocument(text, mode='page'|'character') 
+   - embedDocument(text, mode='page') 기본값 설정
+   - 페이지별 메타데이터 제공 (페이지번호, 문자수, 단어수)
+
+3. VectorSearchService 업데이트
+   - processAndStoreDocument에 mode 파라미터 추가
+   - 페이지 모드를 기본값으로 설정
+
+4. 문서 업로드 API 수정
+   - upload/route.ts에서 페이지 모드 사용하도록 변경
+
+테스트 결과:
+- 기존 500자 청킹: 2개 청크 생성
+- 새로운 페이지 청킹: 5개 페이지로 정확히 분할
+- 문서 구조와 컨텍스트가 더 잘 보존됨
+
+수정된 파일:
+- src/services/EmbeddingService.ts: 페이지 청킹 로직 추가
+- src/services/VectorSearchService.ts: 모드 파라미터 지원
+- src/app/api/documents/upload/route.ts: 페이지 모드 적용
+- scripts/test-page-chunking.js: 테스트 스크립트 추가
+
+------
+
 ## 2025-01-29 - UI 개선 요청 (MCP 관리, 사이드바 레이아웃 수정)
 
 **요청사항:**

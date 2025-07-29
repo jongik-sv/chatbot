@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
       // 임시 파일 정리
       fs.unlinkSync(tempFilePath);
       
-      // 자동 임베딩 생성 (백그라운드에서 수행)
+      // 자동 임베딩 생성 (백그라운드에서 수행) - 페이지 단위로 처리
       let embeddingStatus = 'pending';
       try {
-        await vectorSearchService.processAndStoreDocument(documentId, processedDoc.content);
+        await vectorSearchService.processAndStoreDocument(documentId, processedDoc.content, 'page');
         embeddingStatus = 'completed';
       } catch (embeddingError) {
         console.error(`문서 ${documentId} 임베딩 생성 실패:`, embeddingError);
