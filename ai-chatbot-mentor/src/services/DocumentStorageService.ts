@@ -37,8 +37,8 @@ export class DocumentStorageService {
   private static readonly UPLOAD_DIR = path.join(process.cwd(), 'data', 'uploads');
 
   constructor() {
-    // 올바른 데이터베이스 경로 사용 (CLAUDE.md에 따라 /data/chatbot.db)
-    const dbPath = path.join(process.cwd(), 'data', 'chatbot.db');
+    // 프로젝트 루트의 데이터베이스 참조 (./chatbot/data/chatbot.db)
+    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
     this.db = new Database(dbPath);
     this.initializeTables();
     this.ensureUploadDirectory();
