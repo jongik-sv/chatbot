@@ -91,6 +91,7 @@ const createTablesSQL = [
     file_path TEXT NOT NULL,
     content TEXT,
     metadata TEXT, -- JSON
+    file_size INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE SET NULL

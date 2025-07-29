@@ -42,7 +42,7 @@ graph TB
     end
     
     subgraph "Data Layer"
-        SQLite[(SQLite Database)]
+        SQLite[(SQLite Database<br/>./chatbot/data/chatbot.db)]
         Vector[(Vector Store)]
         Files[File Storage]
     end
@@ -249,6 +249,12 @@ class MCPService {
 ## Data Models
 
 ### 데이터베이스 스키마
+
+**데이터베이스 위치**: `./chatbot/data/chatbot.db` (프로젝트 루트 기준)
+
+**⚠️ 중요**: 모든 서비스에서 올바른 데이터베이스 경로를 사용해야 합니다.
+- ai-chatbot-mentor 내 서비스: `path.join(process.cwd(), '..', 'data', 'chatbot.db')`
+- 루트 레벨 스크립트: `path.join(process.cwd(), 'data', 'chatbot.db')`
 
 ```sql
 -- 사용자 테이블

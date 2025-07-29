@@ -341,7 +341,7 @@ export default function DocumentsPage() {
                   {/* 문서 내용 */}
                   <div className="prose max-w-none">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">문서 내용</h3>
-                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                       <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
                         {viewDocument.content || '문서 내용이 없습니다.'}
                       </pre>

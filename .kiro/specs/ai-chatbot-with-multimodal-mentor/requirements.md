@@ -31,12 +31,17 @@
 
 **User Story:** 사용자로서, 모든 대화 내역이 안전하게 저장되기를 원한다. 그래야 이전 대화를 참조하고 연속성 있는 멘토링을 받을 수 있다.
 
+**⚠️ 데이터베이스 경로 요구사항**: 시스템의 모든 컴포넌트는 `./chatbot/data/chatbot.db` 경로의 SQLite 데이터베이스를 사용해야 합니다.
+- ai-chatbot-mentor 내 서비스: `path.join(process.cwd(), '..', 'data', 'chatbot.db')`
+- 루트 레벨 스크립트: `path.join(process.cwd(), 'data', 'chatbot.db')`
+
 #### Acceptance Criteria
 
-1. WHEN 사용자가 메시지를 보내면 THEN 시스템은 사용자 메시지를 SQLite 데이터베이스에 저장해야 한다
+1. WHEN 사용자가 메시지를 보내면 THEN 시스템은 사용자 메시지를 SQLite 데이터베이스(`./chatbot/data/chatbot.db`)에 저장해야 한다
 2. WHEN AI가 응답을 생성하면 THEN 시스템은 AI 응답을 데이터베이스에 저장해야 한다
 3. WHEN 사용자가 대화 기록을 요청하면 THEN 시스템은 저장된 대화 내역을 시간순으로 표시해야 한다
 4. WHEN 시스템이 데이터베이스에 접근할 때 THEN 사용자 개인정보와 대화 내용이 암호화되어 저장되어야 한다
+5. WHEN 새로운 서비스나 컴포넌트가 데이터베이스에 접근할 때 THEN 반드시 올바른 데이터베이스 경로를 사용해야 한다
 
 ### Requirement 4
 

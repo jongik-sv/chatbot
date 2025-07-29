@@ -111,6 +111,27 @@ npm run dev
 - `/components/mentor/`: Mentor management components
 - `/app/api/`: Next.js API routes
 
+### Database Path Configuration
+**CRITICAL: Always use the correct database path**
+
+The SQLite database is located at: `./chatbot/data/chatbot.db` (relative to project root)
+
+**For services in ai-chatbot-mentor:**
+```typescript
+// Correct path from ai-chatbot-mentor directory
+const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+```
+
+**For root-level scripts:**
+```javascript
+// Correct path from project root
+const dbPath = path.join(process.cwd(), 'data', 'chatbot.db');
+```
+
+**❌ NEVER use these paths:**
+- `process.cwd() + 'database/chatbot.db'` (old incorrect path)
+- `process.cwd() + 'data/chatbot.db'` (when in ai-chatbot-mentor directory)
+
 ### Database Initialization
 Database auto-initializes on first run, but manual init may be needed:
 ```bash
