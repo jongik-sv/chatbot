@@ -4,6 +4,10 @@
 
 아티팩트를 오른쪽에서 열리게 하고, alert이 실행되지 않는 문제 해결 요청
 
+------
+
+모듈 해결 오류 수정 요청 - "Module not found: Can't resolve '../database/db'" 문제 해결
+
 **완료 사항**: 
 - ChatInterface 레이아웃을 가로 분할로 변경하여 아티팩트를 오른쪽 1/3 영역에 표시
 - CodeExecutor iframe에 allow-modals, allow-popups 권한 추가로 alert() 함수 실행 지원
@@ -884,8 +888,6 @@ user_sessions 테이블:
 
 ------
 
-Module not found 오류 해결 요청: '../database/db' 경로 문제
+자바스크립트로 테트리스 코드 짜줘. 라고 채팅을 하면 아무 답변도 없음 - 채팅 응답 문제 해결 요청
 
-**오류 내용**: 
-- RuleService.js에서 '../database/db' 모듈을 찾을 수 없음
-- Import 경로가 잘못되어 빌드 실패 발생
+------
