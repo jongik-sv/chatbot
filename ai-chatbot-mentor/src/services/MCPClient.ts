@@ -146,6 +146,7 @@ export class MCPClient extends EventEmitter {
   private getServerCommand(): string {
     // 설정 파일에서 command가 지정된 경우 우선 사용
     if (this.config.command) {
+      this.log('debug', `Using config command: ${this.config.command}`);
       return this.config.command;
     }
 
@@ -158,7 +159,9 @@ export class MCPClient extends EventEmitter {
       'mcp-sequential-thinking': process.platform === 'win32' ? 'npx' : 'uvx'
     };
 
-    return serverCommands[this.config.id] || 'npx';
+    const defaultCommand = serverCommands[this.config.id] || 'npx';
+    this.log('debug', `Using default command for ${this.config.id}: ${defaultCommand}`);
+    return defaultCommand;
   }
 
   /**
@@ -167,6 +170,7 @@ export class MCPClient extends EventEmitter {
   private getServerArgs(): string[] {
     // 설정 파일에서 args가 지정된 경우 우선 사용
     if (this.config.args && this.config.args.length > 0) {
+      this.log('debug', `Using config args: ${JSON.stringify(this.config.args)}`);
       return this.config.args;
     }
 
@@ -189,7 +193,9 @@ export class MCPClient extends EventEmitter {
         : ['@modelcontextprotocol/server-sequential-thinking']
     };
 
-    return serverArgs[this.config.id] || ['-y', this.config.id];
+    const defaultArgs = serverArgs[this.config.id] || ['-y', this.config.id];
+    this.log('debug', `Using default args for ${this.config.id}: ${JSON.stringify(defaultArgs)}`);
+    return defaultArgs;
   }
 
   /**
