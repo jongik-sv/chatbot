@@ -9,6 +9,7 @@ import {
   DocumentTextIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
+import MainLayout from '@/components/layout/MainLayout';
 import { ApiClient } from '@/lib/api';
 import { formatRelativeTime } from '@/utils/dateUtils';
 
@@ -115,33 +116,38 @@ export default function ChatsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">채팅 목록을 불러오는 중...</p>
+      <MainLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">채팅 목록을 불러오는 중...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <button
-            onClick={loadSessions}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            다시 시도
-          </button>
+      <MainLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button
+              onClick={loadSessions}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              다시 시도
+            </button>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="flex-1 overflow-hidden">
+    <MainLayout>
+      <div className="flex-1 overflow-hidden">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center">
@@ -245,6 +251,7 @@ export default function ChatsPage() {
           </a>
         </div>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

@@ -1881,3 +1881,26 @@ kiro : 업로드된 문서 보기에서 스크롤바 추가
 - src/components/chat/ChatInterface.tsx: 디버깅 로그 추가
 
 ------
+
+문서 삭제 시 실제 파일도 함께 삭제되지 않는 문제 해결:
+
+문제: 업로드된 문서를 UI에서 삭제해도 ai-chatbot-mentor\data\uploads 폴더의 실제 파일은 삭제되지 않음
+
+해결 방법:
+1. DocumentRepository.deleteDocument 메서드 수정
+   - 문서 삭제 전 파일 경로 정보 조회
+   - 데이터베이스 삭제 후 실제 파일도 fs.unlinkSync로 삭제
+   - 관련 임베딩도 함께 삭제하여 고아 데이터 방지
+
+2. 고아 데이터 정리 스크립트 생성
+   - scripts/cleanup-orphaned-data.js 추가
+   - 참조되지 않는 임베딩 66개 삭제
+   - 데이터베이스에 등록되지 않은 파일 1개 삭제
+
+수정된 파일:
+- src/lib/repositories/DocumentRepository.ts: 파일 및 임베딩 삭제 로직 추가
+- scripts/cleanup-orphaned-data.js: 고아 데이터 정리 스크립트 추가
+
+결과: 문서 삭제 시 데이터베이스 레코드, 임베딩, 실제 파일이 모두 함께 삭제됨
+
+------

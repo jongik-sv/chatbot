@@ -12,7 +12,8 @@ import {
   SparklesIcon,
   GlobeAltIcon,
   ServerIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
 
@@ -163,8 +164,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
         )}
       </div>
 
-      {/* Settings */}
-      <div className="px-4 py-4 border-t border-gray-200">
+      {/* User & Settings */}
+      <div className="px-4 py-4 border-t border-gray-200 space-y-1">
+        {/* User Profile */}
+        <button
+          type="button"
+          className="group flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+        >
+          <UserCircleIcon className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+          사용자 프로필
+        </button>
+        
+        {/* Settings */}
         <a
           href="/settings"
           className="group flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"

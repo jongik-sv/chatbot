@@ -18,7 +18,9 @@ import {
   Wrench,
   Activity,
   Clock,
-  Zap
+  Zap,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
 interface MCPServer {
@@ -67,6 +69,7 @@ export default function MCPStatusPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
 
   // MCP 상태 조회
   const fetchMCPStatus = async () => {
@@ -142,6 +145,14 @@ export default function MCPStatusPanel() {
     };
     
     return variants[status as keyof typeof variants] || 'bg-gray-100 text-gray-800';
+  };
+
+  // 도구 정보 토글 함수
+  const toggleToolsExpanded = (serverId: string) => {
+    setExpandedTools(prev => ({
+      ...prev,
+      [serverId]: !prev[serverId]
+    }));
   };
 
   // 컴포넌트 마운트 시 데이터 로드
@@ -348,21 +359,36 @@ export default function MCPStatusPanel() {
 
                 {/* 사용 가능한 도구 */}
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                    <Wrench className="h-4 w-4" />
-                    사용 가능한 도구 ({server.toolCount}개)
-                  </h4>
-                  {server.tools.length > 0 ? (
-                    <div className="space-y-2">
-                      {server.tools.map((tool, index) => (
-                        <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                          <div className="font-medium text-blue-900">{tool.name}</div>
-                          <div className="text-sm text-blue-700 mt-1">{tool.description}</div>
+                  <button
+                    onClick={() => toggleToolsExpanded(server.id)}
+                    className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                      <Wrench className="h-4 w-4" />
+                      사용 가능한 도구 ({server.toolCount}개)
+                    </h4>
+                    {expandedTools[server.id] ? (
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+                  
+                  {expandedTools[server.id] && (
+                    <div className="mt-2">
+                      {server.tools.length > 0 ? (
+                        <div className="space-y-2">
+                          {server.tools.map((tool, index) => (
+                            <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="font-medium text-blue-900">{tool.name}</div>
+                              <div className="text-sm text-blue-700 mt-1">{tool.description}</div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="text-sm text-gray-500">사용 가능한 도구가 없습니다</div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">사용 가능한 도구가 없습니다</div>
                   )}
                 </div>
 

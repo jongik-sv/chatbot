@@ -129,6 +129,17 @@ export class DocumentRepository extends BaseRepository {
    */
   deleteDocument(id: number, userId?: number): boolean {
     try {
+      // 먼저 문서 정보를 조회하여 파일 경로를 확인
+      const document = this.getDocumentById(id);
+      if (!document) {
+        return false;
+      }
+
+      // 사용자 권한 확인
+      if (userId && document.user_id !== userId) {
+        return false;
+      }
+
       let query = `DELETE FROM documents WHERE id = ?`;
       const params = [id];
       
@@ -138,7 +149,46 @@ export class DocumentRepository extends BaseRepository {
       }
       
       const result = this.run(query, params);
-      return (result as any).changes > 0;
+      const isDeleted = (result as any).changes > 0;
+
+      // 데이터베이스에서 삭제되었으면 관련 임베딩과 실제 파일도 삭제
+      if (isDeleted) {
+        // 관련 임베딩 삭제
+        try {
+          const deleteEmbeddingsQuery = `DELETE FROM embeddings WHERE document_id = ?`;
+          this.run(deleteEmbeddingsQuery, [id]);
+          console.log(`문서 ${id}의 임베딩 삭제 완료`);
+        } catch (embeddingError) {
+          console.error('임베딩 삭제 실패:', embeddingError);
+        }
+
+        // 실제 파일 삭제
+        if (document.file_path) {
+          try {
+            const fs = require('fs');
+            const path = require('path');
+            
+            // 파일 경로가 상대경로인 경우 절대경로로 변환
+            let filePath = document.file_path;
+            if (!path.isAbsolute(filePath)) {
+              filePath = path.join(process.cwd(), '..', filePath); // ai-chatbot-mentor에서 상위로
+            }
+            
+            // 파일이 존재하면 삭제
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              console.log(`파일 삭제 완료: ${filePath}`);
+            } else {
+              console.warn(`파일을 찾을 수 없음: ${filePath}`);
+            }
+          } catch (fileError) {
+            console.error('파일 삭제 실패:', fileError);
+            // 파일 삭제에 실패해도 데이터베이스 삭제는 성공으로 처리
+          }
+        }
+      }
+      
+      return isDeleted;
     } catch (error) {
       console.error('문서 삭제 오류:', error);
       throw new Error(`문서 삭제에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);

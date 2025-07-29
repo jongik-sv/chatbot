@@ -27,24 +27,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </h1>
           </div>
 
-          {/* Right side actions */}
-          <div className="flex items-center space-x-4">
-            {/* Settings button */}
-            <button
-              type="button"
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              <Cog6ToothIcon className="h-6 w-6" />
-            </button>
-
-            {/* User profile */}
-            <button
-              type="button"
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-            >
-              <UserCircleIcon className="h-6 w-6" />
-            </button>
-          </div>
+          {/* Spacer for mobile layout */}
+          <div className="lg:hidden"></div>
         </div>
       </div>
     </header>

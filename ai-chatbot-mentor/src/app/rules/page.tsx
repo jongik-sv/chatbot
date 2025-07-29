@@ -3,13 +3,18 @@
  */
 
 import React from 'react';
+import MainLayout from '@/components/layout/MainLayout';
 import RuleManager from '../../components/rules/RuleManager';
 
 export default function RulesPage() {
   return (
-    <div className="container mx-auto py-8">
-      <RuleManager />
-    </div>
+    <MainLayout>
+      <div className="h-full overflow-y-auto">
+        <div className="container mx-auto py-8">
+          <RuleManager />
+        </div>
+      </div>
+    </MainLayout>
   );
 }
 
