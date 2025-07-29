@@ -58,7 +58,7 @@ export class MCPService extends EventEmitter {
       const fs = await import('fs/promises');
       const path = await import('path');
       
-      const configPath = path.join(process.cwd(), '.mcp1.json');
+      const configPath = path.join(process.cwd(), '.mcp.json');
       const configData = await fs.readFile(configPath, 'utf-8');
       const config = JSON.parse(configData);
 
@@ -86,10 +86,10 @@ export class MCPService extends EventEmitter {
         }
       }
 
-      this.log('info', 'MCP servers loaded from .mcp1.json');
+      this.log('info', 'MCP servers loaded from .mcp.json');
 
     } catch (error) {
-      this.log('error', 'Failed to load .mcp1.json, using fallback servers:', error);
+      this.log('error', 'Failed to load .mcp.json, using fallback servers:', error);
       // 설정 파일 로드 실패 시 기본 서버들로 폴백
       await this.loadFallbackServers();
     }
