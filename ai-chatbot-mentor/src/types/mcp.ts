@@ -10,6 +10,12 @@ export interface MCPServer {
   lastConnected?: Date;
   capabilities?: MCPCapabilities;
   error?: string;
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  type?: 'builtin' | 'external';
+  tools?: string[];
+  autoApprove?: string[];
 }
 
 export interface MCPCapabilities {

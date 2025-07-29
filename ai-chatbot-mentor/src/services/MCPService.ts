@@ -178,8 +178,14 @@ export class MCPService extends EventEmitter {
       id: config.id,
       name: config.name,
       version: '1.0.0',
-      description: config.name,
-      status: 'disconnected'
+      description: config.description || config.name,
+      status: 'disconnected',
+      command: config.command,
+      args: config.args,
+      env: config.env,
+      type: config.type,
+      tools: config.tools,
+      autoApprove: config.autoApprove
     };
 
     this.servers.set(config.id, server);
@@ -253,7 +259,13 @@ export class MCPService extends EventEmitter {
       const config: MCPServerConfig = {
         id: serverId,
         name: server.name,
-        description: server.description
+        description: server.description,
+        command: server.command,
+        args: server.args,
+        env: server.env,
+        type: server.type,
+        tools: server.tools,
+        autoApprove: server.autoApprove
       };
 
       const client = new MCPClient(config, {
