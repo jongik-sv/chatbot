@@ -1097,4 +1097,13 @@ message.role === 'assistant'
 - MCP 도구 실행 API (/api/mcp/execute)
 - MCP 히스토리 조회 API (/api/mcp/history)
 
-Requirements: 4.2, 4.4
+Requirements: 4.2, 4.4-
+-----
+
+**요청**: 17.3 MCP 채팅 통합 완성 작업 구현
+- 채팅 API에서 MCP 도구 자동 선택 및 실행
+- MCP 실행 결과를 대화 컨텍스트에 통합
+- MCP 도구 사용 히스토리 UI 표시
+- Requirements: 4.3
+
+**날짜**: 2025-01-29

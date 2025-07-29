@@ -7,6 +7,7 @@ import { LLMService } from '../../../services/LLMService';
 import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
 import { ArtifactService } from '../../../services/ArtifactService';
+import { mcpService } from '../../../services/MCPService';
 import { parseArtifactsFromContent } from '../../../utils/artifactParser';
 import { detectContinuation, shouldUpdateExistingArtifact, enhancePromptForContinuation } from '../../../utils/continuationHandler';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
@@ -17,6 +18,159 @@ const chatRepo = new ChatRepository();
 const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
 const ruleIntegration = new RuleIntegration();
+
+/**
+ * 사용자 메시지를 분석하여 필요한 MCP 도구들을 결정
+ */
+async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
+  serverId: string;
+  toolName: string;
+  arguments: Record<string, any>;
+  reasoning: string;
+}>> {
+  const tools = [];
+  const lowerMessage = message.toLowerCase();
+
+  // 웹 콘텐츠 가져오기 관련
+  if (lowerMessage.includes('http://') || lowerMessage.includes('https://') || 
+      lowerMessage.includes('웹사이트') || lowerMessage.includes('페이지') ||
+      lowerMessage.includes('url') || lowerMessage.includes('링크')) {
+    
+    // URL 추출
+    const urlRegex = /(https?:\/\/[^\s]+)/gi;
+    const urls = message.match(urlRegex);
+    
+    if (urls && urls.length > 0) {
+      for (const url of urls) {
+        tools.push({
+          serverId: 'mcp-fetch',
+          toolName: 'fetch',
+          arguments: {
+            url: url.trim(),
+            max_length: 10000
+          },
+          reasoning: `URL에서 콘텐츠를 가져오기 위해 fetch 도구 사용: ${url}`
+        });
+      }
+    }
+  }
+
+  // 라이브러리/문서 검색 관련
+  if (lowerMessage.includes('라이브러리') || lowerMessage.includes('문서') ||
+      lowerMessage.includes('api') || lowerMessage.includes('documentation') ||
+      lowerMessage.includes('docs') || lowerMessage.includes('reference')) {
+    
+    // 일반적인 라이브러리 이름들 추출 시도
+    const libraryKeywords = ['react', 'next.js', 'typescript', 'javascript', 'node.js', 
+                           'express', 'mongodb', 'supabase', 'tailwind', 'prisma'];
+    
+    for (const keyword of libraryKeywords) {
+      if (lowerMessage.includes(keyword)) {
+        tools.push({
+          serverId: 'mcp-context7',
+          toolName: 'resolve-library-id',
+          arguments: {
+            libraryName: keyword
+          },
+          reasoning: `${keyword} 라이브러리 문서 검색을 위해 Context7 사용`
+        });
+        break; // 첫 번째 매치만 사용
+      }
+    }
+  }
+
+  // UI 컴포넌트 생성 관련
+  if (lowerMessage.includes('컴포넌트') || lowerMessage.includes('ui') ||
+      lowerMessage.includes('버튼') || lowerMessage.includes('폼') ||
+      lowerMessage.includes('모달') || lowerMessage.includes('카드') ||
+      lowerMessage.includes('component') || lowerMessage.includes('button') ||
+      lowerMessage.includes('form') || lowerMessage.includes('modal')) {
+    
+    // UI 컴포넌트 관련 키워드 추출
+    const uiKeywords = ['button', 'form', 'modal', 'card', 'input', 'table'];
+    let searchQuery = 'component';
+    
+    for (const keyword of uiKeywords) {
+      if (lowerMessage.includes(keyword)) {
+        searchQuery = keyword;
+        break;
+      }
+    }
+    
+    tools.push({
+      serverId: 'mcp-21st-dev-magic',
+      toolName: '21st_magic_component_builder',
+      arguments: {
+        message: message,
+        searchQuery: searchQuery,
+        absolutePathToCurrentFile: '/current/file/path', // 실제 경로로 대체 필요
+        absolutePathToProjectDirectory: '/project/root', // 실제 경로로 대체 필요
+        standaloneRequestQuery: `Create a ${searchQuery} component based on user request`
+      },
+      reasoning: `UI 컴포넌트 생성을 위해 21st.dev Magic 도구 사용`
+    });
+  }
+
+  // 로고 검색 관련
+  if (lowerMessage.includes('로고') || lowerMessage.includes('logo') ||
+      lowerMessage.includes('아이콘') || lowerMessage.includes('icon')) {
+    
+    // 회사/브랜드 이름 추출 시도
+    const brandKeywords = ['google', 'microsoft', 'apple', 'facebook', 'twitter', 
+                          'github', 'discord', 'slack', 'notion', 'figma'];
+    
+    const foundBrands = brandKeywords.filter(brand => lowerMessage.includes(brand));
+    
+    if (foundBrands.length > 0) {
+      tools.push({
+        serverId: 'mcp-21st-dev-magic',
+        toolName: 'logo_search',
+        arguments: {
+          queries: foundBrands,
+          format: 'TSX'
+        },
+        reasoning: `${foundBrands.join(', ')} 로고 검색을 위해 logo_search 도구 사용`
+      });
+    }
+  }
+
+  // MCP 서버 검색 관련
+  if (lowerMessage.includes('mcp') || lowerMessage.includes('도구') ||
+      lowerMessage.includes('서버') || lowerMessage.includes('tool') ||
+      lowerMessage.includes('server')) {
+    
+    tools.push({
+      serverId: 'mcp-toolbox',
+      toolName: 'search_servers',
+      arguments: {
+        query: message.substring(0, 100), // 메시지의 첫 100자를 검색어로 사용
+        n: 3
+      },
+      reasoning: 'MCP 서버 검색을 위해 toolbox 사용'
+    });
+  }
+
+  // 복잡한 사고/분석이 필요한 경우
+  if (lowerMessage.includes('분석') || lowerMessage.includes('생각') ||
+      lowerMessage.includes('계획') || lowerMessage.includes('단계') ||
+      lowerMessage.includes('analyze') || lowerMessage.includes('think') ||
+      lowerMessage.includes('plan') || lowerMessage.includes('step')) {
+    
+    tools.push({
+      serverId: 'mcp-sequential-thinking',
+      toolName: 'sequentialthinking',
+      arguments: {
+        thought: `사용자 요청 분석: ${message}`,
+        nextThoughtNeeded: true,
+        thoughtNumber: 1,
+        totalThoughts: 3
+      },
+      reasoning: '복잡한 분석을 위해 순차적 사고 도구 사용'
+    });
+  }
+
+  return tools;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -189,10 +343,75 @@ export async function POST(request: NextRequest) {
     // 향상된 프롬프트 사용
     const enhancedMessage = ruleApplicationResult.enhancedPrompt;
 
-    // 현재 사용자 메시지 추가 (향상된 메시지 사용)
+    // MCP 도구 자동 선택 및 실행
+    let mcpResults = [];
+    let mcpContext = '';
+    
+    try {
+      const mcpToolsNeeded = await analyzeMCPToolsNeeded(enhancedMessage);
+      
+      if (mcpToolsNeeded.length > 0) {
+        console.log('MCP 도구 필요:', mcpToolsNeeded.map(t => t.toolName));
+        
+        for (const toolInfo of mcpToolsNeeded) {
+          try {
+            const mcpResult = await mcpService.executeTool(
+              toolInfo.serverId,
+              toolInfo.toolName,
+              toolInfo.arguments,
+              {
+                sessionId: currentSession.id,
+                userId: userId?.toString()
+              }
+            );
+            
+            mcpResults.push({
+              toolName: toolInfo.toolName,
+              serverId: toolInfo.serverId,
+              result: mcpResult,
+              reasoning: toolInfo.reasoning
+            });
+            
+            if (mcpResult.success && mcpResult.content) {
+              const contentText = mcpResult.content
+                .map(c => c.type === 'text' ? c.text : `[${c.type} content]`)
+                .join('\n');
+              mcpContext += `\n\n[MCP Tool: ${toolInfo.toolName}]\n${contentText}`;
+            }
+            
+          } catch (toolError) {
+            console.error(`MCP 도구 실행 오류 (${toolInfo.toolName}):`, toolError);
+            mcpResults.push({
+              toolName: toolInfo.toolName,
+              serverId: toolInfo.serverId,
+              result: {
+                id: `error_${Date.now()}`,
+                toolCallId: `call_${Date.now()}`,
+                success: false,
+                error: toolError instanceof Error ? toolError.message : 'Tool execution failed',
+                isError: true,
+                timestamp: new Date(),
+                executionTime: 0
+              },
+              reasoning: toolInfo.reasoning
+            });
+          }
+        }
+      }
+    } catch (mcpError) {
+      console.error('MCP 분석 오류:', mcpError);
+    }
+
+    // MCP 컨텍스트를 포함한 메시지 구성
+    let finalMessage = enhancedMessage;
+    if (mcpContext) {
+      finalMessage += mcpContext;
+    }
+
+    // 현재 사용자 메시지 추가 (MCP 컨텍스트 포함)
     conversationHistory.push({
       role: 'user',
-      content: enhancedMessage
+      content: finalMessage
     });
 
     // 사용자 메시지 저장
@@ -202,8 +421,11 @@ export async function POST(request: NextRequest) {
       content: message,
       contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
       metadata: uploadedFiles.length > 0 ? { 
-        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size }))
-      } : undefined
+        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size })),
+        mcpTools: mcpResults.length > 0 ? mcpResults : undefined
+      } : {
+        mcpTools: mcpResults.length > 0 ? mcpResults : undefined
+      }
     });
 
     let llmResponse;
@@ -380,6 +602,8 @@ export async function POST(request: NextRequest) {
         messageId: assistantMessage.id,
         artifacts: createdArtifacts,
         sources: [], // TODO: RAG 소스 처리 구현
+        // MCP 도구 사용 정보 추가
+        mcpTools: mcpResults.length > 0 ? mcpResults : undefined,
         // 룰 적용 정보 추가
         ruleInfo: {
           appliedRules: ruleApplicationResult.appliedRules,

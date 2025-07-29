@@ -210,6 +210,24 @@ export interface ChatResponse {
   sources?: string[];
   sessionId: number;
   messageId: number;
+  mcpTools?: Array<{
+    toolName: string;
+    serverId: string;
+    result: {
+      id: string;
+      toolCallId: string;
+      success: boolean;
+      content?: Array<{
+        type: string;
+        text?: string;
+      }>;
+      error?: string;
+      isError?: boolean;
+      timestamp: Date;
+      executionTime?: number;
+    };
+    reasoning: string;
+  }>;
   ruleInfo?: {
     appliedRules: Array<{
       name: string;

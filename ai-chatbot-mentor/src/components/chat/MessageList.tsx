@@ -8,6 +8,7 @@ import { useChatContext } from '@/contexts/ChatContext';
 import { formatChatTime } from '../../utils/dateUtils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import MCPToolsDisplay from './MCPToolsDisplay';
 
 interface Message {
   id: string;
@@ -239,6 +240,13 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                 </div>
               </div>
               
+              {/* MCP 도구 사용 표시 (사용자 메시지에 표시) */}
+              {message.role === 'user' && message.metadata?.mcpTools && (
+                <div className="mt-2">
+                  <MCPToolsDisplay mcpTools={message.metadata.mcpTools} />
+                </div>
+              )}
+
               {/* 피드백 버튼 (멘토 응답에만 표시) */}
               {message.role === 'assistant' && mentorId && state.currentSessionId && (
                 <div className="flex justify-end mt-1">

@@ -253,9 +253,28 @@ export default function ChatInterface({
         metadata: {
           artifacts: response.artifacts,
           sources: response.sources,
-          modelSettings
+          modelSettings,
+          mcpTools: response.mcpTools
         }
       };
+
+      // 사용자 메시지에 MCP 도구 정보 추가 (있는 경우)
+      if (response.mcpTools && response.mcpTools.length > 0) {
+        setMessages(prev => {
+          const updatedMessages = [...prev];
+          const lastUserMessageIndex = updatedMessages.length - 1;
+          if (updatedMessages[lastUserMessageIndex]?.role === 'user') {
+            updatedMessages[lastUserMessageIndex] = {
+              ...updatedMessages[lastUserMessageIndex],
+              metadata: {
+                ...updatedMessages[lastUserMessageIndex].metadata,
+                mcpTools: response.mcpTools
+              }
+            };
+          }
+          return updatedMessages;
+        });
+      }
 
       setMessages(prev => [...prev, assistantMessage]);
 
