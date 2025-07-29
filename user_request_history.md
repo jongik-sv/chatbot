@@ -957,3 +957,67 @@ user_sessions 테이블:
 **상태**: 🎯 **AI 답변 Markdown 렌더링 완전 구현 완료**
 
 ------
+
+AI 답변 연속 처리 기능 구현 요청 ("계속" 키워드로 이전 답변과 연결)
+
+**요구사항**:
+- AI 답변이 길어서 여러 번에 걸쳐 나뉠 때 "계속" 메시지로 이전 답변과 연결
+- 연결된 답변에서 아티팩트가 있으면 기존 아티팩트 업데이트
+- 새로운 아티팩트 생성보다는 기존 것을 확장하는 방식 우선
+
+**구현 완료 사항**:
+
+#### ✅ 1. 연속 답변 감지 시스템
+- **continuationHandler.ts**: 연속 메시지 감지 유틸리티
+- 다양한 "계속" 키워드 패턴 지원: `계속`, `continue`, `계속해줘`, `이어서`, `더 써줘` 등
+- 이전 assistant 메시지 자동 식별 및 연결
+
+#### ✅ 2. 컨텍스트 연결 처리
+- **detectContinuation()**: 이전 메시지와 현재 요청 연결
+- **shouldUpdateExistingArtifact()**: 기존 아티팩트 업데이트 여부 판단
+- **enhancePromptForContinuation()**: 연속 작성 컨텍스트 프롬프트 향상
+
+#### ✅ 3. 아티팩트 업데이트 로직
+- 연속 답변 시 이전 메시지의 아티팩트 검색
+- 동일 타입/언어의 기존 아티팩트 자동 업데이트
+- 새 아티팩트 생성보다 기존 확장 우선 처리
+
+#### ✅ 4. Chat API 통합
+- 연속 답변 감지 및 컨텍스트 처리 로직 통합
+- 이전 내용과 현재 내용 결합한 아티팩트 추출
+- ArtifactService에 `getArtifactsByMessageId()` 메서드 추가
+
+**핵심 처리 흐름**:
+```javascript
+// 1. 연속 답변 감지
+const continuationResult = detectContinuation(message, conversationHistory);
+
+// 2. 이전 메시지와 연결
+if (continuationResult.isContinuation) {
+  const artifactUpdateInfo = shouldUpdateExistingArtifact(previousContent, message);
+  processedMessage = enhancePromptForContinuation(message, previousContent, shouldUpdate);
+}
+
+// 3. 아티팩트 처리
+if (shouldUpdateArtifact) {
+  const existingArtifacts = await ArtifactService.getArtifactsByMessageId(previousMessageId);
+  const existingArtifact = findMatchingArtifact(existingArtifacts, newArtifact);
+  if (existingArtifact) {
+    await ArtifactService.updateArtifact(existingArtifact.id, newContent);
+  }
+}
+```
+
+**지원 키워드**:
+- `계속`, `continue`, `계속해`, `계속해줘`
+- `이어서`, `이어서 해줘`, `계속 작성`, `더 써줘`
+
+**수정된 파일**:
+- utils/continuationHandler.ts (신규)
+- app/api/chat/route.ts
+- services/ArtifactService.ts  
+- types/index.ts
+
+**결과**: "계속"이라고 하면 이전 답변과 자연스럽게 연결되어 아티팩트가 확장/업데이트됨
+
+------

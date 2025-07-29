@@ -8,6 +8,7 @@ import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
 import { ArtifactService } from '../../../services/ArtifactService';
 import { parseArtifactsFromContent } from '../../../utils/artifactParser';
+import { detectContinuation, shouldUpdateExistingArtifact, enhancePromptForContinuation } from '../../../utils/continuationHandler';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
@@ -140,12 +141,44 @@ export async function POST(request: NextRequest) {
       const recentMessages = chatRepo.getMessages(currentSession.id, { limit: 20 });
       conversationHistory = recentMessages.map(msg => ({
         role: msg.role,
-        content: msg.content
+        content: msg.content,
+        id: msg.id
       }));
     }
 
-    // 룰 적용하여 프롬프트 향상
-    const ruleApplicationResult = await ruleIntegration.applyRulesToPrompt(message, {
+    // 연속 답변 감지 및 처리
+    const continuationResult = detectContinuation(message, conversationHistory);
+    let processedMessage = message;
+    let continuationContext = null;
+
+    if (continuationResult.isContinuation && continuationResult.combinedContent) {
+      // 이전 메시지와 연결된 컨텍스트 처리
+      const artifactUpdateInfo = shouldUpdateExistingArtifact(
+        continuationResult.combinedContent,
+        message
+      );
+      
+      // 연속 작성을 위한 프롬프트 향상
+      processedMessage = enhancePromptForContinuation(
+        message,
+        continuationResult.combinedContent,
+        artifactUpdateInfo.shouldUpdate
+      );
+
+      continuationContext = {
+        previousMessageId: continuationResult.previousMessageId,
+        shouldUpdateArtifact: artifactUpdateInfo.shouldUpdate,
+        previousContent: continuationResult.combinedContent
+      };
+
+      console.log('연속 답변 감지됨:', {
+        previousMessageId: continuationResult.previousMessageId,
+        shouldUpdateArtifact: artifactUpdateInfo.shouldUpdate
+      });
+    }
+
+    // 룰 적용하여 프롬프트 향상 (연속 답변 처리된 메시지 사용)
+    const ruleApplicationResult = await ruleIntegration.applyRulesToPrompt(processedMessage, {
       userId: userId,
       sessionId: currentSession.id,
       mentorId: mentorId,
@@ -263,28 +296,63 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // AI 응답에서 아티팩트 추출 및 생성 (메시지 ID 포함)
+      // AI 응답에서 아티팩트 추출 및 생성/업데이트 처리
+      let contentToProcess = llmResponse.content;
+      
+      // 연속 답변인 경우 이전 내용과 함께 처리
+      if (continuationContext?.shouldUpdateArtifact && continuationContext?.previousContent) {
+        contentToProcess = continuationContext.previousContent + '\n\n' + llmResponse.content;
+        console.log('연속 답변으로 처리: 이전 내용과 결합하여 아티팩트 업데이트');
+      }
+
       const parsedArtifacts = parseArtifactsFromContent(
-        llmResponse.content,
+        contentToProcess,
         currentSession.id,
         assistantMessage.id
       );
 
-      console.log('파싱된 아티팩트:', parsedArtifacts.artifacts.length, '개');
+      console.log('파싱된 아티팩트:', parsedArtifacts.artifacts.length, '개', 
+                  continuationContext?.shouldUpdateArtifact ? '(연속 답변 모드)' : '');
 
       const createdArtifacts = [];
+      
       for (const artifactData of parsedArtifacts.artifacts) {
         try {
-          console.log('아티팩트 생성 중:', artifactData.title, artifactData.type);
+          console.log('아티팩트 처리 중:', artifactData.title, artifactData.type);
+          
+          // 연속 답변이고 기존 아티팩트를 업데이트해야 하는 경우
+          if (continuationContext?.shouldUpdateArtifact && continuationContext?.previousMessageId) {
+            // 이전 메시지의 아티팩트 찾기
+            const previousArtifacts = await ArtifactService.getArtifactsByMessageId(continuationContext.previousMessageId);
+            const existingArtifact = previousArtifacts.find(existing => 
+              existing.type === artifactData.type && 
+              (existing.title === artifactData.title || 
+               existing.language === artifactData.language)
+            );
+
+            if (existingArtifact) {
+              // 기존 아티팩트 업데이트
+              console.log('기존 아티팩트 업데이트:', existingArtifact.id);
+              const updatedArtifact = await ArtifactService.updateArtifact(existingArtifact.id, {
+                content: artifactData.content,
+                title: artifactData.title || existingArtifact.title,
+                updated_at: new Date().toISOString()
+              });
+              createdArtifacts.push(updatedArtifact);
+              continue;
+            }
+          }
+          
+          // 새 아티팩트 생성
           const artifact = ArtifactService.createArtifact(artifactData);
           createdArtifacts.push(artifact);
           console.log('아티팩트 생성 완료:', artifact.id);
         } catch (error) {
-          console.error('아티팩트 생성 오류:', error);
+          console.error('아티팩트 처리 오류:', error);
         }
       }
 
-      console.log('총 생성된 아티팩트:', createdArtifacts.length, '개');
+      console.log('총 처리된 아티팩트:', createdArtifacts.length, '개');
 
       // 메시지 메타데이터에 아티팩트 정보 추가 (필요시)
       if (createdArtifacts.length > 0) {
@@ -318,7 +386,14 @@ export async function POST(request: NextRequest) {
           rulesSummary: ruleApplicationResult.rulesSummary,
           originalMessage: message, // 원본 메시지
           enhancedMessage: enhancedMessage // 룰 적용 후 메시지
-        }
+        },
+        // 연속 답변 정보 추가
+        continuationInfo: continuationContext ? {
+          isContinuation: true,
+          previousMessageId: continuationContext.previousMessageId,
+          wasArtifactUpdated: continuationContext.shouldUpdateArtifact,
+          artifactsProcessed: createdArtifacts.length
+        } : undefined
       };
 
       return NextResponse.json(response);

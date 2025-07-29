@@ -160,6 +160,13 @@ export class ArtifactService {
   }
 
   /**
+   * 메시지 ID로 아티팩트 목록 조회 (연속 답변 처리용)
+   */
+  static getArtifactsByMessageId(messageId: number): Artifact[] {
+    return this.getArtifacts({ messageId });
+  }
+
+  /**
    * 아티팩트 업데이트
    */
   static updateArtifact(id: number, data: UpdateArtifactData): Artifact | null {

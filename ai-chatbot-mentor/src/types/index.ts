@@ -221,6 +221,12 @@ export interface ChatResponse {
     originalMessage: string;
     enhancedMessage: string;
   };
+  continuationInfo?: {
+    isContinuation: boolean;
+    previousMessageId?: number;
+    wasArtifactUpdated: boolean;
+    artifactsProcessed: number;
+  };
 }
 
 // MBTI 관련 타입 정의
