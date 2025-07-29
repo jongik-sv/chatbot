@@ -25,23 +25,23 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Placeholder 색상 개선 */
+/* Placeholder 색상 개선 - 더 진하게 */
 ::placeholder {
-  color: #6b7280; /* gray-500 */
+  color: #4b5563; /* gray-600 - 더 진한 색상 */
   opacity: 1;
 }
 
 ::-webkit-input-placeholder {
-  color: #6b7280;
+  color: #4b5563;
 }
 
 ::-moz-placeholder {
-  color: #6b7280;
+  color: #4b5563;
   opacity: 1;
 }
 
 :-ms-input-placeholder {
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* Markdown 콘텐츠 스타일링 */

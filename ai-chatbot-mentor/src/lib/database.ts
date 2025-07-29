@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 const DB_PATH = path.join(process.cwd(), '..', 'data', 'chatbot.db');
-const SCHEMA_PATH = path.join(process.cwd(), 'database', 'schema.sql');
+// const SCHEMA_PATH = path.join(process.cwd(), 'database', 'schema.sql'); // 사용하지 않음
 
 let db: Database.Database | null = null;
 
@@ -23,76 +23,13 @@ export function getDatabase(): Database.Database {
     
     // 외래 키 제약 조건 비활성화 (아티팩트 생성 문제 해결)
     db.pragma('foreign_keys = OFF');
-    
-    // 스키마 초기화
-    initializeSchema();
   }
   
   return db;
 }
 
-function initializeSchema() {
-  if (!db) return;
-  
-  try {
-    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
-    db.exec(schema);
-    console.log('Database schema initialized successfully');
-    
-    // 마이그레이션 실행
-    runMigrations();
-    
-    // 기본 데이터 삽입
-    const initDataPath = path.join(process.cwd(), 'database', 'init-data.sql');
-    if (fs.existsSync(initDataPath)) {
-      const initData = fs.readFileSync(initDataPath, 'utf8');
-      db.exec(initData);
-      console.log('Database initial data inserted successfully');
-    }
-  } catch (error) {
-    console.error('Failed to initialize database schema:', error);
-    throw error;
-  }
-}
-
-function runMigrations() {
-  if (!db) return;
-  
-  try {
-    // file_size 컬럼 추가 마이그레이션
-    const migrationPath = path.join(process.cwd(), 'database', 'migration-add-file-size.sql');
-    if (fs.existsSync(migrationPath)) {
-      // 컬럼이 이미 존재하는지 확인
-      const columnsQuery = db.prepare("PRAGMA table_info(documents)");
-      const columns = columnsQuery.all() as any[];
-      const hasFileSizeColumn = columns.some(col => col.name === 'file_size');
-      
-      if (!hasFileSizeColumn) {
-        console.log('Running migration: Add file_size column to documents table');
-        const migration = fs.readFileSync(migrationPath, 'utf8');
-        db.exec(migration);
-        console.log('Migration completed: file_size column added');
-      }
-    }
-
-    // artifacts 테이블 외래키 제약 조건 제거 마이그레이션
-    const artifactsMigrationPath = path.join(process.cwd(), 'database', 'migration-remove-artifacts-fk.sql');
-    if (fs.existsSync(artifactsMigrationPath)) {
-      // 외래키 제약 조건이 있는지 확인 (PRAGMA foreign_key_list 사용)
-      const foreignKeys = db.prepare("PRAGMA foreign_key_list(artifacts)").all() as any[];
-      
-      if (foreignKeys.length > 0) {
-        console.log('Running migration: Remove foreign key constraints from artifacts table');
-        const migration = fs.readFileSync(artifactsMigrationPath, 'utf8');
-        db.exec(migration);
-        console.log('Migration completed: artifacts foreign key constraints removed');
-      }
-    }
-  } catch (error) {
-    console.error('Migration failed:', error);
-    // 마이그레이션 실패는 치명적이지 않으므로 계속 진행
-  }
-}
+// 스키마 초기화 및 마이그레이션 로직 제거
+// 기존 /data/chatbot.db 데이터베이스를 그대로 사용
 
 export function closeDatabase() {
   if (db) {

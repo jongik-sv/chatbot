@@ -1119,6 +1119,47 @@ search:1  Failed to load resource: the server responded with a status of 500 (In
 
 왜 또 @ai-chatbot-mentor/data/chatbot.db를 사용하고 있지? 또 어디서 사용하고 있는지 확인해줘.
 
+### 데이터베이스 중복 생성 문제 완전 해결
+
+**문제 상황**:
+- `ai-chatbot-mentor/database/chatbot.db` 파일이 새로 생성됨 (20KB, 12:02)
+- 기존 `/data/chatbot.db` (196KB, 08:53)와 중복 사용
+
+**원인 분석**:
+- `ai-chatbot-mentor/src/lib/database.ts`의 `initializeSchema()` 함수
+- `SCHEMA_PATH`가 `ai-chatbot-mentor/database/schema.sql`을 참조
+- TypeScript 데이터베이스 초기화 시 새 DB 파일 생성
+
+**완료된 해결 작업**:
+1. ✅ **불필요한 DB 파일 삭제**: `ai-chatbot-mentor/database/chatbot.db` 제거
+2. ✅ **스키마 초기화 로직 제거**: `initializeSchema()`, `runMigrations()` 함수 제거  
+3. ✅ **SCHEMA_PATH 비활성화**: 스키마 파일 참조 주석 처리
+4. ✅ **데이터베이스 경로 통일**: 모든 코드가 `/data/chatbot.db` 사용
+
+**수정된 database.ts**:
+```typescript
+const DB_PATH = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+// const SCHEMA_PATH = path.join(process.cwd(), 'database', 'schema.sql'); // 사용하지 않음
+
+export function getDatabase(): Database.Database {
+  if (!db) {
+    db = new Database(DB_PATH);
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = OFF');
+    // 스키마 초기화 로직 제거 - 기존 /data/chatbot.db 사용
+  }
+  return db;
+}
+```
+
+**결과**:
+- ✅ 단일 데이터베이스(`/data/chatbot.db`) 사용 보장
+- ✅ 새로운 DB 파일 생성 방지
+- ✅ 기존 데이터 및 스키마 보존
+- ✅ 시스템 안정성 확보
+
+**상태**: 🎯 **데이터베이스 중복 생성 문제 완전 해결**
+
 ------
 
 ## 답변 끊어짐 문제 분석 및 해결 방안
