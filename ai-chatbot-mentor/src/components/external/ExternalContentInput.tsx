@@ -124,7 +124,17 @@ export default function ExternalContentInput({
         }),
       });
 
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('서버에서 올바르지 않은 응답을 반환했습니다.');
+      }
+
       const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || result.details || '콘텐츠 처리에 실패했습니다.');
+      }
       
       if (result.success) {
         setProcessing(prev => ({ ...prev, progress: '처리 완료!' }));
@@ -203,7 +213,7 @@ export default function ExternalContentInput({
             value={url}
             onChange={handleUrlChange}
             placeholder="YouTube URL 또는 웹사이트 URL을 입력하세요..."
-            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={processing.isProcessing}
           />
           {url && (
