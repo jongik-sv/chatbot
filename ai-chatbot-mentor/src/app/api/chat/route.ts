@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 // JavaScript Repository 사용 (히스토리 API와 호환성을 위해)
 const ChatRepository = require('../../../lib/repositories/ChatRepository');
+const RuleIntegration = require('../../../lib/services/RuleIntegration');
 import { LLMService } from '../../../services/LLMService';
 import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
@@ -14,6 +15,7 @@ import path from 'path';
 const chatRepo = new ChatRepository();
 const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
+const ruleIntegration = new RuleIntegration();
 
 export async function POST(request: NextRequest) {
   try {
@@ -142,10 +144,22 @@ export async function POST(request: NextRequest) {
       }));
     }
 
-    // 현재 사용자 메시지 추가
+    // 룰 적용하여 프롬프트 향상
+    const ruleApplicationResult = await ruleIntegration.applyRulesToPrompt(message, {
+      userId: userId,
+      sessionId: currentSession.id,
+      mentorId: mentorId,
+      // 멘토 모드인 경우 일반 룰 제외 (멘토별 룰 우선)
+      excludeCategories: mentorId ? ['general'] : []
+    });
+
+    // 향상된 프롬프트 사용
+    const enhancedMessage = ruleApplicationResult.enhancedPrompt;
+
+    // 현재 사용자 메시지 추가 (향상된 메시지 사용)
     conversationHistory.push({
       role: 'user',
-      content: message
+      content: enhancedMessage
     });
 
     // 사용자 메시지 저장
@@ -243,7 +257,9 @@ export async function POST(request: NextRequest) {
           provider: llmResponse.provider,
           usage: llmResponse.usage,
           mentorId: mentorId,
-          mentorName: mentorContext?.mentor.name
+          mentorName: mentorContext?.mentor.name,
+          appliedRules: ruleApplicationResult.appliedRules,
+          rulesSummary: ruleApplicationResult.rulesSummary
         }
       });
 
@@ -295,7 +311,14 @@ export async function POST(request: NextRequest) {
         sessionId: currentSession.id,
         messageId: assistantMessage.id,
         artifacts: createdArtifacts,
-        sources: [] // TODO: RAG 소스 처리 구현
+        sources: [], // TODO: RAG 소스 처리 구현
+        // 룰 적용 정보 추가
+        ruleInfo: {
+          appliedRules: ruleApplicationResult.appliedRules,
+          rulesSummary: ruleApplicationResult.rulesSummary,
+          originalMessage: message, // 원본 메시지
+          enhancedMessage: enhancedMessage // 룰 적용 후 메시지
+        }
       };
 
       return NextResponse.json(response);

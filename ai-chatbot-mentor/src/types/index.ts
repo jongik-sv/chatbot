@@ -210,6 +210,17 @@ export interface ChatResponse {
   sources?: string[];
   sessionId: number;
   messageId: number;
+  ruleInfo?: {
+    appliedRules: Array<{
+      name: string;
+      displayName: string;
+      category: string;
+      priority: number;
+    }>;
+    rulesSummary: string;
+    originalMessage: string;
+    enhancedMessage: string;
+  };
 }
 
 // MBTI 관련 타입 정의
