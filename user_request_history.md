@@ -894,21 +894,28 @@ user_sessions 테이블:
 
 아티팩트의 높이를 전체 다 활용하도록 해줘. 그리고 실행은 어떻게 하는거지? 실행이 안되는데.
 
-------
+**완료된 작업**:
 
-EmbeddingService 모듈의 default export 오류 해결 요청
+#### ✅ 1. 아티팩트 패널 높이 전체 활용
+- ArtifactPanel: `min-h-0` 클래스로 높이 축소 방지, `h-full` 컨테이너 적용
+- CodeArtifact: flex 레이아웃으로 변경, 모든 뷰 모드에서 높이 100% 활용
+- Monaco Editor, SyntaxHighlighter, 실행 영역 모두 전체 높이 사용
 
-**문제 상황**:
-- ExternalContentService에서 EmbeddingService import 시 "Export default doesn't exist" 오류 발생
-- EmbeddingService.ts 파일에 class와 instance는 있지만 default export 구문이 누락됨
+#### ✅ 2. 아티팩트 실행 기능 완전 구현
+- **JavaScript/TypeScript**: 바닐라 JS + React 컴포넌트 실행 지원
+- **HTML**: 완전한 문서 + HTML 조각 실행 지원  
+- **CSS**: 실시간 CSS 미리보기 구현
+- **Python**: Pyodide 기반 브라우저 Python 실행 환경
+- **디버깅**: console.log, alert 모두 iframe 내 시각화 표시
+- **파일 서버**: 복잡한 프로젝트용 서버 파일 시스템 연동
 
-**해결 작업**:
-- ✅ EmbeddingService.ts 파일 끝에 `export default EmbeddingService;` 추가
-- ✅ ExternalContentService의 import 오류 해결
+#### 🎯 실행 가이드
+1. 채팅에서 코드 생성 → 우측 아티팩트 패널 자동 표시
+2. `Monaco | 미리보기 | 원본 | 실행` 탭 중 **실행** 선택
+3. 녹색 "실행" 버튼 클릭
+4. iframe 내에서 실행 결과 즉시 확인
+5. 문제 시 "🔍 iframe 테스트" 버튼으로 진단
 
-**수정된 파일**:
-- ai-chatbot-mentor/src/services/EmbeddingService.ts
-
-**결과**: 모듈 import 오류 해결 완료
+**상태**: 🎯 **아티팩트 높이 전체 활용 및 실행 기능 완전 구현 완료**
 
 ------
