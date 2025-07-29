@@ -170,20 +170,21 @@ export class EmbeddingService {
     
     // 각 패턴으로 페이지 분할 시도
     for (const pattern of pagePatterns) {
-      if (pattern.test(remainingText)) {
-        pages = remainingText.split(pattern);
+      const resetPattern = new RegExp(pattern.source, pattern.flags);
+      if (resetPattern.test(remainingText)) {
+        pages = remainingText.split(resetPattern).filter(page => page.trim().length > 100); // 너무 작은 페이지 제외
         console.log(`페이지 패턴 발견: ${pattern}, ${pages.length}개 페이지로 분할`);
         break;
       }
     }
     
-    // 패턴이 없으면 대략적인 페이지 크기로 분할 (일반적으로 3000-5000자 정도)
+    // 패턴이 없으면 대략적인 페이지 크기로 분할 (일반적으로 2000-3000자 정도)
     if (pages.length <= 1) {
-      const averagePageSize = 3500; // 평균 페이지 크기
+      const averagePageSize = 2500; // 평균 페이지 크기 (더 작게 조정)
       const textLength = text.length;
       const estimatedPages = Math.ceil(textLength / averagePageSize);
       
-      console.log(`페이지 구분자가 없어서 추정 분할: ${estimatedPages}개 페이지`);
+      console.log(`페이지 구분자가 없어서 추정 분할: ${estimatedPages}개 페이지 (전체 ${textLength}자)`);
       
       pages = [];
       for (let i = 0; i < estimatedPages; i++) {
@@ -200,6 +201,7 @@ export class EmbeddingService {
         }
         
         pages.push(pageText);
+        console.log(`페이지 ${i + 1}: ${pageText.length}자`);
       }
     }
     

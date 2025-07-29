@@ -2090,3 +2090,21 @@ YouTube URL과 웹사이트 URL을 입력하면 실제로 콘텐츠가 추출되
 - 서버 콘솔에서 MCP 디버그 로그 확인
 - tools/list JSON-RPC 응답 내용 분석
 - MCP 프로토콜 통신 오류 원인 파악
+
+
+## 문서 청크 생성 및 Markdown 렌더링 개선 작업 (2025-07-29)
+
+### 문제 해결
+1. **문서 청크 생성 문제**: EmbeddingService의 페이지 분할 로직 개선
+   - 평균 페이지 크기를 3500자에서 2500자로 축소
+   - 페이지 구분자 감지 로직 개선 (너무 작은 페이지 제외)
+   - 청크 생성 과정에 상세한 로깅 추가
+
+2. **Markdown 인라인 코드 렌더링 개선**: 기술 용어와 실제 코드 구분
+   - pg_vector 같은 기술 용어는 파란색 강조 텍스트로 렌더링
+   - 실제 코드 패턴(괄호, 중괄호, 함수 키워드 등)만 코드 블럭 스타일 적용
+   - 파일 확장자와 라이브러리 이름은 강조 텍스트로 처리
+
+### 수정된 파일
+- ai-chatbot-mentor/src/services/EmbeddingService.ts: 페이지 청킹 로직 개선
+- ai-chatbot-mentor/src/components/chat/MessageList.tsx: 인라인 코드 렌더링 개선
