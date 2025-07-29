@@ -175,7 +175,13 @@ export class ExternalContentService {
       return result;
     } catch (error) {
       console.error('YouTube 콘텐츠 처리 실패:', error);
-      throw new Error(`YouTube 콘텐츠 처리 실패: ${error}`);
+      
+      // 더 자세한 오류 정보 제공
+      if (error.message && error.message.includes('유효하지 않은 YouTube URL')) {
+        throw new Error('유효하지 않은 YouTube URL입니다. 올바른 YouTube 비디오 링크를 입력해주세요.');
+      } else {
+        throw new Error(`YouTube 콘텐츠 처리 중 오류가 발생했습니다: ${error.message || error}`);
+      }
     }
   }
 

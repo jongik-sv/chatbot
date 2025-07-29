@@ -146,6 +146,51 @@ export class YouTubeContentService {
   }
 
   /**
+   * 자막이 없을 때 비디오 메타데이터를 기반으로 대체 콘텐츠 생성
+   */
+  private generateFallbackContent(videoInfo: YouTubeVideoInfo): string {
+    const parts = [];
+    
+    // 제목
+    if (videoInfo.title) {
+      parts.push(`제목: ${videoInfo.title}`);
+    }
+    
+    // 채널명
+    if (videoInfo.channelTitle) {
+      parts.push(`채널: ${videoInfo.channelTitle}`);
+    }
+    
+    // 설명 (처음 500자만 사용)
+    if (videoInfo.description) {
+      const description = videoInfo.description.length > 500 
+        ? videoInfo.description.substring(0, 500) + '...'
+        : videoInfo.description;
+      parts.push(`설명: ${description}`);
+    }
+    
+    // 태그들
+    if (videoInfo.tags && videoInfo.tags.length > 0) {
+      parts.push(`태그: ${videoInfo.tags.slice(0, 10).join(', ')}`);
+    }
+    
+    // 기본 정보
+    const metadata = [];
+    if (videoInfo.duration) metadata.push(`길이: ${videoInfo.duration}`);
+    if (videoInfo.viewCount) metadata.push(`조회수: ${videoInfo.viewCount.toLocaleString()}회`);
+    if (videoInfo.publishedAt) metadata.push(`게시일: ${videoInfo.publishedAt}`);
+    
+    if (metadata.length > 0) {
+      parts.push(`정보: ${metadata.join(', ')}`);
+    }
+    
+    // 자막 부재 안내
+    parts.push('참고: 이 비디오는 자막이 제공되지 않아 메타데이터를 기반으로 내용을 구성했습니다. 더 정확한 정보를 원하시면 비디오를 직접 시청해주세요.');
+    
+    return parts.join('\n\n');
+  }
+
+  /**
    * YouTube 콘텐츠 전체 처리
    */
   public async processYouTubeContent(url: string): Promise<ProcessedYouTubeContent> {
@@ -155,13 +200,24 @@ export class YouTubeContentService {
     }
 
     try {
-      // 병렬로 메타데이터와 자막 가져오기
-      const [videoInfo, transcriptItems] = await Promise.all([
-        this.getVideoMetadata(videoId),
-        this.getTranscript(videoId)
-      ]);
-
-      const transcript = this.combineTranscriptText(transcriptItems);
+      // 먼저 비디오 메타데이터 가져오기
+      const videoInfo = await this.getVideoMetadata(videoId);
+      
+      // 자막 가져오기 시도 (실패해도 계속 진행)
+      let transcriptItems: YouTubeTranscriptItem[] = [];
+      let transcript = '';
+      
+      try {
+        transcriptItems = await this.getTranscript(videoId);
+        transcript = this.combineTranscriptText(transcriptItems);
+        console.log(`자막 추출 성공: ${transcript.length}자`);
+      } catch (transcriptError) {
+        console.warn(`자막 추출 실패 (비디오 ID: ${videoId}):`, transcriptError.message);
+        
+        // 자막이 없을 때는 비디오 정보로 대체 텍스트 생성
+        transcript = this.generateFallbackContent(videoInfo);
+        console.log('자막 대신 비디오 메타데이터 기반 콘텐츠 생성');
+      }
       
       return {
         videoInfo,

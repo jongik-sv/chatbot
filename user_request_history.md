@@ -2108,3 +2108,30 @@ YouTube URL과 웹사이트 URL을 입력하면 실제로 콘텐츠가 추출되
 ### 수정된 파일
 - ai-chatbot-mentor/src/services/EmbeddingService.ts: 페이지 청킹 로직 개선
 - ai-chatbot-mentor/src/components/chat/MessageList.tsx: 인라인 코드 렌더링 개선
+
+
+## YouTube 자막 비활성화 비디오 처리 개선 (2025-07-29)
+
+### 문제 해결
+**문제**: 자막이 비활성화된 YouTube 비디오 처리 시 전체 시스템이 실패함
+- 오류: '[YoutubeTranscript] 🚨 Transcript is disabled on this video'
+- 결과: 500 서버 오류로 인한 완전한 처리 실패
+
+**해결 방안**:
+1. **자막 실패 시 대체 처리 로직 추가**
+   - 자막 추출 실패해도 비디오 메타데이터를 활용하여 콘텐츠 생성
+   - 제목, 채널명, 설명, 태그, 기본 정보를 조합한 대체 텍스트 생성
+
+2. **Graceful Fallback 구현**
+   - generateFallbackContent() 메서드 추가
+   - 자막 부재 시에도 의미있는 콘텐츠 제공
+   - 사용자에게 자막 부재 상황 명확히 안내
+
+### 수정된 파일
+- ai-chatbot-mentor/src/services/YouTubeContentService.ts: 자막 실패 시 대체 처리 로직
+- ai-chatbot-mentor/src/services/ExternalContentService.ts: 개선된 오류 메시지
+
+### 개선 효과
+- 자막이 없는 비디오도 처리 가능
+- 시스템 전체 실패 방지
+- 사용자 경험 개선 (오류 대신 대체 콘텐츠 제공)
