@@ -879,3 +879,13 @@ user_sessions 테이블:
 - 🛡️ **충돌 감지**: 상충하는 룰 자동 탐지
 
 **상태**: 🎯 **룰 설정 시스템 구현 완료**
+
+------
+
+------
+
+Module not found 오류 해결 요청: '../database/db' 경로 문제
+
+**오류 내용**: 
+- RuleService.js에서 '../database/db' 모듈을 찾을 수 없음
+- Import 경로가 잘못되어 빌드 실패 발생
