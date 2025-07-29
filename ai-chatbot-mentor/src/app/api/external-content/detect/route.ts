@@ -1,7 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ExternalContentService from '@/services/ExternalContentService';
 
-const externalContentService = ExternalContentService.getInstance();
+/**
+ * URL 유형 감지 함수
+ */
+function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    // YouTube URL 확인
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      return 'youtube';
+    }
+    
+    // 일반 웹사이트 URL 확인 (http/https 프로토콜)
+    if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+      return 'website';
+    }
+    
+    return 'unknown';
+  } catch (error) {
+    return 'unknown';
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 콘텐츠 타입 감지
-    const contentType = externalContentService.detectContentType(url);
+    const contentType = detectContentType(url);
     
     // URL 패턴 분석
     const urlAnalysis = analyzeUrl(url);
@@ -62,7 +83,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 콘텐츠 타입 감지
-    const contentType = externalContentService.detectContentType(url);
+    const contentType = detectContentType(url);
     
     // URL 패턴 분석
     const urlAnalysis = analyzeUrl(url);

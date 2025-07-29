@@ -1162,6 +1162,70 @@ export function getDatabase(): Database.Database {
 
 ------
 
+외부 콘텐츠 추가에서 웹사이트 추가를 하면 에러메시지가 나와. 
+POST http://localhost:3000/api/external-content/detect 500 (Internal Server Error)
+hook.js:608 URL 감지 실패: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+
+### 외부 콘텐츠 URL 감지 API 오류 해결
+
+**문제 상황**:
+- `/api/external-content/detect` 엔드포인트에서 500 오류 발생
+- "<!DOCTYPE" 오류는 서버가 HTML 응답을 반환했음을 의미
+- ExternalContentService의 복잡한 의존성으로 인한 로딩 실패
+
+**원인 분석**:
+- `ExternalContentService.getInstance()` 호출 시 오류 발생
+- 복잡한 싱글톤 의존성 체인 (YouTubeContentService, WebScrapingService 등)
+- 서버 초기화 중 예외 발생으로 HTML 에러 페이지 반환
+
+**완료된 해결 작업**:
+
+#### ✅ 1. API 엔드포인트 단순화
+- 복잡한 ExternalContentService 의존성 제거
+- 직접적인 URL 감지 로직을 API 내부에 구현
+- YouTube와 일반 웹사이트 URL 패턴 감지 함수 추가
+
+```typescript
+function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    
+    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+      return 'youtube';
+    }
+    
+    if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+      return 'website';
+    }
+    
+    return 'unknown';
+  } catch (error) {
+    return 'unknown';
+  }
+}
+```
+
+#### ✅ 2. 프론트엔드 오류 처리 강화
+- JSON 응답 여부 검증 로직 추가
+- Content-Type 헤더 확인 후 에러 처리
+- 사용자 친화적 오류 메시지 표시
+- 에러 콜백을 통한 상위 컴포넌트 알림
+
+**수정된 파일**:
+- `api/external-content/detect/route.ts`: 의존성 제거, 직접 구현
+- `components/external/ExternalContentInput.tsx`: 오류 처리 강화
+
+**결과**:
+- ✅ URL 감지 API가 안정적으로 JSON 응답 반환
+- ✅ YouTube/웹사이트 URL 패턴 정확히 감지
+- ✅ 서버 오류 시 명확한 에러 메시지 표시
+- ✅ HTML 응답 오류 완전 해결
+
+**상태**: 🎯 **외부 콘텐츠 URL 감지 API 오류 완전 해결**
+
+------
+
 ## 답변 끊어짐 문제 분석 및 해결 방안
 
 사용자가 AI 답변이 자꾸 끊어지는 문제에 대해 분석을 요청했습니다.
@@ -1200,3 +1264,54 @@ export function getDatabase(): Database.Database {
 이 문제를 해결하면 사용자가 설정한 토큰 수만큼 긴 답변을 받을 수 있게 됩니다.
 
 ------
+
+## 시스템 전체 placeholder 색상 진하게 수정
+
+사용자가 시스템 전체의 placeholder 색상이 너무 연해서 잘 안 보인다고 하여 더 진하게 만들어 달라고 요청했습니다.
+
+### 수정 사항
+
+#### ✅ 1. 전역 CSS 스타일 업데이트
+- `globals.css`에서 placeholder 색상을 `#6b7280` (gray-500)에서 `#4b5563` (gray-600)으로 변경
+- 모든 브라우저 호환성을 위한 벤더 프리픽스 적용:
+  - `::placeholder`
+  - `::-webkit-input-placeholder`
+  - `::-moz-placeholder`
+  - `:-ms-input-placeholder`
+
+#### ✅ 2. 다크 모드 지원 추가
+- 다크 모드에서는 `#9ca3af` (gray-400)로 설정하여 가독성 확보
+- `@media (prefers-color-scheme: dark)` 미디어 쿼리 사용
+
+#### ✅ 3. 개별 컴포넌트 일관성 통일
+- `MessageInput.tsx`: `placeholder-gray-500` → `placeholder-gray-600`
+- `ModelSettings.tsx`: `placeholder-gray-700` → `placeholder-gray-600` (2곳)
+- `Input.tsx`: `placeholder-gray-600` 유지 (이미 적절함)
+- `Textarea.tsx`: `placeholder-gray-600` 유지 (이미 적절함)
+
+#### ✅ 4. 적용 범위
+- 메시지 입력창
+- 모델 설정 폼
+- 로그인/회원가입 폼
+- 검색 입력창
+- 외부 콘텐츠 입력창
+- 기타 모든 input, textarea 요소
+
+### 수정된 파일
+- `ai-chatbot-mentor/src/app/globals.css`
+- `ai-chatbot-mentor/src/components/chat/MessageInput.tsx`
+- `ai-chatbot-mentor/src/components/chat/ModelSettings.tsx`
+
+### 결과
+- 라이트 모드: `#4b5563` (gray-600) - 기존보다 더 진하고 선명함
+- 다크 모드: `#9ca3af` (gray-400) - 다크 배경에서 적절한 대비
+- 모든 입력 필드에서 placeholder 텍스트가 더 읽기 쉬워짐
+
+------
+------
+
+
+MCP 웹페이지 요약 기능 문제 해결 요청
+- 웹페이지 요약 요청 시 "This is mock content from the URL." 가상 콘텐츠만 반환되는 문제
+- URL: https://apidog.com/kr/blog/a-comprehensive-guide-to-the-claude-code-sdk-kr/
+- MCP 설정 확인 및 문제 해결 필요

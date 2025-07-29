@@ -47,16 +47,35 @@ export default function ExternalContentInput({
         body: JSON.stringify({ url: inputUrl }),
       });
 
+      // 응답이 JSON인지 확인
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('API 응답이 JSON이 아닙니다:', contentType);
+        setDetectedType('unknown');
+        if (onError) {
+          onError('서버에서 올바르지 않은 응답을 반환했습니다.');
+        }
+        return;
+      }
+
       const result = await response.json();
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setDetectedType(result.data.contentType);
       } else {
         setDetectedType('unknown');
+        const errorMessage = result.error || result.details || 'URL 감지에 실패했습니다.';
+        if (onError) {
+          onError(errorMessage);
+        }
       }
     } catch (error) {
       console.error('URL 감지 실패:', error);
       setDetectedType('unknown');
+      const errorMessage = error instanceof Error ? error.message : 'URL 감지 중 오류가 발생했습니다.';
+      if (onError) {
+        onError(errorMessage);
+      }
     }
   };
 
