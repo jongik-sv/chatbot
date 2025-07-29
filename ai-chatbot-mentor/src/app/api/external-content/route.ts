@@ -1,30 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * URL 유형 감지 함수
- */
-function detectContentType(url: string): 'youtube' | 'website' | 'unknown' {
+// ExternalContentService 동적 import
+async function getExternalContentService() {
   try {
-    const urlObj = new URL(url);
-    const hostname = urlObj.hostname.toLowerCase();
-    
-    // YouTube URL 확인
-    if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
-      return 'youtube';
-    }
-    
-    // 일반 웹사이트 URL 확인 (http/https 프로토콜)
-    if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
-      return 'website';
-    }
-    
-    return 'unknown';
+    const { getInstance } = require('../../../../../services/ExternalContentService');
+    return getInstance();
   } catch (error) {
-    return 'unknown';
+    console.error('ExternalContentService 로드 실패:', error);
+    throw new Error('외부 콘텐츠 서비스를 로드할 수 없습니다.');
   }
 }
 
 export async function POST(request: NextRequest) {
+  let contentService = null;
+  
   try {
     const body = await request.json();
     const { url, options = {}, customGptId } = body;
@@ -37,36 +26,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // URL 타입 감지
-    const contentType = detectContentType(url);
-    
-    if (contentType === 'unknown') {
+    // URL 기본 유효성 검사
+    try {
+      new URL(url);
+    } catch (urlError) {
       return NextResponse.json(
-        { error: '지원하지 않는 URL 형식입니다.' },
+        { error: '유효하지 않은 URL 형식입니다.' },
         { status: 400 }
       );
     }
 
-    // 임시 mock 응답 (실제 서비스 구현 전까지)
-    const mockResult = {
-      id: `${contentType}_${Date.now()}`,
-      type: contentType,
-      url,
-      title: contentType === 'youtube' ? 'YouTube 비디오' : '웹페이지',
-      content: `${url}에서 추출된 콘텐츠입니다. (현재 개발 중)`,
-      summary: `${url}의 요약 내용입니다. (현재 개발 중)`,
-      metadata: {
-        processed: new Date().toISOString(),
-        options,
-        customGptId
-      },
-      createdAt: new Date().toISOString()
-    };
+    // 외부 콘텐츠 서비스 초기화
+    contentService = await getExternalContentService();
+
+    console.log(`콘텐츠 추출 요청: ${url}`);
+    console.log('옵션:', options);
+
+    // 콘텐츠 추출 실행
+    const result = await contentService.extractContent(url, {
+      ...options,
+      customGptId,
+      saveToDatabase: true
+    });
 
     return NextResponse.json({
       success: true,
-      data: mockResult,
-      message: `${contentType === 'youtube' ? 'YouTube' : '웹사이트'} 콘텐츠가 처리되었습니다. (개발 중)`
+      data: result,
+      message: `${result.type === 'youtube' ? 'YouTube' : '웹사이트'} 콘텐츠가 성공적으로 처리되었습니다.`
     });
 
   } catch (error) {
@@ -75,6 +61,91 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         error: '콘텐츠 처리 중 오류가 발생했습니다.',
+        details: error instanceof Error ? error.message : '알 수 없는 오류'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const contentType = searchParams.get('type') || 'all';
+    const customGptId = searchParams.get('customGptId');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    // 외부 콘텐츠 서비스 초기화
+    const contentService = await getExternalContentService();
+
+    // 모든 콘텐츠 조회
+    const contents = contentService.getAllContents({
+      contentType: contentType === 'all' ? undefined : contentType,
+      customGptId: customGptId ? parseInt(customGptId) : undefined,
+      limit,
+      offset
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        results: contents,
+        total: contents.length,
+        limit,
+        offset
+      }
+    });
+
+  } catch (error) {
+    console.error('콘텐츠 목록 조회 실패:', error);
+    
+    return NextResponse.json(
+      { 
+        error: '콘텐츠 목록을 불러오는 중 오류가 발생했습니다.',
+        details: error instanceof Error ? error.message : '알 수 없는 오류'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const contentId = searchParams.get('id');
+
+    if (!contentId) {
+      return NextResponse.json(
+        { error: '콘텐츠 ID가 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 외부 콘텐츠 서비스 초기화
+    const contentService = await getExternalContentService();
+
+    // 콘텐츠 삭제
+    const deleted = contentService.deleteContent(contentId);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: '콘텐츠를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: '콘텐츠가 성공적으로 삭제되었습니다.'
+    });
+
+  } catch (error) {
+    console.error('콘텐츠 삭제 실패:', error);
+    
+    return NextResponse.json(
+      { 
+        error: '콘텐츠 삭제 중 오류가 발생했습니다.',
         details: error instanceof Error ? error.message : '알 수 없는 오류'
       },
       { status: 500 }

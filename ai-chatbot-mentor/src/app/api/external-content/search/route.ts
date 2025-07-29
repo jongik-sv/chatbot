@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ExternalContentService from '@/services/ExternalContentService';
 
-const externalContentService = ExternalContentService.getInstance();
+// ExternalContentService 동적 import
+async function getExternalContentService() {
+  try {
+    const { getInstance } = require('../../../../../../services/ExternalContentService');
+    return getInstance();
+  } catch (error) {
+    console.error('ExternalContentService 로드 실패:', error);
+    throw new Error('외부 콘텐츠 서비스를 로드할 수 없습니다.');
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,19 +33,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 외부 콘텐츠 서비스 초기화
+    const contentService = await getExternalContentService();
+
     // 콘텐츠 검색
-    const results = await externalContentService.searchProcessedContent(
-      query.trim(),
-      contentType || undefined,
-      Math.min(limit, 50)
-    );
+    const searchResults = contentService.searchContents(query.trim(), {
+      contentType: contentType || undefined,
+      limit: Math.min(limit, 50)
+    });
 
     return NextResponse.json({
       success: true,
       data: {
         query: query.trim(),
         contentType: contentType || 'all',
-        results: results.map(result => ({
+        results: searchResults.results.map(result => ({
           id: result.id,
           type: result.type,
           url: result.url,
@@ -48,11 +58,11 @@ export async function GET(request: NextRequest) {
             // 민감한 정보 제거
             transcriptItems: undefined
           },
-          createdAt: result.createdAt
+          createdAt: result.created_at
         })),
-        total: results.length
+        total: searchResults.total
       },
-      message: `${results.length}개의 관련 콘텐츠를 찾았습니다.`
+      message: `${searchResults.results.length}개의 관련 콘텐츠를 찾았습니다.`
     });
 
   } catch (error) {
@@ -94,20 +104,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 콘텐츠 검색
-    const results = await externalContentService.searchProcessedContent(
-      query.trim(),
-      contentType,
-      Math.min(limit, 50)
-    );
+    // 외부 콘텐츠 서비스 초기화
+    const contentService = await getExternalContentService();
 
-    // 특정 GPT의 콘텐츠만 필터링 (옵션)
-    let filteredResults = results;
-    if (customGptId) {
-      filteredResults = results.filter(result => 
-        result.metadata?.customGptId === customGptId
-      );
-    }
+    // 콘텐츠 검색
+    const searchResults = contentService.searchContents(query.trim(), {
+      contentType: contentType || undefined,
+      customGptId: customGptId ? parseInt(customGptId) : undefined,
+      limit: Math.min(limit, 50)
+    });
 
     return NextResponse.json({
       success: true,
@@ -115,7 +120,7 @@ export async function POST(request: NextRequest) {
         query: query.trim(),
         contentType: contentType || 'all',
         customGptId: customGptId || null,
-        results: filteredResults.map(result => ({
+        results: searchResults.results.map(result => ({
           id: result.id,
           type: result.type,
           url: result.url,
@@ -127,11 +132,11 @@ export async function POST(request: NextRequest) {
             // 전체 자막 데이터는 필요시에만 포함
             transcriptItems: includeFullContent ? result.metadata?.transcriptItems : undefined
           },
-          createdAt: result.createdAt
+          createdAt: result.created_at
         })),
-        total: filteredResults.length
+        total: searchResults.total
       },
-      message: `${filteredResults.length}개의 관련 콘텐츠를 찾았습니다.`
+      message: `${searchResults.results.length}개의 관련 콘텐츠를 찾았습니다.`
     });
 
   } catch (error) {

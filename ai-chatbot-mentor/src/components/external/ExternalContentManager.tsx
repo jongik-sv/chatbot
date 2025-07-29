@@ -172,14 +172,46 @@ export default function ExternalContentManager({
     if (searchQuery.trim()) {
       searchContents();
     } else {
-      applyFiltersAndSort();
+      loadContents();
     }
   };
 
   // 컴포넌트 마운트 시 초기화
   useEffect(() => {
+    loadContents();
+  }, []);
+
+  useEffect(() => {
     applyFiltersAndSort();
   }, [contents, filterType, sortBy, sortOrder]);
+
+  // 저장된 콘텐츠 로드
+  const loadContents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/external-content');
+      const data = await response.json();
+      
+      if (data.success) {
+        const loadedContents = data.data.results.map((item: any) => ({
+          id: item.id,
+          type: item.type,
+          url: item.url,
+          title: item.title,
+          summary: item.summary,
+          metadata: item.metadata,
+          createdAt: item.created_at || item.createdAt
+        }));
+        setContents(loadedContents);
+      } else {
+        console.error('콘텐츠 로드 실패:', data.error);
+      }
+    } catch (error) {
+      console.error('콘텐츠 로드 오류:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // 시간 포맷팅
   const formatDate = (dateString: string) => {
