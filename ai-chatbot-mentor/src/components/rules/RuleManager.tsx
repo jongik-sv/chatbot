@@ -145,7 +145,17 @@ export default function RuleManager() {
         method: 'DELETE'
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      if (!text.trim()) {
+        await loadData();
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         await loadData();
@@ -154,7 +164,11 @@ export default function RuleManager() {
       }
     } catch (error) {
       console.error('룰 삭제 오류:', error);
-      setError('네트워크 오류가 발생했습니다.');
+      if (error instanceof SyntaxError) {
+        setError('서버 응답 형식 오류가 발생했습니다.');
+      } else {
+        setError('네트워크 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -187,17 +201,35 @@ export default function RuleManager() {
         method: 'DELETE'
       });
 
-      const data = await response.json();
+      // 응답 상태 확인
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      // 응답 본문이 있는지 확인
+      const text = await response.text();
+      if (!text.trim()) {
+        // 빈 응답인 경우 성공으로 처리
+        await loadData();
+        alert('만료된 임시 룰이 정리되었습니다.');
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         await loadData();
-        alert(`만료된 임시 룰 ${data.data.cleanedCount}개가 정리되었습니다.`);
+        alert(`만료된 임시 룰 ${data.data?.cleanedCount || 0}개가 정리되었습니다.`);
       } else {
         setError(data.error || '임시 룰 정리에 실패했습니다.');
       }
     } catch (error) {
       console.error('임시 룰 정리 오류:', error);
-      setError('네트워크 오류가 발생했습니다.');
+      if (error instanceof SyntaxError) {
+        setError('서버 응답 형식 오류가 발생했습니다.');
+      } else {
+        setError('네트워크 오류가 발생했습니다.');
+      }
     }
   };
 
