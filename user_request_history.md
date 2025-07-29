@@ -1436,4 +1436,10 @@ MCP fetch 도구 실행 실패 문제 보고
 
 ------
 
-동작중인 mcp를 확인하는 버튼과 화면도 만들어줘. 그리고 mcp를 추가하거나 삭제 하려면 어떤 파일을 편집해야 하는지에 대한 도움말도 추가해줘.
+동작중인 mcp를 확인하는 버튼과 화면도 만들어줘. 그리고 mcp를 추가하거나 삭제 하려면 어떤 파일을 편집해야 하는지에 대한 도움말도 추가해줘.---
+---
+
+Sequential Thinking MCP 서버 연결 문제
+- "Server mcp-sequential-thinking is not connected" 에러 발생
+- 복잡한 분석을 위한 순차적 사고 도구 사용 시도 실패
+- mcp-sequential-thinking 서버도 내장 서버로 구현하거나 연결 문제 해결 필요
