@@ -1114,3 +1114,48 @@ MCP 설정하는 부분이 어딨지?---
 ---
 
 search:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)이 오류 이해하기hook.js:608 검색 오류: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+
+------
+
+왜 또 @ai-chatbot-mentor/data/chatbot.db를 사용하고 있지? 또 어디서 사용하고 있는지 확인해줘.
+
+------
+
+## 답변 끊어짐 문제 분석 및 해결 방안
+
+사용자가 AI 답변이 자꾸 끊어지는 문제에 대해 분석을 요청했습니다.
+
+### 분석 결과
+
+#### 1. 현재 토큰 설정 상황
+- **기본 maxTokens**: 10000 (최근 수정됨)
+- **API 호출 시 실제 사용되는 토큰 수**: 2048 (고정값)
+- **문제점**: UI에서는 10000으로 설정되어 있지만, 실제 API 호출에서는 2048을 사용
+
+#### 2. 코드 분석
+- `ChatContext.tsx`: defaultModelSettings.maxTokens = 10000 ✓
+- `ModelSettings.tsx`: 기본값 10000, 최대값 200000 ✓  
+- `route.ts`: **모든 LLM 호출에서 maxTokens: 2048 하드코딩됨** ❌
+
+#### 3. 문제 발생 위치
+`ai-chatbot-mentor/src/app/api/chat/route.ts` 파일의 다음 라인들:
+- 라인 460: `maxTokens: 2048`
+- 라인 477: `maxTokens: 2048` 
+- 라인 485: `maxTokens: 2048`
+- 라인 495: `maxTokens: 2048`
+
+#### 4. 해결 방안
+1. **즉시 해결**: API route에서 하드코딩된 2048을 사용자 설정값으로 변경
+2. **권장 토큰 설정**: 
+   - 일반 답변: 8000-10000 토큰
+   - 긴 코드/문서: 15000-20000 토큰
+   - 복잡한 분석: 최대 50000 토큰
+
+#### 5. 추가 개선사항
+- 사용자 설정에서 선택한 maxTokens 값이 API 호출 시 실제로 사용되도록 수정
+- 답변 길이에 따른 동적 토큰 조정 로직 구현
+- 토큰 사용량 모니터링 추가
+
+이 문제를 해결하면 사용자가 설정한 토큰 수만큼 긴 답변을 받을 수 있게 됩니다.
+
+------
