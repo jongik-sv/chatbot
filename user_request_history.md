@@ -1021,3 +1021,37 @@ if (shouldUpdateArtifact) {
 **결과**: "계속"이라고 하면 이전 답변과 자연스럽게 연결되어 아티팩트가 확장/업데이트됨
 
 ------
+
+ReactMarkdown className prop 오류 해결
+
+**문제 상황**:
+- ReactMarkdown에서 `className` prop을 직접 사용할 수 없게 변경됨
+- "Unexpected `className` prop, remove it" 오류 발생
+- 브라우저 콘솔에서 Assertion 에러 표시
+
+**해결 작업**:
+- ✅ ReactMarkdown을 `<div className="markdown-content">`로 감싸서 스타일 적용
+- ✅ 기존 className prop을 외부 div로 이동
+- ✅ Markdown 렌더링 기능 정상 동작 유지
+
+**수정된 코드**:
+```javascript
+// 이전 (오류 발생)
+<ReactMarkdown className="markdown-content" remarkPlugins={[remarkGfm]}>
+  {message.content}
+</ReactMarkdown>
+
+// 수정 후 (정상 동작)
+<div className="markdown-content">
+  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+    {message.content}
+  </ReactMarkdown>
+</div>
+```
+
+**수정된 파일**:
+- ai-chatbot-mentor/src/components/chat/MessageList.tsx
+
+**결과**: ReactMarkdown 오류 해결, AI 답변의 Markdown 렌더링 정상 작동
+
+------

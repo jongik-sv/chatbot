@@ -121,10 +121,10 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                 <div className="relative">
                   <div className="flex-1 pr-10 min-w-[6rem] max-w-[40vw] sm:max-w-[36rem]" style={{wordBreak: 'break-word', overflowWrap: 'anywhere'}}>
                     {message.role === 'assistant' ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        className="markdown-content"
-                        components={{
+                      <div className="markdown-content">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
                           // 코드 블록 스타일링
                           code: ({ node, inline, className, children, ...props }) => {
                             const match = /language-(\w+)/.exec(className || '');
@@ -215,9 +215,10 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
                             </p>
                           )
                         }}
-                      >
-                        {message.content}
-                      </ReactMarkdown>
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       <div className="whitespace-pre-wrap break-words">
                         {message.content}
