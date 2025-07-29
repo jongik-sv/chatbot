@@ -77,16 +77,16 @@ export default function MCPHelpGuide() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">1. MCPService.ts 파일 수정</h4>
+            <h4 className="font-medium text-gray-900">1. .mcp.json 파일 수정</h4>
             <div className="bg-gray-50 border rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <code className="text-sm font-mono text-gray-700">
-                  ai-chatbot-mentor/src/services/MCPService.ts
+                  ai-chatbot-mentor/.mcp.json
                 </code>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard('ai-chatbot-mentor/src/services/MCPService.ts')}
+                  onClick={() => copyToClipboard('ai-chatbot-mentor/.mcp.json')}
                   className="flex items-center gap-1"
                 >
                   <Copy className="h-3 w-3" />
@@ -94,21 +94,28 @@ export default function MCPHelpGuide() {
                 </Button>
               </div>
               <p className="text-sm text-gray-600">
-                <code>loadFallbackServers()</code> 함수의 <code>fallbackServers</code> 배열에 새 서버 설정을 추가합니다.
+                <code>mcpServers</code> 객체에 새 서버 설정을 추가합니다.
               </p>
             </div>
 
             <h4 className="font-medium text-gray-900">2. 서버 설정 예시</h4>
             <div className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-green-400">// MCPService.ts의 fallbackServers 배열에 추가</span>
+                <span className="text-green-400">// .mcp.json의 mcpServers에 추가</span>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => copyToClipboard(`{
-  id: 'my-custom-server',
-  name: 'My Custom MCP Server',
-  description: '사용자 정의 MCP 서버 설명'
+                  onClick={() => copyToClipboard(`"my-custom-server": {
+  "name": "My Custom MCP Server",
+  "description": "사용자 정의 MCP 서버 설명",
+  "command": "uvx",
+  "args": ["my-mcp-package"],
+  "enabled": true,
+  "env": {
+    "API_KEY": "your-api-key",
+    "FASTMCP_LOG_LEVEL": "ERROR"
+  },
+  "autoApprove": ["tool1", "tool2"]
 }`)}
                   className="flex items-center gap-1 text-white border-gray-600 hover:bg-gray-800"
                 >
@@ -117,17 +124,50 @@ export default function MCPHelpGuide() {
                 </Button>
               </div>
               <pre className="text-gray-100">
-{`{
-  id: 'my-custom-server',
-  name: 'My Custom MCP Server', 
-  description: '사용자 정의 MCP 서버 설명'
+{`"my-custom-server": {
+  "name": "My Custom MCP Server",
+  "description": "사용자 정의 MCP 서버 설명",
+  "command": "uvx",
+  "args": ["my-mcp-package"],
+  "enabled": true,
+  "env": {
+    "API_KEY": "your-api-key",
+    "FASTMCP_LOG_LEVEL": "ERROR"
+  },
+  "autoApprove": ["tool1", "tool2"]
 }`}
               </pre>
             </div>
 
-            <h4 className="font-medium text-gray-900">3. 도구 정의 (선택사항)</h4>
+            <h4 className="font-medium text-gray-900">3. 설정 옵션 설명</h4>
+            <div className="bg-gray-50 border rounded-lg p-4">
+              <div className="grid gap-3 text-sm">
+                <div className="flex justify-between">
+                  <code className="text-blue-600">enabled</code>
+                  <span className="text-gray-600">서버 활성화 여부 (기본: true)</span>
+                </div>
+                <div className="flex justify-between">
+                  <code className="text-blue-600">command</code>
+                  <span className="text-gray-600">실행할 명령어 (예: uvx, python)</span>
+                </div>
+                <div className="flex justify-between">
+                  <code className="text-blue-600">args</code>
+                  <span className="text-gray-600">명령어 인수 배열</span>
+                </div>
+                <div className="flex justify-between">
+                  <code className="text-blue-600">env</code>
+                  <span className="text-gray-600">환경 변수 설정</span>
+                </div>
+                <div className="flex justify-between">
+                  <code className="text-blue-600">autoApprove</code>
+                  <span className="text-gray-600">자동 승인할 도구 목록</span>
+                </div>
+              </div>
+            </div>
+
+            <h4 className="font-medium text-gray-900">4. 내장 서버 타입</h4>
             <p className="text-sm text-gray-600">
-              내장 도구를 제공하려면 <code>setupBuiltinFetchServer()</code> 함수를 참고하여 
+              내장 서버의 경우 <code>type: "builtin"</code>을 설정하고 <code>tools</code> 배열에 제공할 도구를 명시합니다. 
               새로운 도구 설정 함수를 추가하세요.
             </p>
           </div>
@@ -158,14 +198,26 @@ export default function MCPHelpGuide() {
           <div className="space-y-3">
             <h4 className="font-medium text-gray-900">1. 서버 설정 제거</h4>
             <p className="text-sm text-gray-600">
-              <code>MCPService.ts</code> 파일의 <code>fallbackServers</code> 배열에서 
-              해당 서버 객체를 제거합니다.
+              <code>.mcp.json</code> 파일의 <code>mcpServers</code> 객체에서 
+              해당 서버 설정을 제거하거나 <code>"enabled": false</code>로 설정합니다.
             </p>
 
-            <h4 className="font-medium text-gray-900">2. 관련 도구 설정 제거</h4>
-            <p className="text-sm text-gray-600">
-              해당 서버를 위한 특별한 도구 설정 함수가 있다면 함께 제거하세요.
-            </p>
+            <h4 className="font-medium text-gray-900">2. 서버 비활성화 (권장)</h4>
+            <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-green-400"># 서버를 완전히 제거하지 않고 비활성화</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard('"enabled": false')}
+                  className="flex items-center gap-1 text-white border-gray-600 hover:bg-gray-800"
+                >
+                  <Copy className="h-3 w-3" />
+                  복사
+                </Button>
+              </div>
+              <pre>"enabled": false</pre>
+            </div>
 
             <h4 className="font-medium text-gray-900">3. 개발 서버 재시작</h4>
             <div className="bg-gray-900 text-gray-100 rounded-lg p-3 font-mono text-sm">
@@ -199,7 +251,7 @@ export default function MCPHelpGuide() {
           <div className="space-y-3">
             <h4 className="font-medium text-gray-900">MCP 서비스 설정 수정</h4>
             <p className="text-sm text-gray-600">
-              <code>MCPService.ts</code> 생성자에서 다음 설정들을 변경할 수 있습니다:
+              <code>.mcp.json</code> 파일의 <code>settings</code> 객체에서 다음 설정들을 변경할 수 있습니다:
             </p>
             
             <div className="bg-gray-50 border rounded-lg p-4">
@@ -225,6 +277,83 @@ export default function MCPHelpGuide() {
                   <span className="text-gray-600">로깅 활성화 (기본: true)</span>
                 </div>
               </div>
+            </div>
+
+            <h4 className="font-medium text-gray-900">완전한 .mcp.json 설정 예시</h4>
+            <div className="bg-gray-900 text-gray-100 rounded-lg p-4 font-mono text-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-green-400"># 완전한 .mcp.json 파일 예시</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(`{
+  "mcpServers": {
+    "mcp-fetch": {
+      "name": "MCP Fetch",
+      "description": "Web content fetching and processing",
+      "type": "builtin",
+      "enabled": true,
+      "tools": ["fetch"]
+    },
+    "sequential-thinking": {
+      "name": "Sequential Thinking",
+      "description": "Advanced reasoning and problem-solving tool",
+      "command": "uvx",
+      "args": ["mcp-sequential-thinking"],
+      "enabled": false,
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": ["sequentialthinking"]
+    }
+  },
+  "settings": {
+    "autoConnect": true,
+    "timeout": 30000,
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "enableLogging": true,
+    "logLevel": "info"
+  }
+}`)}
+                  className="flex items-center gap-1 text-white border-gray-600 hover:bg-gray-800"
+                >
+                  <Copy className="h-3 w-3" />
+                  복사
+                </Button>
+              </div>
+              <pre className="text-gray-100 text-xs overflow-x-auto">
+{`{
+  "mcpServers": {
+    "mcp-fetch": {
+      "name": "MCP Fetch",
+      "description": "Web content fetching and processing",
+      "type": "builtin",
+      "enabled": true,
+      "tools": ["fetch"]
+    },
+    "sequential-thinking": {
+      "name": "Sequential Thinking",
+      "description": "Advanced reasoning tool",
+      "command": "uvx",
+      "args": ["mcp-sequential-thinking"],
+      "enabled": false,
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": ["sequentialthinking"]
+    }
+  },
+  "settings": {
+    "autoConnect": true,
+    "timeout": 30000,
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "enableLogging": true,
+    "logLevel": "info"
+  }
+}`}
+              </pre>
             </div>
 
             <h4 className="font-medium text-gray-900">외부 MCP 서버 연결</h4>
@@ -321,8 +450,9 @@ export default function MCPHelpGuide() {
             </div>
 
             <div className="text-sm text-gray-600 mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="font-medium text-gray-900 mb-2">소스 코드 위치:</p>
+              <p className="font-medium text-gray-900 mb-2">주요 파일 위치:</p>
               <ul className="space-y-1 font-mono text-xs">
+                <li>MCP 설정: <code>ai-chatbot-mentor/.mcp.json</code></li>
                 <li>MCP 서비스: <code>ai-chatbot-mentor/src/services/MCPService.ts</code></li>
                 <li>MCP 클라이언트: <code>ai-chatbot-mentor/src/services/MCPClient.ts</code></li>
                 <li>MCP 타입 정의: <code>ai-chatbot-mentor/src/types/mcp.ts</code></li>

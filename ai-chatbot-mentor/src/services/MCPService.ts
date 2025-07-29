@@ -54,11 +54,42 @@ export class MCPService extends EventEmitter {
    */
   private async loadMCPServers() {
     try {
-      // 내장 서버만 사용하도록 직접 설정
-      await this.loadFallbackServers();
+      // .mcp.json 파일에서 설정 로드
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      const configPath = path.join(process.cwd(), '.mcp.json');
+      const configData = await fs.readFile(configPath, 'utf-8');
+      const config = JSON.parse(configData);
+
+      // 설정 업데이트
+      if (config.settings) {
+        this.updateSettings(config.settings);
+      }
+
+      // MCP 서버들 로드
+      if (config.mcpServers) {
+        for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
+          if ((serverConfig as any).enabled !== false) {
+            await this.registerServer({
+              id: serverId,
+              name: (serverConfig as any).name,
+              description: (serverConfig as any).description,
+              command: (serverConfig as any).command,
+              args: (serverConfig as any).args,
+              env: (serverConfig as any).env,
+              type: (serverConfig as any).type,
+              tools: (serverConfig as any).tools,
+              autoApprove: (serverConfig as any).autoApprove
+            });
+          }
+        }
+      }
+
+      this.log('info', 'MCP servers loaded from .mcp.json');
 
     } catch (error) {
-      this.log('error', 'Failed to load MCP servers:', error);
+      this.log('error', 'Failed to load .mcp.json, using fallback servers:', error);
       // 설정 파일 로드 실패 시 기본 서버들로 폴백
       await this.loadFallbackServers();
     }
@@ -72,7 +103,9 @@ export class MCPService extends EventEmitter {
       {
         id: 'mcp-fetch',
         name: 'MCP Fetch',
-        description: 'Web content fetching and processing'
+        description: 'Web content fetching and processing',
+        type: 'builtin',
+        tools: ['fetch']
       }
     ];
 

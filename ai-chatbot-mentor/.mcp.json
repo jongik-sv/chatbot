@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "mcp-fetch": {
+      "name": "MCP Fetch",
+      "description": "Web content fetching and processing",
+      "type": "builtin",
+      "enabled": true,
+      "tools": ["fetch"]
+    },
+    "sequential-thinking": {
+      "name": "Sequential Thinking",
+      "description": "Advanced reasoning and problem-solving tool",
+      "command": "uvx",
+      "args": ["mcp-sequential-thinking"],
+      "enabled": false,
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": ["sequentialthinking"]
+    },
+    "context7": {
+      "name": "Context7 Documentation",
+      "description": "Access to library documentation and code examples",
+      "command": "uvx",
+      "args": ["mcp-context7"],
+      "enabled": false,
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": ["resolve-library-id", "get-library-docs"]
+    },
+    "21st-devmagic": {
+      "name": "21st DevMagic",
+      "description": "UI component generation and logo search tools",
+      "command": "uvx", 
+      "args": ["mcp-21st-devmagic"],
+      "enabled": false,
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "autoApprove": ["21st_magic_component_builder", "logo_search", "21st_magic_component_inspiration", "21st_magic_component_refiner"]
+    }
+  },
+  "settings": {
+    "autoConnect": true,
+    "timeout": 30000,
+    "maxRetries": 3,
+    "retryDelay": 1000,
+    "enableLogging": true,
+    "logLevel": "info"
+  }
+}

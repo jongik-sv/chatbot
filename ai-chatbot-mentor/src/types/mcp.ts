@@ -106,6 +106,9 @@ export interface MCPServerConfig {
   timeout?: number;
   enabled?: boolean;
   autoConnect?: boolean;
+  type?: 'builtin' | 'external';
+  tools?: string[];
+  autoApprove?: string[];
 }
 
 // MCP 메시지 타입들
