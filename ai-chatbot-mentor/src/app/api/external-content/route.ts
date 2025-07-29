@@ -1,41 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ExternalContentService from '@/services/ExternalContentService';
 
-// ExternalContentService 인스턴스 가져오기
-async function getExternalContentService() {
-  try {
-    return ExternalContentService.getInstance();
-  } catch (error) {
-    console.error('ExternalContentService 초기화 실패:', error);
-    // Mock 서비스 반환
-    return {
-      processExternalContent: async (url: string, options: any = {}) => {
-        const urlObj = new URL(url);
-        const isYoutube = urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be');
-        const contentType = isYoutube ? 'youtube' : 'website';
-        
-        return {
-          id: `${contentType}_${Date.now()}`,
-          type: contentType,
-          url,
-          title: isYoutube ? 'YouTube 비디오 (개발 중)' : '웹페이지 (개발 중)',
-          content: `${url}의 콘텐츠 추출 기능은 현재 개발 중입니다.`,
-          summary: `${url}의 요약 내용 (개발 중)`,
-          metadata: {
-            contentLength: 100,
-            language: 'ko',
-            extractedAt: new Date().toISOString()
-          },
-          createdAt: new Date()
-        };
-      }
-    };
-  }
+// JavaScript ExternalContentService 사용
+function getJavaScriptExternalContentService() {
+  const { getInstance } = require('../../../services/ExternalContentService');
+  return getInstance();
 }
 
 export async function POST(request: NextRequest) {
-  let contentService = null;
-  
   try {
     const body = await request.json();
     const { url, options = {}, customGptId } = body;
@@ -58,21 +30,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 외부 콘텐츠 서비스 초기화
-    contentService = await getExternalContentService();
+    // JavaScript 외부 콘텐츠 서비스 사용
+    const jsService = getJavaScriptExternalContentService();
 
     console.log(`콘텐츠 추출 요청: ${url}`);
     console.log('옵션:', options);
 
     // 콘텐츠 추출 실행
-    const result = await contentService.processExternalContent(url, {
+    const result = await jsService.extractContent(url, {
       ...options,
-      customGptId
+      customGptId: customGptId ? parseInt(customGptId) : null,
+      saveToDatabase: true
     });
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data: {
+        id: result.id,
+        type: result.type,
+        url: result.url,
+        title: result.title,
+        content: result.content,
+        summary: result.summary,
+        metadata: result.metadata,
+        createdAt: result.createdAt
+      },
       message: `${result.type === 'youtube' ? 'YouTube' : '웹사이트'} 콘텐츠가 성공적으로 처리되었습니다.`
     });
 
@@ -116,17 +98,33 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // 외부 콘텐츠 서비스 초기화
-    const contentService = await getExternalContentService();
+    // JavaScript ExternalContentService 사용
+    const jsService = getJavaScriptExternalContentService();
 
-    // 모든 콘텐츠 조회 (Mock으로 빈 배열 반환)
-    const contents = [];
+    // 모든 콘텐츠 조회
+    const contents = jsService.getAllContents({
+      contentType: contentType === 'all' ? undefined : contentType,
+      customGptId: customGptId ? parseInt(customGptId) : undefined,
+      limit,
+      offset
+    });
+
+    // 데이터 형식 통일
+    const formattedContents = contents.map((content: any) => ({
+      id: content.id,
+      type: content.type,
+      url: content.url,
+      title: content.title,
+      summary: content.summary,
+      metadata: content.metadata,
+      createdAt: content.created_at
+    }));
 
     return NextResponse.json({
       success: true,
       data: {
-        results: contents,
-        total: contents.length,
+        results: formattedContents,
+        total: formattedContents.length,
         limit,
         offset
       }

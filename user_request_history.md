@@ -23,6 +23,16 @@ markdown component가 교체가 안된것 같아. 다른 컴포넌트로 바꿔�
 
 ------
 
+외부 콘텐츠 관리에서 콘텐츠 추가를 해서 웹사이트나 유튜브 주소를 넣으면 저장을 안하는 것 같아.
+
+------
+
+저장은 하는데 리스트가 안보이나봐
+
+------
+
+------
+
 markdown component가 교체가 안된것 같아. 다른 컴포넌트로 바꿔줘.
 
 지식 베이스 추가 실패: TypeError: this.embeddingService.storeEmbedding is not a function
@@ -38,3 +48,13 @@ markdown component가 교체가 안된것 같아. 다른 컴포넌트로 바꿔�
   260 |             chunkIndex: i,
   261 |             chunkText: chunk,
  POST /api/external-content 200 in 1212ms
+
+------
+
+외부 콘텐츠 관리에서 콘텐츠 추가를 해서 웹사이트나 유튜브 주소를 넣으면 저장을 안하는 것 같아.
+
+------
+
+저장은 하는데 리스트가 안보이나봐
+
+------
