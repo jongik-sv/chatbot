@@ -106,9 +106,9 @@ export function ArtifactPanel({
   }
 
   return (
-    <div className={`bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
       {/* 아티팩트 탭 */}
-      <div className="border-b border-gray-200">
+      <div className="flex-shrink-0 border-b border-gray-200">
         <div className="flex overflow-x-auto">
           {artifacts.filter(artifact => artifact && artifact.id).map((artifact) => (
             <button
@@ -137,7 +137,7 @@ export function ArtifactPanel({
       {selectedArtifact && (
         <>
           {/* 아티팩트 헤더 */}
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+          <div className="flex-shrink-0 px-4 py-3 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 {isEditing ? (
@@ -222,7 +222,7 @@ export function ArtifactPanel({
                 />
               </div>
             ) : (
-              <div className="h-full overflow-hidden">
+              <div className="h-full">
                 {selectedArtifact.type === 'code' && (
                   <CodeArtifact
                     content={selectedArtifact.content}

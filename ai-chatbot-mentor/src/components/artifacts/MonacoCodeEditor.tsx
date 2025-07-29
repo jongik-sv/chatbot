@@ -148,9 +148,9 @@ export function MonacoCodeEditor({
   };
 
   return (
-    <div className={`border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full border border-gray-200 rounded-lg overflow-hidden ${className}`}>
       {/* 컨트롤 헤더 */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center space-x-2">
           <span className="text-sm font-medium text-gray-700">
             Monaco Editor
@@ -213,8 +213,8 @@ export function MonacoCodeEditor({
         </div>
       </div>
 
-      {/* Monaco Editor */}
-      <div className="relative" style={{ height: height === '100%' ? 'calc(100% - 80px)' : height }}>
+      {/* Monaco Editor - 전체 높이 활용 */}
+      <div className="flex-1 min-h-0 relative">
         <Editor
           height="100%"
           language={getMonacoLanguage(language || 'javascript')}
@@ -238,7 +238,7 @@ export function MonacoCodeEditor({
       </div>
 
       {/* 상태 표시줄 */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
+      <div className="flex-shrink-0 px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500">
         <div className="flex items-center justify-between">
           <span>
             {(isEditing ? editedContent : content).length} 문자, {(isEditing ? editedContent : content).split('\n').length} 줄

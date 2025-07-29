@@ -1491,3 +1491,41 @@ kiro : React DOM 에러 수정 - "<p> cannot contain a nested <pre>" 에러 해�
 - ✅ Monaco 에디터에서 아티팩트 소스 코드 정상 표시
 - ✅ iframe 테스트 버튼 정상 작동, 참조 오류 해결
 - ✅ 아티팩트 실행 환경 안정성 개선
+
+------
+
+아티팩트 높이 전체 활용 요청
+- Monaco 에디터 내용이 안보이는 문제로 아티팩트 패널 높이 최적화 필요
+- 현재 높이 제한으로 인해 Monaco 에디터의 콘텐츠가 제대로 표시되지 않음
+
+**해결 완료 사항**:
+
+#### ✅ 1. ArtifactPanel 높이 구조 개선
+- 전체 컨테이너를 `flex flex-col h-full`로 변경
+- 아티팩트 탭을 `flex-shrink-0`로 고정 높이 설정
+- 아티팩트 헤더를 `flex-shrink-0`로 고정 높이 설정
+- 아티팩트 내용 영역을 `flex-1 min-h-0`로 전체 남은 공간 활용
+
+#### ✅ 2. CodeArtifact 높이 구조 개선  
+- 컨테이너를 `flex flex-col h-full`로 변경하여 전체 높이 활용
+- 코드 헤더를 `flex-shrink-0`로 고정
+- 코드 내용 영역을 `flex-1 min-h-0`로 확장
+- Monaco/미리보기 모드 모두 전체 높이 활용
+- 코드 통계 영역을 `flex-shrink-0`로 고정
+
+#### ✅ 3. MonacoCodeEditor 높이 구조 개선
+- 전체 컨테이너를 `flex flex-col h-full`로 변경
+- 컨트롤 헤더를 `flex-shrink-0`로 고정
+- Monaco Editor 영역을 `flex-1 min-h-0`로 전체 높이 활용
+- 상태 표시줄을 `flex-shrink-0`로 고정
+- Editor 컴포넌트에 `height="100%"` 확실히 적용
+
+**수정된 파일**:
+- ArtifactPanel.tsx: flex 레이아웃으로 높이 구조 개선
+- CodeArtifact.tsx: 전체 높이 활용 구조로 변경
+- MonacoCodeEditor.tsx: flex 기반 높이 관리로 개선
+
+**결과**:
+- ✅ 아티팩트 패널이 전체 화면 높이 완전 활용
+- ✅ Monaco 에디터에서 모든 코드 내용이 스크롤 없이 보임
+- ✅ 반응형 높이 조절로 다양한 화면 크기 대응

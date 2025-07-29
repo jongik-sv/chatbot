@@ -80,7 +80,7 @@ export function CodeArtifact({
   };
 
   return (
-    <div className={`flex flex-col bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}>
       {/* 코드 헤더 */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center space-x-2">
@@ -117,7 +117,7 @@ export function CodeArtifact({
               {isExecutable() ? (
                 <>
                   <PlayIcon className="h-3 w-3 inline mr-1" />
-                  미리보기
+                  실행
                 </>
               ) : (
                 <>
@@ -142,32 +142,28 @@ export function CodeArtifact({
         </div>
       </div>
 
-      {/* 코드 내용 */}
+      {/* 코드 내용 - 전체 높이 활용 */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {viewMode === 'monaco' ? (
-          <div className="h-full">
-            <MonacoCodeEditor
-              content={content}
-              language={language}
-              theme={theme}
-              height="100%"
+          <MonacoCodeEditor
+            content={content}
+            language={language}
+            theme={theme}
+            height="100%"
+            className="h-full"
+          />
+        ) : (
+          // 미리보기/실행 모드
+          isExecutable() ? (
+            <CodeExecutor 
+              code={content} 
+              language={language || 'javascript'} 
+              title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
+              artifactId={artifactId}
+              sessionId={sessionId}
+              useFileServer={useFileServer}
               className="h-full"
             />
-          </div>
-        ) : (
-          // 미리보기 모드: 실행 가능한 코드는 실행 결과, 아니면 하이라이트된 코드
-          isExecutable() ? (
-            <div className="h-full p-4">
-              <CodeExecutor 
-                code={content} 
-                language={language || 'javascript'} 
-                title={`${getLanguageDisplayName(language || 'javascript')} 실행 결과`}
-                artifactId={artifactId}
-                sessionId={sessionId}
-                useFileServer={useFileServer}
-                className="h-full"
-              />
-            </div>
           ) : (
             <div className="h-full overflow-auto">
               <SyntaxHighlighter
