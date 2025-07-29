@@ -188,6 +188,21 @@ export class MCPService extends EventEmitter {
         status: 'connecting'
       });
 
+      // 내장 fetch 서버는 별도 연결 과정 없이 즉시 연결 상태로 설정
+      if (serverId === 'mcp-fetch') {
+        server.status = 'connected';
+        server.lastConnected = new Date();
+        this.connections.set(serverId, {
+          serverId,
+          status: 'connected',
+          lastPing: new Date(),
+          latency: 0
+        });
+        this.log('info', `Connected to builtin MCP server: ${server.name}`);
+        this.emitEvent('server_connected', serverId);
+        return;
+      }
+
       // 기존 클라이언트가 있으면 연결 해제
       const existingClient = this.clients.get(serverId);
       if (existingClient) {

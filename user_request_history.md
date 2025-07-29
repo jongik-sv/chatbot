@@ -1425,4 +1425,15 @@ MCP 서버 연결 구현 완료 후 테스트 결과
 - 내장 fetch 서버 성공적으로 실행됨 (로그 확인: "Executed tool fetch on server mcp-fetch")
 - 외부 MCP 패키지 의존성 없이 웹페이지 요약 기능 활성화
 - "This is mock content from the URL." 문제 해결
-- 실제 WebScrapingService를 활용한 콘텐츠 추출 구현
+- 실제 WebScrapingService를 활용한 콘텐츠 추출 구현-----
+-
+
+MCP fetch 도구 실행 실패 문제 보고
+- 웹 콘텐츠 fetch 시도 시 "Server mcp-fetch is not connected" 에러 발생
+- URL: https://www.etnews.com/20250729000191?mc=ns_001_00001
+- Sequential thinking 도구도 연결되지 않음
+- 내장 fetch 서버 연결 상태 확인 및 문제 해결 필요
+
+------
+
+동작중인 mcp를 확인하는 버튼과 화면도 만들어줘. 그리고 mcp를 추가하거나 삭제 하려면 어떤 파일을 편집해야 하는지에 대한 도움말도 추가해줘.
