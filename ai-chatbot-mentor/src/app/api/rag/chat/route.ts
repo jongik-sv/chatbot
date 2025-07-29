@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
       message, 
       model = 'gemini-2.0-flash-exp',
       documentIds, 
-      topK = 3, 
-      threshold = 0.5,
+      topK = 5, 
+      threshold = 0.3,
       sessionId,
       userId = 1 
     } = await request.json();
@@ -91,11 +91,27 @@ export async function POST(request: NextRequest) {
     });
 
     // 1. 관련 문서 검색
+    console.log('RAG API - 검색 시작:', {
+      message: message.substring(0, 100),
+      documentIds,
+      topK,
+      threshold
+    });
+
     const searchResults = await vectorSearchService.searchSimilarChunks(message, {
       topK,
       threshold,
       documentIds,
       includeMetadata: true
+    });
+
+    console.log('RAG API - 검색 결과:', {
+      resultsCount: searchResults.length,
+      topSimilarities: searchResults.slice(0, 3).map(r => ({
+        similarity: r.similarity,
+        docTitle: r.documentTitle,
+        chunkPreview: r.chunkText.substring(0, 50) + '...'
+      }))
     });
 
     if (searchResults.length === 0) {

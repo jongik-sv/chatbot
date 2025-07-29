@@ -133,8 +133,13 @@ export class VectorSearchService extends BaseRepository {
       const stmt = this.prepare(sql);
       const rows = stmt.all(...params) as any[];
 
+      console.log('VectorSearchService - 검색 쿼리:', sql);
+      console.log('VectorSearchService - 파라미터:', params);
+      console.log('VectorSearchService - DB 행 수:', rows.length);
+
       // 각 임베딩과 유사도 계산
       const similarities: SearchResult[] = [];
+      const allSimilarities: number[] = [];
       
       for (const row of rows) {
         try {
@@ -145,6 +150,7 @@ export class VectorSearchService extends BaseRepository {
 
           // 유사도 계산
           const similarity = this.cosineSimilarity(queryEmbedding, embedding);
+          allSimilarities.push(similarity);
 
           if (similarity >= threshold) {
             similarities.push({
@@ -162,6 +168,15 @@ export class VectorSearchService extends BaseRepository {
           continue;
         }
       }
+
+      console.log('VectorSearchService - 유사도 통계:', {
+        전체_계산된_유사도: allSimilarities.length,
+        최고_유사도: Math.max(...allSimilarities),
+        최저_유사도: Math.min(...allSimilarities),
+        평균_유사도: allSimilarities.reduce((a, b) => a + b, 0) / allSimilarities.length,
+        threshold: threshold,
+        threshold_이상_결과: similarities.length
+      });
 
       // 유사도 순으로 정렬하고 상위 K개 반환
       return similarities

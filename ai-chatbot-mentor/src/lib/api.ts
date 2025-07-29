@@ -16,12 +16,24 @@ export class ApiClient {
     // 문서 기반 대화인 경우 RAG 엔드포인트 사용
     const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
 
+    // 요청 데이터 구조화
+    const requestData = {
+      message: request.message,
+      model: request.model,
+      mode: request.mode || 'chat',
+      ...(request.sessionId && { sessionId: request.sessionId }),
+      ...(request.mentorId && { mentorId: request.mentorId }),
+      ...(request.documentIds && request.documentIds.length > 0 && { documentIds: request.documentIds })
+    };
+
+    console.log('API 요청 데이터:', requestData); // 디버깅용
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
@@ -45,6 +57,15 @@ export class ApiClient {
     
     if (request.sessionId) {
       formData.append('sessionId', request.sessionId.toString());
+    }
+
+    if (request.mentorId) {
+      formData.append('mentorId', request.mentorId.toString());
+    }
+
+    // 문서 ID들 추가
+    if (request.documentIds && request.documentIds.length > 0) {
+      formData.append('documentIds', JSON.stringify(request.documentIds));
     }
 
     // 파일들 추가

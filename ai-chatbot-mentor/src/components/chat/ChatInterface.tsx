@@ -219,6 +219,9 @@ export default function ChatInterface({
       // 현재 모델의 설정 가져오기
       const modelSettings = getModelSettings(state.selectedModel);
       
+      console.log('ChatInterface - 메시지 전송 전 선택된 문서 IDs:', selectedDocumentIds);
+      console.log('ChatInterface - 세션 모드:', sessionMode);
+
       const response = await ApiClient.sendMessage({
         message: content,
         model: state.selectedModel,

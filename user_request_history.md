@@ -1858,3 +1858,26 @@ kiro : 업로드된 문서 보기에서 스크롤바 추가
 - border 스타일 추가로 스크롤바 시각적 구분 강화
 
 ------
+
+문서 기반 채팅에서 선택한 문서를 참고하지 않는 문제 해결:
+
+문제: "선택한 문서로 대화하기"를 눌러도 문서 내용을 참고하지 않고 "죄송합니다. 업로드된 문서에서 관련 정보를 찾을 수 없습니다" 메시지 반환
+
+원인 분석:
+- 데이터베이스에 문서 1개와 임베딩 66개가 정상적으로 저장됨
+- documentIds=[1]이 API에 올바르게 전달됨
+- 문제: 유사도 검색에서 threshold=0.5가 너무 높아서 결과가 필터링됨
+
+해결 방법:
+1. ApiClient.sendMessage에서 documentIds와 mentorId가 JSON body에 포함되지 않던 문제 수정
+2. sendMessageWithFiles에서도 documentIds를 FormData에 추가
+3. RAG API의 threshold를 0.5에서 0.3으로 낮춤, topK를 3에서 5로 증가
+4. 상세한 디버깅 로그 추가하여 검색 과정 모니터링
+
+수정된 파일:
+- src/lib/api.ts: requestData 구조화 및 documentIds 포함
+- src/app/api/rag/chat/route.ts: threshold 0.3, topK 5로 변경
+- src/services/VectorSearchService.ts: 유사도 통계 로깅 추가
+- src/components/chat/ChatInterface.tsx: 디버깅 로그 추가
+
+------
