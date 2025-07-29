@@ -7,7 +7,7 @@ import RuleManager from '../../components/rules/RuleManager';
 
 export default function RulesPage() {
   return (
-    <div className=\"container mx-auto py-8\">
+    <div className="container mx-auto py-8">
       <RuleManager />
     </div>
   );

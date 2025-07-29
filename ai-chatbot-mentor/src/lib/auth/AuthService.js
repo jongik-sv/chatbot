@@ -5,7 +5,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { getDatabase } = require('../database/db');
+const { getDatabase } = require('../database');
 
 class AuthService {
   constructor() {

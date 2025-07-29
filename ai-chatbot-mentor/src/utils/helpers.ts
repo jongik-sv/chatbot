@@ -1,5 +1,10 @@
 // utils/helpers.ts
 import { MAX_FILE_SIZE } from './constants';
+import { clsx, type ClassValue } from 'clsx';
+
+export function cn(...inputs: ClassValue[]) {
+  return clsx(inputs);
+}
 
 export function validateFileType(filename: string, allowedTypes: string[]): boolean {
   const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));

@@ -218,13 +218,13 @@ export default function RuleManager() {
   }
 
   return (
-    <div className=\"w-full max-w-6xl mx-auto p-6 space-y-6\">
+    <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       {/* 헤더 */}
-      <div className=\"flex items-center justify-between\">
-        <h1 className=\"text-3xl font-bold\">룰 관리</h1>
-        <div className=\"flex gap-2\">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">룰 관리</h1>
+        <div className="flex gap-2">
           <Button
-            variant=\"outline\"
+            variant="outline"
             onClick={loadData}
             disabled={isLoading}
           >
@@ -232,7 +232,7 @@ export default function RuleManager() {
             새로고침
           </Button>
           <Button onClick={() => setShowForm(true)}>
-            <Plus className=\"h-4 w-4 mr-2\" />
+            <Plus className="h-4 w-4 mr-2" />
             새 룰 추가
           </Button>
         </div>
@@ -240,54 +240,54 @@ export default function RuleManager() {
 
       {/* 오류 표시 */}
       {error && (
-        <Alert variant=\"destructive\">
+        <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {/* 통계 */}
       {stats && (
-        <div className=\"grid grid-cols-2 md:grid-cols-4 gap-4\">
-          <div className=\"bg-blue-50 p-4 rounded-lg\">
-            <div className=\"text-2xl font-bold text-blue-700\">{stats.totalRules}</div>
-            <div className=\"text-sm text-blue-600\">전체 룰</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-blue-700">{stats.totalRules}</div>
+            <div className="text-sm text-blue-600">전체 룰</div>
           </div>
-          <div className=\"bg-green-50 p-4 rounded-lg\">
-            <div className=\"text-2xl font-bold text-green-700\">{stats.activeRules}</div>
-            <div className=\"text-sm text-green-600\">활성 룰</div>
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-green-700">{stats.activeRules}</div>
+            <div className="text-sm text-green-600">활성 룰</div>
           </div>
-          <div className=\"bg-yellow-50 p-4 rounded-lg\">
-            <div className=\"text-2xl font-bold text-yellow-700\">{stats.temporaryRules}</div>
-            <div className=\"text-sm text-yellow-600\">임시 룰</div>
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-700">{stats.temporaryRules}</div>
+            <div className="text-sm text-yellow-600">임시 룰</div>
           </div>
-          <div className=\"bg-purple-50 p-4 rounded-lg\">
-            <div className=\"text-2xl font-bold text-purple-700\">{categories.length}</div>
-            <div className=\"text-sm text-purple-600\">카테고리</div>
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="text-2xl font-bold text-purple-700">{categories.length}</div>
+            <div className="text-sm text-purple-600">카테고리</div>
           </div>
         </div>
       )}
 
       {/* 검색 및 필터 */}
-      <div className=\"flex flex-col md:flex-row gap-4\">
-        <div className=\"flex-1\">
-          <div className=\"relative\">
-            <Search className=\"absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400\" />
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder=\"룰 이름이나 내용으로 검색...\"
+              placeholder="룰 이름이나 내용으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className=\"pl-10\"
+              className="pl-10"
             />
           </div>
         </div>
         
-        <div className=\"flex gap-2\">
+        <div className="flex gap-2">
           <Button
-            variant=\"outline\"
+            variant="outline"
             onClick={handleCleanupExpiredRules}
-            className=\"whitespace-nowrap\"
+            className="whitespace-nowrap"
           >
-            <Trash2 className=\"h-4 w-4 mr-2\" />
+            <Trash2 className="h-4 w-4 mr-2" />
             만료 룰 정리
           </Button>
         </div>
@@ -295,8 +295,8 @@ export default function RuleManager() {
 
       {/* 카테고리 탭 */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className=\"grid grid-cols-3 md:grid-cols-6 w-full\">
-          <TabsTrigger value=\"all\">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+          <TabsTrigger value="all">
             전체 ({rules.length})
           </TabsTrigger>
           {categories.map(category => (
@@ -306,20 +306,20 @@ export default function RuleManager() {
           ))}
         </TabsList>
 
-        <TabsContent value={selectedCategory} className=\"mt-6\">
+        <TabsContent value={selectedCategory} className="mt-6">
           {isLoading ? (
-            <div className=\"text-center py-8\">
-              <div className=\"inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600\"></div>
-              <p className=\"mt-2 text-gray-600\">로딩 중...</p>
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-600">로딩 중...</p>
             </div>
           ) : filteredRules.length === 0 ? (
-            <div className=\"text-center py-8\">
-              <p className=\"text-gray-500\">
+            <div className="text-center py-8">
+              <p className="text-gray-500">
                 {searchTerm ? '검색 결과가 없습니다.' : '등록된 룰이 없습니다.'}
               </p>
             </div>
           ) : (
-            <div className=\"grid gap-4 md:grid-cols-2 lg:grid-cols-3\">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredRules.map(rule => (
                 <RuleCard
                   key={rule.name}

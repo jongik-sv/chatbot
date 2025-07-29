@@ -2,7 +2,7 @@
  * 룰 설정 관리 서비스
  */
 
-const { getDatabase } = require('../database/db');
+const { getDatabase } = require('../database');
 
 class RuleService {
   constructor() {

@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '../../../../lib/middleware/auth';
 import AuthService from '../../../../lib/auth/AuthService';
-import { getDatabase } from '../../../../lib/database/db';
+import { getDatabase } from '../../../../lib/database';
 
 export const POST = withAuth(async (req: NextRequest & { user: any }) => {
   try {

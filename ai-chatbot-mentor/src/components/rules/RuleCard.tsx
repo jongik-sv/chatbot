@@ -98,31 +98,31 @@ export default function RuleCard({
 
   return (
     <Card className={`w-full ${!rule.isActive ? 'opacity-60' : ''}`}>
-      <CardHeader className=\"pb-3\">
-        <div className=\"flex items-start justify-between\">
-          <div className=\"flex-1\">
-            <div className=\"flex items-center gap-2 mb-2\">
-              <CardTitle className=\"text-lg\">{rule.displayName}</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <CardTitle className="text-lg">{rule.displayName}</CardTitle>
               {rule.isActive ? (
-                <CheckCircle className=\"h-4 w-4 text-green-600\" />
+                <CheckCircle className="h-4 w-4 text-green-600" />
               ) : (
-                <XCircle className=\"h-4 w-4 text-gray-400\" />
+                <XCircle className="h-4 w-4 text-gray-400" />
               )}
             </div>
             
-            <div className=\"flex flex-wrap gap-2\">
+            <div className="flex flex-wrap gap-2">
               <Badge className={getCategoryColor(rule.category)}>
                 {rule.category}
               </Badge>
               
               <Badge className={getPriorityColor(rule.priority)}>
-                <Target className=\"h-3 w-3 mr-1\" />
+                <Target className="h-3 w-3 mr-1" />
                 우선순위 {rule.priority}
               </Badge>
               
               {rule.isTemporary && (
-                <Badge className=\"bg-yellow-100 text-yellow-800\">
-                  <Clock className=\"h-3 w-3 mr-1\" />
+                <Badge className="bg-yellow-100 text-yellow-800">
+                  <Clock className="h-3 w-3 mr-1" />
                   임시
                 </Badge>
               )}
@@ -130,7 +130,7 @@ export default function RuleCard({
           </div>
 
           {!readOnly && (
-            <div className=\"flex items-center gap-2\">
+            <div className="flex items-center gap-2">
               <Switch
                 checked={rule.isActive}
                 onCheckedChange={handleToggle}
@@ -141,26 +141,26 @@ export default function RuleCard({
         </div>
       </CardHeader>
 
-      <CardContent className=\"space-y-4\">
+      <CardContent className="space-y-4">
         {/* 룰 내용 */}
-        <div className=\"p-3 bg-gray-50 rounded-md\">
-          <p className=\"text-sm text-gray-700 whitespace-pre-wrap\">
+        <div className="p-3 bg-gray-50 rounded-md">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap">
             {rule.content}
           </p>
         </div>
 
         {/* 만료 시간 (임시 룰의 경우) */}
         {rule.isTemporary && rule.expiresAt && (
-          <Alert className=\"border-yellow-200 bg-yellow-50\">
-            <Clock className=\"h-4 w-4 text-yellow-600\" />
-            <AlertDescription className=\"text-yellow-800\">
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <Clock className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
               {getTimeRemaining(rule.expiresAt)}
             </AlertDescription>
           </Alert>
         )}
 
         {/* 메타정보 */}
-        <div className=\"text-xs text-gray-500 space-y-1\">
+        <div className="text-xs text-gray-500 space-y-1">
           <div>생성일: {formatDate(rule.createdAt)}</div>
           {rule.updatedAt !== rule.createdAt && (
             <div>수정일: {formatDate(rule.updatedAt)}</div>
@@ -169,27 +169,27 @@ export default function RuleCard({
 
         {/* 액션 버튼 */}
         {!readOnly && (onEdit || onDelete) && (
-          <div className=\"flex gap-2 pt-2 border-t\">
+          <div className="flex gap-2 pt-2 border-t">
             {onEdit && (
               <Button
-                variant=\"outline\"
-                size=\"sm\"
+                variant="outline"
+                size="sm"
                 onClick={() => onEdit(rule)}
-                className=\"flex-1\"
+                className="flex-1"
               >
-                <Edit className=\"h-4 w-4 mr-2\" />
+                <Edit className="h-4 w-4 mr-2" />
                 수정
               </Button>
             )}
             
             {onDelete && (
               <Button
-                variant=\"outline\"
-                size=\"sm\"
+                variant="outline"
+                size="sm"
                 onClick={() => onDelete(rule.name)}
-                className=\"flex-1 text-red-600 hover:text-red-700\"
+                className="flex-1 text-red-600 hover:text-red-700"
               >
-                <Trash2 className=\"h-4 w-4 mr-2\" />
+                <Trash2 className="h-4 w-4 mr-2" />
                 삭제
               </Button>
             )}
