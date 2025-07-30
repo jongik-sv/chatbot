@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { documentRepository } from '@/lib/repositories/DocumentRepository';
+import { vectorSearchService } from '@/services/VectorSearchService';
 import path from 'path';
 import Database from 'better-sqlite3';
 
@@ -124,10 +125,22 @@ export async function POST(request: NextRequest) {
     
     const documentId = result.lastInsertRowid;
     
-    // RAG를 위한 청크 생성 및 임베딩
-    await generateChunksAndEmbeddings(db, documentId as number, content.trim());
-    
     db.close();
+    
+    // RAG를 위한 청크 생성 및 임베딩 (VectorSearchService 사용)
+    try {
+      await vectorSearchService.processAndStoreDocument(
+        documentId as number,
+        content.trim(),
+        'token',  // 토큰 기반 청킹
+        500,      // 500 토큰 크기
+        50        // 50 토큰 오버랩
+      );
+      console.log(`문서 ${documentId}의 임베딩 생성 완료`);
+    } catch (embeddingError) {
+      console.error(`문서 ${documentId} 임베딩 생성 실패:`, embeddingError);
+      // 임베딩 생성 실패해도 문서 저장은 성공으로 처리
+    }
     
     console.log('직접 내용 입력 저장 완료:', documentId);
     
@@ -152,83 +165,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 청크 생성 및 임베딩 함수
-async function generateChunksAndEmbeddings(db: Database.Database, documentId: number, content: string) {
-  try {
-    console.log(`문서 ${documentId}의 청크 생성 시작`);
-    
-    // 500 토큰 정도로 청크 분할 (대략 500개 글자)
-    const chunkSize = 500;
-    const chunks: string[] = [];
-    
-    // 줄바꿈과 문단을 고려한 청크 분할
-    const paragraphs = content.split(/\n\s*\n/);
-    let currentChunk = '';
-    
-    for (const paragraph of paragraphs) {
-      if ((currentChunk + paragraph).length <= chunkSize) {
-        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
-      } else {
-        if (currentChunk) {
-          chunks.push(currentChunk.trim());
-        }
-        
-        if (paragraph.length <= chunkSize) {
-          currentChunk = paragraph;
-        } else {
-          // 긴 문단은 문장 단위로 분할
-          const sentences = paragraph.split(/[.!?]\s+/);
-          currentChunk = '';
-          
-          for (const sentence of sentences) {
-            if ((currentChunk + sentence).length <= chunkSize) {
-              currentChunk += (currentChunk ? '. ' : '') + sentence;
-            } else {
-              if (currentChunk) {
-                chunks.push(currentChunk.trim() + '.');
-              }
-              currentChunk = sentence;
-            }
-          }
-        }
-      }
-    }
-    
-    if (currentChunk.trim()) {
-      chunks.push(currentChunk.trim());
-    }
-    
-    console.log(`청크 ${chunks.length}개 생성 완료`);
-    
-    // 청크를 embeddings 테이블에 저장 (임베딩은 null로 저장)
-    const insertChunkQuery = `
-      INSERT INTO embeddings (document_id, chunk_text, chunk_index, embedding, metadata)
-      VALUES (?, ?, ?, ?, ?)
-    `;
-    
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkMetadata = JSON.stringify({
-        chunkSize: chunks[i].length,
-        position: i,
-        totalChunks: chunks.length
-      });
-      
-      db.prepare(insertChunkQuery).run(
-        documentId,
-        chunks[i],
-        i,
-        null, // 임베딩은 나중에 별도 프로세스에서 생성
-        chunkMetadata
-      );
-    }
-    
-    console.log(`문서 ${documentId}의 청크 저장 완료`);
-    
-  } catch (error) {
-    console.error('청크 생성 오류:', error);
-    throw error;
-  }
-}
 
 export async function DELETE(request: NextRequest) {
   try {

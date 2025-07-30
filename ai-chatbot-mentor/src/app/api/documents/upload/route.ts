@@ -77,20 +77,62 @@ export async function POST(request: NextRequest) {
       // 문서 처리
       const processedDoc = await DocumentProcessingService.processDocument(tempFilePath, file.name);
       
-      // 데이터베이스에 저장
-      const storageService = new DocumentStorageService();
-      const documentId = await storageService.saveDocument(processedDoc, tempFilePath, parseInt(projectId) || 1);
+      // documents 테이블에만 저장 (document_chunks 제거)
+      const Database = require('better-sqlite3');
+      const path = require('path');
+      
+      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const db = new Database(dbPath);
+      
+      // documents 테이블에 직접 저장
+      const insertQuery = `
+        INSERT INTO documents (
+          user_id, project_id, filename, file_type, file_path, 
+          content, file_size, metadata, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      
+      const metadata = {
+        wordCount: processedDoc.metadata.wordCount || 0,
+        language: processedDoc.metadata.language || 'unknown',
+        summary: processedDoc.metadata.summary || '',
+        fileSize: processedDoc.metadata.fileSize || 0,
+        createdAt: processedDoc.metadata.createdAt,
+        documentId: processedDoc.id
+      };
+      
+      const result = db.prepare(insertQuery).run(
+        1, // user_id (시스템 사용자)
+        parseInt(projectId) || 1, // project_id
+        processedDoc.filename,
+        processedDoc.fileType,
+        tempFilePath, // 임시 파일 경로
+        processedDoc.content,
+        processedDoc.metadata.fileSize || 0,
+        JSON.stringify(metadata),
+        new Date().toISOString()
+      );
+      
+      const documentId = result.lastInsertRowid as string;
+      db.close();
       
       // 임시 파일 정리
       fs.unlinkSync(tempFilePath);
       
-      // 자동 임베딩 생성 (백그라운드에서 수행) - 페이지 단위로 처리
+      // VectorSearchService를 사용하여 임베딩 생성 (토큰 기반)
       let embeddingStatus = 'pending';
       try {
-        await vectorSearchService.processAndStoreDocument(documentId, processedDoc.content, 'page');
+        await vectorSearchService.processAndStoreDocument(
+          parseInt(documentId),
+          processedDoc.content,
+          'token',  // 토큰 기반 청킹으로 변경
+          500,      // 500 토큰 크기
+          50        // 50 토큰 오버랩
+        );
         embeddingStatus = 'completed';
+        console.log(`PDF 문서 ${documentId}의 임베딩 생성 완료`);
       } catch (embeddingError) {
-        console.error(`문서 ${documentId} 임베딩 생성 실패:`, embeddingError);
+        console.error(`PDF 문서 ${documentId} 임베딩 생성 실패:`, embeddingError);
         embeddingStatus = 'failed';
       }
       
@@ -104,7 +146,7 @@ export async function POST(request: NextRequest) {
           wordCount: processedDoc.metadata.wordCount,
           language: processedDoc.metadata.language,
           summary: processedDoc.metadata.summary,
-          chunkCount: processedDoc.chunks.length,
+          chunkCount: 0, // embeddings 테이블에서 관리
           fileSize: processedDoc.metadata.fileSize,
           createdAt: processedDoc.metadata.createdAt,
           embeddingStatus

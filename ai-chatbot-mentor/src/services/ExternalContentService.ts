@@ -2,6 +2,7 @@ import YouTubeContentService from './YouTubeContentService';
 import WebScrapingService from './WebScrapingService';
 import DocumentStorageService from './DocumentStorageService';
 import EmbeddingService from './EmbeddingService';
+import { vectorSearchService } from './VectorSearchService';
 
 interface ExternalContentResult {
   id: string;
@@ -307,116 +308,25 @@ export class ExternalContentService {
       
       const documentId = result.lastInsertRowid as number;
       
-      // 임베딩 생성 및 저장 (토큰 기반)
+      db.close();
+      
+      // VectorSearchService를 사용하여 임베딩 생성 및 저장
       if (content.content.length > 100) {
-        const chunks = this.chunkContent(content.content, 500);
-        console.log(`텍스트 청킹 완료: ${chunks.length}개 청크, 평균 ${Math.round(chunks.reduce((sum, chunk) => sum + chunk.length, 0) / chunks.length / 2)}토큰`);
-        
-        for (let i = 0; i < chunks.length; i++) {
-          const chunk = chunks[i];
-          let embedding = null;
-          
-          // 임베딩 생성 시도
-          try {
-            if (this.embeddingService && typeof this.embeddingService.generateEmbedding === 'function') {
-              // EmbeddingService 초기화 확인
-              if (typeof this.embeddingService.initialize === 'function') {
-                await this.embeddingService.initialize();
-              }
-              
-              embedding = await this.embeddingService.generateEmbedding(chunk);
-              console.log(`청크 ${i} 임베딩 생성 완료 (${embedding ? embedding.length : 0}차원)`);
-            } else {
-              console.log(`청크 ${i} 임베딩 서비스 사용 불가, Mock 임베딩 생성`);
-              // Mock 임베딩 생성 (개발/테스트용)
-              embedding = new Array(384).fill(0).map(() => Math.random() * 2 - 1); // -1 ~ 1 사이의 랜덤 값
-            }
-          } catch (embeddingError) {
-            console.warn(`청크 ${i} 임베딩 생성 실패:`, embeddingError.message);
-            console.log(`청크 ${i} Mock 임베딩으로 대체`);
-            // 오류 발생 시 Mock 임베딩 생성
-            embedding = new Array(384).fill(0).map(() => Math.random() * 2 - 1);
-          }
-          
-          // embeddings 테이블에 청크 저장
-          const insertChunkQuery = `
-            INSERT INTO embeddings (document_id, chunk_text, chunk_index, embedding, metadata, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-          `;
-          
-          const chunkMetadata = JSON.stringify({
-            sourceUrl: content.url,
-            sourceType: content.type,
-            title: content.title,
-            chunkSize: chunk.length,
-            position: i,
-            totalChunks: chunks.length,
-            embeddingGenerated: embedding !== null,
-            ...content.metadata
-          });
-          
-          // 임베딩을 BLOB으로 저장 (Float32Array 사용)
-          let embeddingBlob = null;
-          if (embedding && Array.isArray(embedding)) {
-            try {
-              const float32Array = new Float32Array(embedding);
-              embeddingBlob = Buffer.from(float32Array.buffer);
-            } catch (blobError) {
-              console.warn(`청크 ${i} 임베딩 BLOB 변환 실패, JSON으로 저장:`, blobError.message);
-              embeddingBlob = JSON.stringify(embedding);
-            }
-          }
-          
-          db.prepare(insertChunkQuery).run(
+        try {
+          await vectorSearchService.processAndStoreDocument(
             documentId,
-            chunk,
-            i,
-            embeddingBlob,
-            chunkMetadata,
-            new Date().toISOString()
+            content.content,
+            'token',  // 토큰 기반 청킹
+            500,      // 500 토큰 크기
+            50        // 50 토큰 오버랩
           );
-          
-          // document_chunks 테이블에도 청크 저장
-          const insertDocumentChunkQuery = `
-            INSERT INTO document_chunks (
-              id, document_id, content, chunk_index, 
-              start_position, end_position, word_count, sentences, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `;
-          
-          // 청크 ID 생성 (document_id + chunk_index 조합)
-          const chunkId = `${documentId}_${i}`;
-          
-          // 단어 수와 문장 수 계산
-          const wordCount = chunk.split(/\s+/).filter(word => word.length > 0).length;
-          const sentences = chunk.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0).length;
-          
-          // 시작/끝 위치 계산 (대략적)
-          const startPosition = i * Math.floor(content.content.length / chunks.length);
-          const endPosition = Math.min(startPosition + chunk.length, content.content.length);
-          
-          try {
-            db.prepare(insertDocumentChunkQuery).run(
-              chunkId,
-              documentId,
-              chunk,
-              i,
-              startPosition,
-              endPosition,
-              wordCount,
-              sentences,
-              new Date().toISOString()
-            );
-            console.log(`청크 ${i} document_chunks 테이블에 저장 완료`);
-          } catch (chunkError) {
-            console.warn(`청크 ${i} document_chunks 저장 실패:`, chunkError.message);
-          }
+          console.log(`외부 콘텐츠 ${documentId}의 임베딩 생성 완료`);
+        } catch (embeddingError) {
+          console.error(`외부 콘텐츠 ${documentId} 임베딩 생성 실패:`, embeddingError);
+          // 임베딩 생성 실패해도 문서 저장은 성공으로 처리
         }
-        
-        console.log(`임베딩 처리 완료: ${chunks.length}개 청크 저장`);
       }
       
-      db.close();
       console.log(`외부 콘텐츠 저장 완료: ${content.title} (ID: ${documentId})`);
       
     } catch (error) {
@@ -425,52 +335,6 @@ export class ExternalContentService {
     }
   }
 
-  /**
-   * 콘텐츠를 토큰 기반으로 청크 분할
-   */
-  private chunkContent(content: string, maxTokens: number = 500): string[] {
-    try {
-      // 토큰 기반 청킹 라이브러리 사용
-      const { chunkTextByTokens } = require('@/lib/text-chunking');
-      
-      const chunks = chunkTextByTokens(content, {
-        maxTokens,
-        overlapTokens: 50,
-        preserveSentences: true
-      });
-      
-      return chunks.map((chunk: any) => chunk.text);
-    } catch (error) {
-      console.warn('토큰 기반 청킹 실패, 문자 기반으로 대체:', error);
-      
-      // 폴백: 기존 문자 기반 청킹
-      const chunks: string[] = [];
-      const sentences = content.split(/[.!?。！？]+/).filter(s => s.trim().length > 0);
-      
-      let currentChunk = '';
-      const approxCharsPerToken = 2; // 대략적인 토큰-문자 비율
-      const targetCharsPerChunk = maxTokens * approxCharsPerToken;
-      
-      for (const sentence of sentences) {
-        const trimmedSentence = sentence.trim();
-        
-        if (currentChunk.length + trimmedSentence.length + 1 <= targetCharsPerChunk) {
-          currentChunk += (currentChunk ? '. ' : '') + trimmedSentence;
-        } else {
-          if (currentChunk) {
-            chunks.push(currentChunk + '.');
-          }
-          currentChunk = trimmedSentence;
-        }
-      }
-      
-      if (currentChunk) {
-        chunks.push(currentChunk + '.');
-      }
-      
-      return chunks;
-    }
-  }
 
   /**
    * JavaScript 서비스와 호환성을 위한 메서드들

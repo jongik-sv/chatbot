@@ -85,13 +85,14 @@ export class VectorSearchService extends BaseRepository {
     documentId: number, 
     documentText: string, 
     mode: 'character' | 'page' | 'token' = 'token',
-    chunkSize: number = 500
+    chunkSize: number = 500,
+    overlap: number = 50
   ): Promise<void> {
     try {
-      console.log(`Processing document ${documentId} for embeddings using ${mode} mode...`);
+      console.log(`Processing document ${documentId} for embeddings using ${mode} mode (chunkSize: ${chunkSize}, overlap: ${overlap})...`);
       
       // 문서를 청크로 분할하고 임베딩 생성
-      const embeddings = await embeddingService.embedDocument(documentText, mode, chunkSize);
+      const embeddings = await embeddingService.embedDocument(documentText, mode, chunkSize, overlap);
       
       // 기존 임베딩 삭제 (재처리 시)
       await this.deleteDocumentEmbeddings(documentId);

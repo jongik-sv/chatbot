@@ -324,9 +324,10 @@ export class EmbeddingService {
   async embedDocument(
     text: string, 
     mode: 'character' | 'page' | 'token' = 'token', 
-    chunkSize: number = 500
+    chunkSize: number = 500,
+    overlap: number = 50
   ): Promise<EmbeddingResult[]> {
-    const chunks = this.chunkDocument(text, mode, chunkSize);
+    const chunks = this.chunkDocument(text, mode, chunkSize, overlap);
     const results: EmbeddingResult[] = [];
     
     console.log(`Processing ${chunks.length} ${mode} chunks for embedding...`);
