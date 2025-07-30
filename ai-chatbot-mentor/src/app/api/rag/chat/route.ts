@@ -193,10 +193,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. 컨텍스트 구성
-    const contextParts = searchResults.map((result, index) => 
-      `[출처 ${index + 1}: ${result.documentTitle || '문서'}]\n${result.chunkText}`
-    );
+    // 2. 컨텍스트 구성 (문서명과 페이지 정보 포함)
+    const contextParts = searchResults.map((result, index) => {
+      const documentName = result.documentTitle || '문서';
+      const pageInfo = result.chunkIndex ? `${result.chunkIndex + 1}페이지` : '페이지 미상';
+      return `[${documentName}, ${pageInfo}]\n${result.chunkText}`;
+    });
     
     const context = contextParts.join('\n\n');
 
@@ -233,15 +235,22 @@ export async function POST(request: NextRequest) {
     }
     console.log('====================');
 
-    // 5. 출처 정보 구성
-    const sources = searchResults.map((result, index) => ({
-      index: index + 1,
-      documentId: result.documentId,
-      documentTitle: result.documentTitle,
-      chunkIndex: result.chunkIndex,
-      similarity: Math.round(result.similarity * 1000) / 1000,
-      excerpt: result.chunkText.substring(0, 150) + (result.chunkText.length > 150 ? '...' : '')
-    }));
+    // 5. 출처 정보 구성 (문서명과 페이지 정보 포함)
+    const sources = searchResults.map((result, index) => {
+      const documentName = result.documentTitle || '문서';
+      const pageInfo = result.chunkIndex ? `${result.chunkIndex + 1}페이지` : '페이지 미상';
+      return {
+        index: index + 1,
+        documentId: result.documentId,
+        documentTitle: result.documentTitle,
+        documentName: documentName,
+        pageInfo: pageInfo,
+        sourceReference: `${documentName}, ${pageInfo}`,
+        chunkIndex: result.chunkIndex,
+        similarity: Math.round(result.similarity * 1000) / 1000,
+        excerpt: result.chunkText.substring(0, 150) + (result.chunkText.length > 150 ? '...' : '')
+      };
+    });
 
     const responseContent = response.content || (typeof response === 'string' ? response : JSON.stringify(response));
 
