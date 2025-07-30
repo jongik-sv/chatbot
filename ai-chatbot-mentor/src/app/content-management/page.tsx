@@ -45,7 +45,7 @@ interface Project {
 export default function ContentManagement() {
   const [contents, setContents] = useState<ContentItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('all');
+  const [selectedProject, setSelectedProject] = useState<string | null>(null); // null로 변경하여 프로젝트 선택 상태 표시
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -62,11 +62,12 @@ export default function ContentManagement() {
 
   useEffect(() => {
     loadProjects();
-    loadContents();
   }, []);
 
   useEffect(() => {
-    loadContents();
+    if (selectedProject) {
+      loadContents();
+    }
   }, [selectedProject]);
 
   const loadProjects = async () => {
@@ -92,27 +93,30 @@ export default function ContentManagement() {
   };
 
   const loadContents = async () => {
+    if (!selectedProject) return;
+    
     try {
       setLoading(true);
       
-      // 문서 목록 로드
-      const documentsResponse = await fetch('/api/documents');
+      // 선택된 프로젝트의 문서 목록 로드
+      const documentsResponse = await fetch(`/api/documents?projectId=${selectedProject}`);
       const documentsData = await documentsResponse.json();
       
-      // 외부 콘텐츠 목록 로드
-      const externalResponse = await fetch('/api/external-content');
+      // 선택된 프로젝트의 외부 콘텐츠 목록 로드
+      const externalResponse = await fetch(`/api/external-content?projectId=${selectedProject}`);
       const externalData = await externalResponse.json();
       
       // 데이터 통합 및 표준화
       const documents: ContentItem[] = (documentsData.data || []).map((doc: any) => ({
         id: `doc-${doc.id}`,
-        title: doc.filename || '제목 없음',
+        title: doc.filename || doc.title || '제목 없음',
         type: 'document' as const,
         filename: doc.filename,
         fileSize: doc.file_size || 0,
         content: doc.content,
         summary: doc.content?.substring(0, 200) + '...',
         createdAt: doc.created_at,
+        projectId: doc.project_id?.toString(),
         metadata: doc.metadata ? JSON.parse(doc.metadata) : {}
       }));
 
@@ -123,6 +127,7 @@ export default function ContentManagement() {
         url: ext.url,
         summary: ext.summary,
         createdAt: ext.createdAt,
+        projectId: ext.project_id?.toString(),
         metadata: ext.metadata || {}
       }));
 
