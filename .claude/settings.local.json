@@ -27,9 +27,9 @@
   "enabledMcpjsonServers": [
     "fetch",
     "supabase",
-    "toolbox",
     "sequential-thinking",
     "Context7",
-    "@21st-dev/magic"
+    "@21st-dev/magic",
+    "pyhub.mcptools"
   ]
 }

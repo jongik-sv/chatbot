@@ -354,3 +354,56 @@ kiro: 데이터베이스를 잘 못찾는것 같아. 위치는 무조건 ./data/
 ------
 
 엑셀파일 하나 열여줘.
+
+------
+
+## 2025-07-30 - 데이터베이스 테이블 사용 현황 확인 및 스키마 초기화
+
+### 요청 내용
+C:\Project\chatbot\data에 있는 테이블을 사용하는지 아니면 다른 곳을 보고 있는 코드도 있는지 확인하고, 필요한 테이블을 생성해달라.
+
+### 작업 결과
+
+#### 1. 데이터베이스 경로 사용 현황 확인  
+- **메인 데이터베이스 파일**: `C:\Project\chatbot\data\chatbot.db`
+- **기존 파일들**: chatbot.db, chatbot.db-shm, chatbot.db-wal
+
+#### 2. 코드베이스 내 데이터베이스 경로 사용 패턴
+1. **Root 레벨 (JavaScript)**: `C:\Project\chatbot\lib\database.js`
+   - 경로: `process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'chatbot.db')`
+   
+2. **Next.js 앱 (TypeScript)**: `C:\Project\chatbot\ai-chatbot-mentor\src\lib\database.ts`  
+   - 경로: `path.join(process.cwd(), '..', 'data', 'chatbot.db')`
+
+3. **설정 파일**: `C:\Project\chatbot\config\database.js`
+   - Knex.js 기반 설정 (마이그레이션 지원)
+
+#### 3. 데이터베이스 스키마 초기화 완료
+생성된 테이블 (총 11개):
+- `users` - 사용자 정보 (MBTI, 설정 포함)
+- `chat_sessions` - 대화 세션 관리
+- `messages` - 메시지 저장 (멀티모달 지원)
+- `mentors` - AI 멘토 설정 (MBTI 기반)
+- `documents` - 문서 관리 (RAG용)
+- `embeddings` - 벡터 임베딩
+- `mentor_knowledge_sources` - 멘토 지식 소스
+- `artifacts` - 생성된 아티팩트
+- `projects` - 프로젝트 관리
+- `settings` - 사용자 설정
+- `sqlite_sequence` - SQLite 자동 생성
+
+#### 4. 기본 데이터 삽입
+- 시스템 사용자 생성
+- 4개 MBTI 기본 멘토 (INTJ, ENFP, ISTJ, ESFP)
+- 기본 프로젝트 3개 (공통, 웹 개발, AI/ML)
+
+#### 5. 인덱스 최적화
+- 주요 테이블의 조회 성능 최적화를 위한 인덱스 생성
+- Foreign Key 관계 및 검색용 인덱스 포함
+
+### 중요 사항
+- 모든 코드가 동일한 데이터베이스 파일 (`C:\Project\chatbot\data\chatbot.db`)을 참조
+- TypeScript/JavaScript 이중 구조로 인한 경로 차이는 정상적으로 처리됨
+- WAL 모드 활성화로 성능 최적화 완료
+
+------
