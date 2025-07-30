@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     console.log('프로젝트 목록 조회 시작');
     
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     const db = new Database(dbPath);
     
     // 프로젝트 목록과 각 프로젝트의 문서 수를 조회
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     const db = new Database(dbPath);
     
     // 프로젝트 생성
@@ -133,7 +133,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     const db = new Database(dbPath);
     
     // 프로젝트 수정
@@ -207,7 +207,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     const db = new Database(dbPath);
     
     // 공통 프로젝트 삭제 방지

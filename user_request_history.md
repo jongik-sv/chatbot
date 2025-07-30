@@ -407,3 +407,31 @@ C:\Project\chatbot\data에 있는 테이블을 사용하는지 아니면 다른 
 - WAL 모드 활성화로 성능 최적화 완료
 
 ------
+
+## 2025-07-30 - chat_sessions 테이블 접근 오류 해결
+
+### 요청 내용
+채팅 API에서 "SqliteError: no such table: chat_sessions" 오류가 발생하는 문제 해결
+
+### 문제 원인
+Next.js 앱의 여러 파일에서 `path.join()` 대신 `path.resolve()`를 사용해야 하는데, 상대 경로 처리가 잘못되어 데이터베이스 파일을 찾지 못함
+
+### 수정 작업
+1. **ChatRepository.js**: `path.join()` → `path.resolve()` 변경
+2. **database.ts**: 메인 데이터베이스 연결 파일 경로 수정  
+3. **서비스 파일들**: ExternalContentService, CustomGPTService, DocumentStorageService, EmbeddingService
+4. **API 라우트들**: projects/route.ts, documents/route.ts, documents/upload/route.ts
+
+### 테스트 결과
+- ✅ 데이터베이스 파일 존재 확인 (4096 bytes)
+- ✅ chat_sessions 테이블 정상 존재 
+- ✅ 테이블 스키마 정상 (id, user_id, title, mode, model_used, mentor_id, created_at, updated_at)
+- ✅ 총 11개 테이블 모두 정상 생성됨
+
+### 수정된 경로 패턴
+**변경 전**: `path.join(process.cwd(), '..', 'data', 'chatbot.db')`  
+**변경 후**: `path.resolve(process.cwd(), '..', 'data', 'chatbot.db')`
+
+모든 Next.js 앱 내 파일이 올바른 데이터베이스 경로를 참조하도록 수정 완료
+
+------

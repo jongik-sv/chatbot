@@ -44,7 +44,7 @@ export class CustomGPTService {
   private db: Database.Database;
 
   constructor() {
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     this.db = new Database(dbPath);
     this.initializeTables();
   }

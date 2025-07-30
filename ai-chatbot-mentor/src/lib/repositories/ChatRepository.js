@@ -8,8 +8,8 @@ const fs = require("fs");
 
 class ChatRepository {
   constructor() {
-    // 통일된 데이터베이스 경로 사용 (Next.js 작업 디렉토리 고려)
-    this.dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "..", "data", "chatbot.db");
+    // 통일된 데이터베이스 경로 사용 (절대 경로로 수정)
+    this.dbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "..", "data", "chatbot.db");
     this.db = null;
     this.initDatabase();
   }

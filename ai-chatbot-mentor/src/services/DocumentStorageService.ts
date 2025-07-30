@@ -38,7 +38,7 @@ export class DocumentStorageService {
 
   constructor() {
     // 프로젝트 루트의 데이터베이스 참조 (./chatbot/data/chatbot.db)
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     this.db = new Database(dbPath);
     this.initializeTables();
     this.ensureUploadDirectory();

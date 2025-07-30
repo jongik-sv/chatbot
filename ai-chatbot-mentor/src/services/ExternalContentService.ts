@@ -271,7 +271,7 @@ export class ExternalContentService {
       const Database = require('better-sqlite3');
       const path = require('path');
       
-      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
       const db = new Database(dbPath);
       
       // 외부 콘텐츠 메타데이터 구성
@@ -355,7 +355,7 @@ export class ExternalContentService {
       const Database = require('better-sqlite3');
       const path = require('path');
       
-      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
       const db = new Database(dbPath);
       
       // documents 테이블에서 외부 콘텐츠 조회 (isExternalContent가 true인 경우)

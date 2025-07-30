@@ -35,7 +35,7 @@ export class EmbeddingService {
   private db: sqlite3.Database;
 
   private constructor() {
-    const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+    const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
     this.db = new sqlite3.Database(dbPath);
   }
 
