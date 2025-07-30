@@ -339,4 +339,7 @@ kiro : 환경 변수 참조 경로 수정 및 chat_sessions 테이블 오류 해
 ---
 ---
 
-kiro : ./ai-chatbot-mentor/.env.local → ./.env.local로 변경
+kiro : ./ai-chatbot-mentor/.env.local → ./.env.local로 변경------
+
+ki
+ro : 프로그램 코드도 .env.local 읽는 디렉토리가 제대로 됐는지 확인해줘.
