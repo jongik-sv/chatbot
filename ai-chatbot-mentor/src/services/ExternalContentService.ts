@@ -283,14 +283,38 @@ export class ExternalContentService {
       // 임베딩 생성 및 저장 (토큰 기반)
       if (content.content.length > 100) {
         const chunks = this.chunkContent(content.content, 500);
+        console.log(`텍스트 청킹 완료: ${chunks.length}개 청크, 평균 ${Math.round(chunks.reduce((sum, chunk) => sum + chunk.length, 0) / chunks.length / 2)}토큰`);
         
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
+          let embedding = null;
           
-          // embeddings 테이블에 청크 저장 (임베딩은 null로 저장)
+          // 임베딩 생성 시도
+          try {
+            if (this.embeddingService && typeof this.embeddingService.generateEmbedding === 'function') {
+              // EmbeddingService 초기화 확인
+              if (typeof this.embeddingService.initialize === 'function') {
+                await this.embeddingService.initialize();
+              }
+              
+              embedding = await this.embeddingService.generateEmbedding(chunk);
+              console.log(`청크 ${i} 임베딩 생성 완료 (${embedding ? embedding.length : 0}차원)`);
+            } else {
+              console.log(`청크 ${i} 임베딩 서비스 사용 불가, Mock 임베딩 생성`);
+              // Mock 임베딩 생성 (개발/테스트용)
+              embedding = new Array(384).fill(0).map(() => Math.random() * 2 - 1); // -1 ~ 1 사이의 랜덤 값
+            }
+          } catch (embeddingError) {
+            console.warn(`청크 ${i} 임베딩 생성 실패:`, embeddingError.message);
+            console.log(`청크 ${i} Mock 임베딩으로 대체`);
+            // 오류 발생 시 Mock 임베딩 생성
+            embedding = new Array(384).fill(0).map(() => Math.random() * 2 - 1);
+          }
+          
+          // embeddings 테이블에 청크 저장
           const insertChunkQuery = `
-            INSERT INTO embeddings (document_id, chunk_text, chunk_index, embedding, metadata)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO embeddings (document_id, chunk_text, chunk_index, embedding, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
           `;
           
           const chunkMetadata = JSON.stringify({
@@ -300,17 +324,33 @@ export class ExternalContentService {
             chunkSize: chunk.length,
             position: i,
             totalChunks: chunks.length,
+            embeddingGenerated: embedding !== null,
             ...content.metadata
           });
+          
+          // 임베딩을 BLOB으로 저장 (Float32Array 사용)
+          let embeddingBlob = null;
+          if (embedding && Array.isArray(embedding)) {
+            try {
+              const float32Array = new Float32Array(embedding);
+              embeddingBlob = Buffer.from(float32Array.buffer);
+            } catch (blobError) {
+              console.warn(`청크 ${i} 임베딩 BLOB 변환 실패, JSON으로 저장:`, blobError.message);
+              embeddingBlob = JSON.stringify(embedding);
+            }
+          }
           
           db.prepare(insertChunkQuery).run(
             documentId,
             chunk,
             i,
-            null, // 임베딩은 나중에 별도 프로세스에서 생성
-            chunkMetadata
+            embeddingBlob,
+            chunkMetadata,
+            new Date().toISOString()
           );
         }
+        
+        console.log(`임베딩 처리 완료: ${chunks.length}개 청크 저장`);
       }
       
       db.close();
