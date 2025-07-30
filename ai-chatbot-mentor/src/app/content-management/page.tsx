@@ -72,6 +72,7 @@ export default function ContentManagement() {
 
   const loadProjects = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/projects');
       const data = await response.json();
       
@@ -89,6 +90,8 @@ export default function ContentManagement() {
       }
     } catch (error) {
       console.error('프로젝트 로딩 오류:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

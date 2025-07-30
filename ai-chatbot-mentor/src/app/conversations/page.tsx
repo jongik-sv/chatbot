@@ -17,6 +17,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { ApiClient } from '@/lib/api';
 
+import { 
+  Server, 
+  HelpCircle, 
+  Activity,
+  Settings,
+  Home,
+  ArrowLeft
+} from 'lucide-react';
+
 interface ChatSession {
   id: number;
   title: string;
@@ -190,11 +199,17 @@ export default function ConversationsPage() {
   return (
     <MainLayout>
       <div className="h-full bg-gray-50 p-4 overflow-auto">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">대화 목록</h1>
-          <p className="text-gray-600">모든 대화를 검색하고 관리하세요</p>
+
+        {/* 페이지 헤더 */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center h-16">
+              <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                대화 목록
+              </h1>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -494,7 +509,6 @@ export default function ConversationsPage() {
             </div>
           </div>
         )}
-      </div>
       </div>
     </MainLayout>
   );
