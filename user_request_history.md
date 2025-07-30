@@ -300,3 +300,7 @@ VectorSearchService - 유사도 통계: {
 ------
 
 출처 1, 출처 2 이렇게 나타내지말고 문서명과 페이지를 나타내주면 좋겠어.
+
+------
+
+topK, threshold 하드코딩 설정을  .env.local에 넣어주면 좋겠어.

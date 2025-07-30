@@ -59,14 +59,29 @@ export async function POST(request: NextRequest) {
   try {
     const { 
       message, 
-      model = 'gemini-2.0-flash-exp',
+      model = process.env.RAG_DEFAULT_MODEL || 'gemini-2.0-flash-exp',
       documentIds, 
-      topK = 5, 
-      threshold = 0.3,
+      topK = parseInt(process.env.RAG_TOP_K || '5'), 
+      threshold = parseFloat(process.env.RAG_THRESHOLD || '0.3'),
       sessionId,
       userId = 1,
       stream = false
     } = await request.json();
+
+    // RAG 설정 값 유효성 검증
+    if (topK <= 0 || topK > 50) {
+      return NextResponse.json(
+        { success: false, error: 'topK 값은 1-50 범위여야 합니다.' },
+        { status: 400 }
+      );
+    }
+
+    if (threshold < 0 || threshold > 1) {
+      return NextResponse.json(
+        { success: false, error: 'threshold 값은 0-1 범위여야 합니다.' },
+        { status: 400 }
+      );
+    }
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json(
@@ -142,8 +157,14 @@ export async function POST(request: NextRequest) {
     console.log('RAG API - 검색 시작:', {
       message: message.substring(0, 100),
       documentIds,
-      topK,
-      threshold
+      topK: topK,
+      threshold: threshold,
+      model: model,
+      configSource: {
+        topK: process.env.RAG_TOP_K ? 'env' : 'default',
+        threshold: process.env.RAG_THRESHOLD ? 'env' : 'default',
+        model: process.env.RAG_DEFAULT_MODEL ? 'env' : 'default'
+      }
     });
 
     const searchResults = await vectorSearchService.searchSimilarChunks(message, {
@@ -320,11 +341,24 @@ export async function GET(request: NextRequest) {
     // RAG 시스템 상태 확인
     const stats = await vectorSearchService.getEmbeddingStats();
     
+    // 현재 RAG 설정 값들
+    const ragConfig = {
+      topK: parseInt(process.env.RAG_TOP_K || '5'),
+      threshold: parseFloat(process.env.RAG_THRESHOLD || '0.3'),
+      defaultModel: process.env.RAG_DEFAULT_MODEL || 'gemini-2.0-flash-exp',
+      configSource: {
+        topK: process.env.RAG_TOP_K ? 'environment' : 'default',
+        threshold: process.env.RAG_THRESHOLD ? 'environment' : 'default',
+        model: process.env.RAG_DEFAULT_MODEL ? 'environment' : 'default'
+      }
+    };
+    
     return NextResponse.json({
       success: true,
       ragSystem: {
         status: 'active',
         embeddingStats: stats,
+        config: ragConfig,
         supportedModels: ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'],
         features: {
           documentSearch: true,
