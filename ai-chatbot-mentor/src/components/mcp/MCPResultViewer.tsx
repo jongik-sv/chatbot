@@ -182,7 +182,7 @@ export function MCPResultViewer({
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-600 hover:text-gray-800 transition-colors"
             >
               <XCircleIcon className="h-5 w-5" />
             </button>
@@ -225,7 +225,7 @@ export function MCPResultViewer({
           </div>
         ) : (
           <div className="text-center py-8">
-            <InformationCircleIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <InformationCircleIcon className="h-8 w-8 text-gray-600 mx-auto mb-2" />
             <p className="text-sm text-gray-500">결과 콘텐츠가 없습니다.</p>
           </div>
         )}

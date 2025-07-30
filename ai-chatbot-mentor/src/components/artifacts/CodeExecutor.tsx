@@ -759,7 +759,7 @@ sys.stdout = output_capture
                 disabled={isRunning}
                 className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded border ${
                   isRunning
-                    ? 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 border-gray-300 text-gray-600 cursor-not-allowed'
                     : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
                 }`}
               >
@@ -789,7 +789,7 @@ sys.stdout = output_capture
         {!isExecutable() ? (
           <div className="h-full flex items-center justify-center text-gray-500">
             <div className="text-center">
-              <StopIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <StopIcon className="h-8 w-8 mx-auto mb-2 text-gray-600" />
               <p>이 언어는 브라우저에서 실행할 수 없습니다.</p>
               <p className="text-xs mt-1">지원 언어: JavaScript, TypeScript, HTML, CSS, React, Python</p>
             </div>
@@ -808,7 +808,7 @@ sys.stdout = output_capture
             {!isReady && (
               <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-white">
                 <div className="text-center">
-                  <PlayIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <PlayIcon className="h-8 w-8 mx-auto mb-2 text-gray-600" />
                   <p>실행 버튼을 클릭하여 코드를 실행하세요.</p>
                 </div>
               </div>

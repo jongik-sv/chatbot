@@ -72,7 +72,7 @@ export default function ModelSelector({ models, selectedModel, onModelChange, di
               </span>
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <ChevronUpDownIcon className="h-5 w-5 text-gray-600" aria-hidden="true" />
             </span>
           </Listbox.Button>
 
@@ -132,7 +132,7 @@ export default function ModelSelector({ models, selectedModel, onModelChange, di
         type="button"
         onClick={() => setShowSettings(true)}
         disabled={disabled || !selectedModel}
-        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         title="모델 설정"
       >
         <CogIcon className="w-5 h-5" />

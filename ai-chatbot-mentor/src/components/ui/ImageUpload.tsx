@@ -148,7 +148,7 @@ export default function ImageUpload({
           <div className="flex flex-col items-center space-y-2">
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
               <svg
-                className="w-6 h-6 text-gray-400"
+                className="w-6 h-6 text-gray-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -165,7 +165,7 @@ export default function ImageUpload({
               <p className="text-sm text-gray-600">
                 이미지를 드래그하여 놓거나 <span className="text-blue-500 underline">클릭하여 선택</span>
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-600 mt-1">
                 최대 {maxSize}MB, {acceptedTypes.map(type => type.split('/')[1]).join(', ')} 형식 지원
               </p>
             </div>

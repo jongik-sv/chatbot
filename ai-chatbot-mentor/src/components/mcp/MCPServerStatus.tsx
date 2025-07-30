@@ -109,11 +109,11 @@ export function MCPServerStatus({
       case 'connected':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
       case 'disconnected':
-        return <XCircleIcon className="h-5 w-5 text-gray-400" />;
+        return <XCircleIcon className="h-5 w-5 text-gray-600" />;
       case 'error':
         return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />;
       default:
-        return <ServerIcon className="h-5 w-5 text-gray-400" />;
+        return <ServerIcon className="h-5 w-5 text-gray-600" />;
     }
   };
 

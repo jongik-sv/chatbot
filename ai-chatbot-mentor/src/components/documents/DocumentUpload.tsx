@@ -193,7 +193,7 @@ export default function DocumentUpload({
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
       >
-        <CloudArrowUpIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <CloudArrowUpIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           파일을 드래그하거나 클릭하여 업로드
         </h3>
@@ -230,7 +230,7 @@ export default function DocumentUpload({
                 key={index}
                 className="flex items-center p-3 bg-white border border-gray-200 rounded-lg"
               >
-                <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                <DocumentTextIcon className="h-5 w-5 text-gray-600 mr-3 flex-shrink-0" />
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -265,7 +265,7 @@ export default function DocumentUpload({
 
                 <button
                   onClick={() => removeFile(uploadedFile.file)}
-                  className="ml-3 p-1 text-gray-400 hover:text-gray-600"
+                  className="ml-3 p-1 text-gray-600 hover:text-gray-800"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>

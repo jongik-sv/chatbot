@@ -358,7 +358,7 @@ export function MCPToolSelector({
                   disabled={disabled}
                   className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md ${
                     disabled
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
@@ -384,7 +384,7 @@ export function MCPToolSelector({
                 disabled={disabled}
                 className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md ${
                   disabled
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 text-gray-600 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >

@@ -107,7 +107,7 @@ export default function DocumentList({
   if (documents.length === 0) {
     return (
       <div className={`text-center py-12 ${className}`}>
-        <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <DocumentTextIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">업로드된 문서가 없습니다</h3>
         <p className="text-gray-500 mb-6">문서를 업로드하여 AI와 대화를 시작해보세요.</p>
       </div>
@@ -125,7 +125,7 @@ export default function DocumentList({
             <div className="flex-1 min-w-0">
               {/* 파일 정보 헤더 */}
               <div className="flex items-center mb-3">
-                <DocumentIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                <DocumentIcon className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0" />
                 <h3 className="text-lg font-semibold text-gray-900 truncate">
                   {document.filename}
                 </h3>

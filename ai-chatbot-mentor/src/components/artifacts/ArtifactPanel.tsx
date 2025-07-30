@@ -95,7 +95,7 @@ export function ArtifactPanel({
     return (
       <div className={`bg-gray-50 border border-gray-200 rounded-lg p-6 ${className}`}>
         <div className="text-center text-gray-500">
-          <DocumentDuplicateIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <DocumentDuplicateIcon className="mx-auto h-12 w-12 text-gray-600" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">아티팩트 없음</h3>
           <p className="mt-1 text-sm text-gray-500">
             AI가 생성한 코드, 문서, 차트 등이 여기에 표시됩니다.
@@ -178,28 +178,28 @@ export function ArtifactPanel({
                   <>
                     <button
                       onClick={handleEdit}
-                      className="p-2 text-gray-400 hover:text-gray-600"
+                      className="p-2 text-gray-600 hover:text-gray-800"
                       title="편집"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
                     <button
                       onClick={handleCopy}
-                      className="p-2 text-gray-400 hover:text-gray-600"
+                      className="p-2 text-gray-600 hover:text-gray-800"
                       title="복사"
                     >
                       <DocumentDuplicateIcon className="h-4 w-4" />
                     </button>
                     <button
                       onClick={handleDownload}
-                      className="p-2 text-gray-400 hover:text-gray-600"
+                      className="p-2 text-gray-600 hover:text-gray-800"
                       title="다운로드"
                     >
                       <ArrowDownTrayIcon className="h-4 w-4" />
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="p-2 text-gray-400 hover:text-red-600"
+                      className="p-2 text-gray-600 hover:text-red-600"
                       title="삭제"
                     >
                       <XMarkIcon className="h-4 w-4" />

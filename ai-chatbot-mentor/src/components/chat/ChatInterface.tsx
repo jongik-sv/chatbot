@@ -572,7 +572,7 @@ export default function ChatInterface({
                 </div>
                 <button
                   onClick={toggleArtifactPanel}
-                  className="p-1 text-gray-400 hover:text-gray-600"
+                  className="p-1 text-gray-600 hover:text-gray-800"
                   title="패널 닫기"
                 >
                   <ChevronRightIcon className="h-4 w-4" />

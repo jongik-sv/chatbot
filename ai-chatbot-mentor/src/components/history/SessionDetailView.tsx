@@ -211,7 +211,7 @@ export default function SessionDetailView({
 
           {/* 검색 */}
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
             <input
               type="text"
               placeholder="메시지 내용 검색..."

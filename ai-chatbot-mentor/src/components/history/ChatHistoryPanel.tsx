@@ -82,7 +82,7 @@ export default function ChatHistoryPanel({
             {view === 'detail' && (
               <button
                 onClick={handleBackToList}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-gray-600 hover:text-gray-800"
               >
                 <ArrowLeftIcon className="w-5 h-5" />
               </button>
@@ -94,7 +94,7 @@ export default function ChatHistoryPanel({
           
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600"
+            className="p-1 text-gray-600 hover:text-gray-800"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>

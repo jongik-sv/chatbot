@@ -132,7 +132,7 @@ export default function MCPStatusPanel() {
       case 'error':
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -223,7 +223,7 @@ export default function MCPStatusPanel() {
               </div>
             </div>
             {lastUpdated && (
-              <div className="text-xs text-gray-400 mt-4 text-center">
+              <div className="text-xs text-gray-600 mt-4 text-center">
                 마지막 업데이트: {lastUpdated}
               </div>
             )}
@@ -349,7 +349,7 @@ export default function MCPStatusPanel() {
                       </div>
                     </div>
                     {server.stats.lastActivity && (
-                      <div className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                      <div className="text-xs text-gray-600 mt-2 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         마지막 활동: {new Date(server.stats.lastActivity).toLocaleString('ko-KR')}
                       </div>
@@ -394,7 +394,7 @@ export default function MCPStatusPanel() {
 
                 {/* 연결 정보 */}
                 {server.lastConnected && (
-                  <div className="text-xs text-gray-400 border-t pt-3">
+                  <div className="text-xs text-gray-600 border-t pt-3">
                     마지막 연결: {new Date(server.lastConnected).toLocaleString('ko-KR')}
                   </div>
                 )}

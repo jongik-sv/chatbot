@@ -78,7 +78,7 @@ export default function MentorList({
       {/* 멘토 목록 */}
       {filteredMentors.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-gray-400 text-lg mb-2">📚</div>
+          <div className="text-gray-600 text-lg mb-2">📚</div>
           <p className="text-gray-600">
             {searchTerm || filterType !== 'all' 
               ? '검색 조건에 맞는 멘토가 없습니다.' 
@@ -124,7 +124,7 @@ export default function MentorList({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(mentor)}
-                          className="p-1 text-gray-400 hover:text-blue-600 rounded"
+                          className="p-1 text-gray-600 hover:text-blue-600 rounded"
                           title="수정"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ export default function MentorList({
                       {onTogglePublic && (
                         <button
                           onClick={() => onTogglePublic(mentor)}
-                          className="p-1 text-gray-400 hover:text-green-600 rounded"
+                          className="p-1 text-gray-600 hover:text-green-600 rounded"
                           title={mentor.isPublic ? '비공개로 변경' : '공개로 변경'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +146,7 @@ export default function MentorList({
                       {onDelete && (
                         <button
                           onClick={() => onDelete(mentor)}
-                          className="p-1 text-gray-400 hover:text-red-600 rounded"
+                          className="p-1 text-gray-600 hover:text-red-600 rounded"
                           title="삭제"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +206,7 @@ export default function MentorList({
                 )}
 
                 {/* 생성일 */}
-                <div className="text-xs text-gray-400 mb-4">
+                <div className="text-xs text-gray-600 mb-4">
                   생성일: {new Date(mentor.createdAt).toLocaleDateString('ko-KR')}
                 </div>
 

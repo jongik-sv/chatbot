@@ -204,7 +204,7 @@ export default function ChatHistoryList({
           <h2 className="text-lg font-semibold text-gray-900">대화 히스토리</h2>
           <button
             onClick={() => setShowManagement(true)}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
             title="히스토리 관리"
           >
             <Cog6ToothIcon className="w-5 h-5" />
@@ -214,7 +214,7 @@ export default function ChatHistoryList({
         {/* 검색 및 필터 */}
         <div className="space-y-3">
           <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
             <input
               type="text"
               placeholder="대화 제목 검색..."
@@ -297,7 +297,7 @@ export default function ChatHistoryList({
                             e.stopPropagation();
                             startEdit(session);
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600"
+                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-600 hover:text-gray-800"
                           title="제목 편집"
                         >
                           <PencilIcon className="w-3 h-3" />
@@ -344,7 +344,7 @@ export default function ChatHistoryList({
                   <div className="flex items-center space-x-1 ml-2">
                     <button
                       onClick={(e) => handleDeleteSession(session.id, e)}
-                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      className="p-1 text-gray-600 hover:text-red-600 transition-colors"
                       title="삭제"
                     >
                       <TrashIcon className="w-4 h-4" />

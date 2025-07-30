@@ -144,7 +144,7 @@ const MBTIRecommendations: React.FC<MBTIRecommendationsProps> = ({
   if (recommendations.length === 0) {
     return (
       <div className={`text-center p-8 ${className}`}>
-        <SparklesIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <SparklesIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
         <p className="text-gray-600">추천할 수 있는 멘토가 없습니다.</p>
       </div>
     );

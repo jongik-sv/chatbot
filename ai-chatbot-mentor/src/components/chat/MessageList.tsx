@@ -41,7 +41,7 @@ function CopyButton({ text }: { text: string }) {
         title="복사"
         style={{ height: 28, width: 28 }}
       >
-        <DocumentDuplicateIcon className="h-5 w-5 text-gray-400 hover:text-blue-500" />
+        <DocumentDuplicateIcon className="h-5 w-5 text-gray-600 hover:text-blue-500" />
       </button>
       {copied && (
         <span className="absolute bottom-full mb-1 right-0 text-xs bg-gray-800 text-white rounded px-2 py-0.5 shadow z-10 whitespace-nowrap animate-fade-in-out">
@@ -68,7 +68,7 @@ export default function MessageList({ messages, mentorId }: MessageListProps) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
-          <CpuChipIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <CpuChipIcon className="mx-auto h-12 w-12 text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             새로운 대화를 시작하세요
           </h3>

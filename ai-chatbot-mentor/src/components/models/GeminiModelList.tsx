@@ -165,7 +165,7 @@ export default function GeminiModelList({
           </div>
         ) : models.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 text-4xl mb-2">🤖</div>
+            <div className="text-gray-600 text-4xl mb-2">🤖</div>
             <p className="text-gray-600">최신 Gemini Flash/Pro 모델을 불러올 수 없습니다.</p>
           </div>
         ) : (

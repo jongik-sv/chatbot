@@ -207,7 +207,7 @@ export function MCPHistoryViewer({
         {/* 필터 및 검색 */}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <div className="relative">
-            <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600" />
             <input
               type="text"
               placeholder="검색..."

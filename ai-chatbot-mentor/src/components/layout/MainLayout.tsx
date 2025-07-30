@@ -36,7 +36,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="lg:hidden">
           <button
             type="button"
-            className="fixed top-4 left-4 z-30 p-2 rounded-md bg-white shadow-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+            className="fixed top-4 left-4 z-30 p-2 rounded-md bg-white shadow-md text-gray-600 hover:text-gray-700 hover:bg-gray-100"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />

@@ -106,7 +106,7 @@ export default function RuleCard({
               {rule.isActive ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
               ) : (
-                <XCircle className="h-4 w-4 text-gray-400" />
+                <XCircle className="h-4 w-4 text-gray-600" />
               )}
             </div>
             

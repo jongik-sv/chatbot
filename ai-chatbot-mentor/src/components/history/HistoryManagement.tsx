@@ -216,7 +216,7 @@ export default function HistoryManagement({
             <h2 className="text-xl font-semibold text-gray-900">히스토리 관리</h2>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-gray-600 hover:text-gray-800"
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
@@ -356,7 +356,7 @@ export default function HistoryManagement({
                         <div className="flex items-center space-x-2 ml-4">
                           <button
                             onClick={() => handleDownloadBackup(backup.fileName)}
-                            className="p-2 text-gray-400 hover:text-blue-600"
+                            className="p-2 text-gray-600 hover:text-blue-600"
                             title="다운로드"
                           >
                             <ArrowDownTrayIcon className="w-5 h-5" />
@@ -365,7 +365,7 @@ export default function HistoryManagement({
                           <button
                             onClick={() => handleRestoreBackup(backup.fileName)}
                             disabled={loading}
-                            className="p-2 text-gray-400 hover:text-green-600 disabled:opacity-50"
+                            className="p-2 text-gray-600 hover:text-green-600 disabled:opacity-50"
                             title="복원"
                           >
                             <CloudArrowDownIcon className="w-5 h-5" />

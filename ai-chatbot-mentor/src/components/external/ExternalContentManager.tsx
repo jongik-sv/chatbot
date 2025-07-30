@@ -260,7 +260,7 @@ export default function ExternalContentManager({
         <div className="flex gap-4 mb-4">
           {/* 검색 */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
             <input
               type="text"
               value={searchQuery}
@@ -342,7 +342,7 @@ export default function ExternalContentManager({
               유형 {sortBy === 'type' && (sortOrder === 'desc' ? '↓' : '↑')}
             </button>
           </div>
-          <span className="text-gray-400 ml-auto">
+          <span className="text-gray-600 ml-auto">
             {filteredContents.length}개 결과
           </span>
         </div>

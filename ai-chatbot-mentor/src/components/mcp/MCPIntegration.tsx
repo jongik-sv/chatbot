@@ -232,7 +232,7 @@ export function MCPIntegration({
 
         {activeTab === 'stats' && (
           <div className="text-center py-8">
-            <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <ChartBarIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">MCP 통계</h3>
             <p className="text-gray-600 mb-4">
               MCP 서버 및 도구 사용 통계를 확인할 수 있습니다.

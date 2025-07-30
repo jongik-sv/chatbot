@@ -210,7 +210,7 @@ export default function TestArtifactsPage() {
                   <span className="font-medium">{artifact.title}</span>
                   <span className="ml-2 text-sm text-gray-500">({artifact.type})</span>
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-gray-600">
                   {artifact.content.length} 문자
                 </div>
               </div>

@@ -186,7 +186,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
   };
 
   const getFileTypeIcon = (fileType: string) => {
-    return <DocumentIcon className="w-5 h-5 text-gray-400" />;
+    return <DocumentIcon className="w-5 h-5 text-gray-600" />;
   };
 
   const handleSort = (field: typeof sortBy) => {
@@ -239,7 +239,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
         <div className="flex flex-col md:flex-row gap-4">
           {/* 검색 */}
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
             <input
               type="text"
               placeholder="문서 검색..."
@@ -251,7 +251,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
 
           {/* 파일 형식 필터 */}
           <div className="relative">
-            <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <FunnelIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
             <select
               value={selectedFileType}
               onChange={(e) => setSelectedFileType(e.target.value)}

@@ -135,7 +135,7 @@ export default function MessageInput({
             <h3 className="text-sm font-medium text-gray-700">이미지 업로드</h3>
             <button
               onClick={() => setShowImageUpload(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-600 hover:text-gray-800"
             >
               ✕
             </button>
@@ -156,7 +156,7 @@ export default function MessageInput({
             <h3 className="text-sm font-medium text-gray-700">음성 녹음</h3>
             <button
               onClick={() => setShowVoiceRecorder(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-600 hover:text-gray-800"
             >
               ✕
             </button>
@@ -175,7 +175,7 @@ export default function MessageInput({
             <h3 className="text-sm font-medium text-gray-700">음성으로 텍스트 입력</h3>
             <button
               onClick={() => setShowVoiceToText(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-600 hover:text-gray-800"
             >
               ✕
             </button>
@@ -246,7 +246,7 @@ export default function MessageInput({
             onClick={toggleImageUpload}
             disabled={disabled}
             className={`p-2 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              showImageUpload ? 'text-blue-500 bg-blue-50' : 'text-gray-400 hover:text-gray-600'
+              showImageUpload ? 'text-blue-500 bg-blue-50' : 'text-gray-600 hover:text-gray-800'
             }`}
             title="이미지 업로드"
           >
@@ -256,7 +256,7 @@ export default function MessageInput({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="파일 업로드"
           >
             <PaperClipIcon className="w-5 h-5" />
@@ -267,7 +267,7 @@ export default function MessageInput({
               onClick={toggleVoiceToText}
               disabled={disabled}
               className={`p-2 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                showVoiceToText ? 'text-green-500 bg-green-50' : 'text-gray-400 hover:text-gray-600'
+                showVoiceToText ? 'text-green-500 bg-green-50' : 'text-gray-600 hover:text-gray-800'
               }`}
               title="음성으로 텍스트 입력"
             >
@@ -297,7 +297,7 @@ export default function MessageInput({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="첨부"
           >
             <PaperClipIcon className="w-5 h-5" />

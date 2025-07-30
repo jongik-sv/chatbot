@@ -97,7 +97,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <h2 className="text-lg font-semibold text-gray-900">AI 챗봇 멘토</h2>
         <button
           type="button"
-          className="lg:hidden p-1 rounded-md text-gray-400 hover:text-gray-500"
+          className="lg:hidden p-1 rounded-md text-gray-600 hover:text-gray-700"
           onClick={onClose}
         >
           <XMarkIcon className="h-6 w-6" />
@@ -123,7 +123,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <item.icon
                 className={`
                   mr-3 h-5 w-5 flex-shrink-0
-                  ${active ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                  ${active ? 'text-blue-500' : 'text-gray-600 group-hover:text-gray-700'}
                 `}
               />
               {item.name}
@@ -199,7 +199,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   p-2 rounded-md transition-colors
                   ${active
                     ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                   }
                 `}
               >

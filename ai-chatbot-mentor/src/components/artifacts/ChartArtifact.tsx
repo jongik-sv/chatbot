@@ -148,7 +148,7 @@ export function ChartArtifact({
         return (
           <div className="flex items-center justify-center h-64 text-gray-500">
             <div className="text-center">
-              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-600" />
               <p className="mt-2">지원되지 않는 차트 타입: {chartData.type}</p>
             </div>
           </div>

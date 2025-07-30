@@ -233,7 +233,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         />
 
         <div className="flex flex-col items-center space-y-4">
-          <DocumentArrowUpIcon className="w-12 h-12 text-gray-400" />
+          <DocumentArrowUpIcon className="w-12 h-12 text-gray-600" />
           
           {uploadStatus.uploading ? (
             <div className="space-y-2">
@@ -298,7 +298,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
               <p className="text-xs text-gray-500">
                 파일을 드래그하거나 클릭하여 선택하세요
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600">
                 지원 형식: {acceptedTypes.join(', ')} (최대 {Math.round(maxFileSize / 1024 / 1024)}MB)
               </p>
             </div>
@@ -311,7 +311,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
               e.stopPropagation();
               resetUpload();
             }}
-            className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600"
+            className="absolute top-2 right-2 p-1 text-gray-600 hover:text-gray-800"
           >
             <XMarkIcon className="w-4 h-4" />
           </button>
