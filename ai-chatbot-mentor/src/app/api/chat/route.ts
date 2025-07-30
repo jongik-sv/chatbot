@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const ChatRepository = require('../../../lib/repositories/ChatRepository');
 const RuleIntegration = require('../../../lib/services/RuleIntegration');
 import { LLMService } from '../../../services/LLMService';
+import { PromptLoader } from '../../../utils/promptLoader';
 import { MentorContextService } from '../../../services/MentorContextService';
 import { vectorSearchService } from '../../../services/VectorSearchService';
 import { ArtifactService } from '../../../services/ArtifactService';
@@ -503,7 +504,7 @@ export async function POST(request: NextRequest) {
           llmResponse = await llmService.generateWithImage(message, base64Image, {
             model: targetModel,
             temperature: 0.7,
-            maxTokens: 2048,
+            maxTokens: 20000,
             mimeType: imageFile.type
           });
           
@@ -520,7 +521,7 @@ export async function POST(request: NextRequest) {
             llmResponse = await llmService.chat(conversationHistory, {
               model,
               temperature: 0.7,
-              maxTokens: 2048,
+              maxTokens: 20000,
               systemInstruction: '사용자가 음성 파일을 업로드했습니다. 음성 처리 기능은 현재 개발 중입니다.'
             });
           } else {
@@ -528,18 +529,21 @@ export async function POST(request: NextRequest) {
             llmResponse = await llmService.chat(conversationHistory, {
               model,
               temperature: 0.7,
-              maxTokens: 2048,
+              maxTokens: 20000,
               systemInstruction: `사용자가 다음 파일들을 업로드했습니다: ${uploadedFiles.map(f => f.name).join(', ')}`
             });
           }
         }
       } else {
         // 일반 텍스트 채팅
+        // 멘토가 아닌 경우 일반 채팅 프롬프트 사용
+        const generalSystemPrompt = systemInstruction || await PromptLoader.loadGeneralChatPrompt();
+        
         llmResponse = await llmService.chat(conversationHistory, {
           model,
           temperature: 0.7,
-          maxTokens: 2048,
-          systemInstruction
+          maxTokens: 20000, // 토큰 크기도 증가
+          systemInstruction: generalSystemPrompt
         });
       }
 

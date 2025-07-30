@@ -1,6 +1,7 @@
 // app/api/rag/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { vectorSearchService } from '@/services/VectorSearchService';
+import { PromptLoader } from '@/utils/promptLoader';
 
 // LLM 서비스 import
 import { LLMService } from '@/services/LLMService';
@@ -200,23 +201,7 @@ export async function POST(request: NextRequest) {
     const context = contextParts.join('\n\n');
 
     // 3. 대화 히스토리와 문서 컨텍스트를 결합한 프롬프트 생성
-    let systemPrompt = `당신은 업로드된 문서를 기반으로 정확한 답변을 제공하는 AI 어시스턴트입니다.
-
-다음은 사용자가 업로드한 문서에서 검색된 관련 정보입니다:
-
-${context}
-
-**중요: 반드시 위에 제공된 출처의 내용에서만 답변을 작성하세요.**
-
-답변할 때는 반드시:
-1. **오직 제공된 문서의 내용만을 기반으로 답변하세요** - 외부 지식은 절대 사용하지 마세요
-2. 문서에 없는 내용은 추측하거나 상상하지 마세요
-3. 반드시 어떤 출처(출처 1, 출처 2 등)에서 정보를 가져왔는지 명시하세요
-4. 문서에서 충분한 정보를 찾을 수 없다면 "제공된 문서에서 해당 정보를 찾을 수 없습니다"라고 명시하세요
-5. 이전 대화 내용을 참고하되, 여전히 제공된 문서 범위 내에서만 답변하세요
-6. **제공된 출처 밖의 일반적인 지식이나 추론은 절대 사용하지 마세요**
-
-답변 형식: "[출처 X에 따르면] 구체적인 내용..." 형태로 출처를 명확히 밝히며 답변하세요.`;
+    const systemPrompt = await PromptLoader.loadRAGPrompt(context);
 
     // 4. LLM으로 답변 생성 (대화 히스토리 포함)
     console.log('=== RAG API 디버깅 정보 ===');
