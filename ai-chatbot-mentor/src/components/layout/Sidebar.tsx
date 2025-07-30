@@ -32,13 +32,14 @@ interface RecentChat {
 const navigation = [
   { name: '새 채팅', href: '/', icon: PlusIcon, description: '새로운 대화 시작' },
   { name: 'MBTI 멘토', href: '/mbti', icon: SparklesIcon, description: 'MBTI 기반 맞춤 멘토' },
-  { name: '문서 기반 대화', href: '/documents', icon: DocumentTextIcon, description: '업로드한 문서로 대화' },
-  { name: '외부 콘텐츠', href: '/external-content', icon: GlobeAltIcon, description: 'YouTube/웹사이트 콘텐츠 추가' },
+  { name: '콘텐츠 관리', href: '/content-management', icon: DocumentTextIcon, description: '문서/웹사이트 콘텐츠 관리' },
+  { name: '대화 목록', href: '/conversations', icon: ChatBubbleLeftRightIcon, description: '대화 검색 및 관리' },
   { name: 'MCP 관리', href: '/mcp-management', icon: ServerIcon, description: 'MCP 서버 상태 확인 및 관리' },
   { name: '룰 관리', href: '/rules', icon: AdjustmentsHorizontalIcon, description: '대화 룰 설정 및 관리' },
-  { name: '채팅 목록', href: '/chats', icon: ChatBubbleLeftRightIcon, description: '최근 대화 빠른 보기' },
   { name: '멘토 관리', href: '/mentors', icon: UserGroupIcon, description: '커스텀 멘토 생성/관리' },
-  { name: '히스토리', href: '/history', icon: ClockIcon, description: '대화 검색 및 상세 관리' },
+];
+
+const footerNavigation = [
   { name: '설정', href: '/settings', icon: Cog6ToothIcon, description: '시스템 설정 및 환경 구성' },
   { name: '사용자 프로필', href: '/profile', icon: UserCircleIcon, description: '프로필 정보 및 계정 관리' },
 ];
@@ -150,7 +151,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <a
                 key={chat.id}
                 href={`/chat/${chat.id}`}
-                className="block px-3 py-2 text-sm text-gray-700 rounded-md hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                className={`
+                  block px-3 py-2 text-sm rounded-md transition-colors
+                  ${pathname === `/chat/${chat.id}` 
+                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-700' 
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }
+                `}
               >
                 <div className="truncate font-medium">{chat.title}</div>
                 <div className="text-xs text-gray-500 flex items-center justify-between">
@@ -169,13 +176,38 @@ export default function Sidebar({ onClose }: SidebarProps) {
         {recentChats.length > 0 && (
           <div className="mt-3 pt-2 border-t border-gray-100">
             <a
-              href="/chats"
+              href="/conversations"
               className="block px-3 py-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
             >
-              모든 채팅 보기 →
+              모든 대화 보기 →
             </a>
           </div>
         )}
+      </div>
+
+      {/* Footer Icons */}
+      <div className="px-4 py-3 border-t border-gray-200">
+        <div className="flex justify-center space-x-4">
+          {footerNavigation.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <a
+                key={item.name}
+                href={item.href}
+                title={item.description}
+                className={`
+                  p-2 rounded-md transition-colors
+                  ${active
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                  }
+                `}
+              >
+                <item.icon className="h-5 w-5" />
+              </a>
+            );
+          })}
+        </div>
       </div>
 
     </div>
