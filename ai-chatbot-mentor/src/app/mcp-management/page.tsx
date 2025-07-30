@@ -39,9 +39,9 @@ export default function MCPManagementPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* 탭 네비게이션 */}
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsList className="grid w-full grid-cols-2 max-w-md text-gray-500">
               <TabsTrigger value="status" className="flex items-center gap-2">
-                <Activity className="h-4 w-4" />
+                <Activity className="h-4 w-4 text-gray-500" />
                 서버 상태
               </TabsTrigger>
               <TabsTrigger value="help" className="flex items-center gap-2">

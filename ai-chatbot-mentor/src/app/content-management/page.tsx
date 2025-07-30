@@ -54,6 +54,7 @@ export default function ContentManagement() {
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showDirectInputModal, setShowDirectInputModal] = useState(false);
   const [selectedContents, setSelectedContents] = useState<string[]>([]);
 
   // 탭 상태
@@ -70,31 +71,21 @@ export default function ContentManagement() {
 
   const loadProjects = async () => {
     try {
-      // Mock 프로젝트 데이터 (나중에 API로 교체)
-      const mockProjects: Project[] = [
-        {
-          id: 'default',
-          name: '기본 프로젝트',
-          description: '분류되지 않은 콘텐츠',
-          createdAt: new Date().toISOString(),
-          contentCount: 0
-        },
-        {
-          id: 'web-dev',
-          name: '웹 개발',
-          description: '웹 개발 관련 문서들',
-          createdAt: new Date().toISOString(),
-          contentCount: 0
-        },
-        {
-          id: 'ai-ml',
-          name: 'AI/ML',
-          description: '인공지능 및 머신러닝 자료',
-          createdAt: new Date().toISOString(),
-          contentCount: 0
-        }
-      ];
-      setProjects(mockProjects);
+      const response = await fetch('/api/projects');
+      const data = await response.json();
+      
+      if (data.success) {
+        const mappedProjects: Project[] = data.data.map((project: any) => ({
+          id: project.id.toString(),
+          name: project.name,
+          description: project.description,
+          createdAt: project.created_at,
+          contentCount: project.contentCount
+        }));
+        setProjects(mappedProjects);
+      } else {
+        console.error('프로젝트 로딩 오류:', data.error);
+      }
     } catch (error) {
       console.error('프로젝트 로딩 오류:', error);
     }
@@ -147,8 +138,7 @@ export default function ContentManagement() {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.summary?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'all' || content.type === activeTab;
-    const matchesProject = selectedProject === 'all' || content.projectId === selectedProject;
-    return matchesSearch && matchesTab && matchesProject;
+    return matchesSearch && matchesTab;
   });
 
   const getContentIcon = (type: string) => {
@@ -205,30 +195,6 @@ export default function ContentManagement() {
       // 외부 콘텐츠의 경우 RAG 모드로 대화 시작
       const extId = content.id.replace('ext-', '');
       window.location.href = `/?mode=rag&documentId=${extId}`;
-    }
-  };
-
-  const handleMultipleConversation = () => {
-    // 선택된 콘텐츠들로 대화 시작
-    const documentIds = selectedContents.map(id => 
-      id.startsWith('doc-') ? id.replace('doc-', '') : id.replace('ext-', '')
-    );
-    window.location.href = `/?mode=multi&documentIds=${documentIds.join(',')}`;
-  };
-
-  const toggleContentSelection = (contentId: string) => {
-    setSelectedContents(prev => 
-      prev.includes(contentId) 
-        ? prev.filter(id => id !== contentId)
-        : [...prev, contentId]
-    );
-  };
-
-  const toggleAllSelection = () => {
-    if (selectedContents.length === filteredContents.length) {
-      setSelectedContents([]);
-    } else {
-      setSelectedContents(filteredContents.map(content => content.id));
     }
   };
 
@@ -292,15 +258,6 @@ export default function ContentManagement() {
 
             {/* Content Actions */}
             <div className="flex flex-col sm:flex-row gap-2">
-              {selectedContents.length > 0 && (
-                <button
-                  onClick={() => handleMultipleConversation()}
-                  className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
-                >
-                  <PlayIcon className="h-5 w-5 mr-2" />
-                  선택한 콘텐츠로 대화 ({selectedContents.length})
-                </button>
-              )}
               <button
                 onClick={() => setShowUploadModal(true)}
                 className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
@@ -314,6 +271,13 @@ export default function ContentManagement() {
               >
                 <GlobeAltIcon className="h-5 w-5 mr-2" />
                 웹 주소 추가
+              </button>
+              <button
+                onClick={() => setShowDirectInputModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
+              >
+                <DocumentTextIcon className="h-5 w-5 mr-2" />
+                직접 내용 입력
               </button>
             </div>
           </div>
@@ -596,7 +560,7 @@ export default function ContentManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">웹 주소 추가</h3>
+              <h3 className="text-lg font-semibold text-gray-600">웹 주소 추가</h3>
               <button
                 onClick={() => setShowUrlModal(false)}
                 className="p-1 text-gray-600 hover:text-gray-700"
@@ -611,6 +575,57 @@ export default function ContentManagement() {
                 loadContents();
               }}
               onCancel={() => setShowUrlModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Project Creation Modal */}
+      {showProjectModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">새 프로젝트 생성</h3>
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="p-1 text-gray-600 hover:text-gray-700"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <ProjectCreationModal
+              onSuccess={() => {
+                setShowProjectModal(false);
+                loadProjects();
+              }}
+              onCancel={() => setShowProjectModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Direct Input Modal */}
+      {showDirectInputModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">직접 내용 입력</h3>
+              <button
+                onClick={() => setShowDirectInputModal(false)}
+                className="p-1 text-gray-600 hover:text-gray-700"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <DirectInputModal
+              projects={projects}
+              onSuccess={() => {
+                setShowDirectInputModal(false);
+                loadContents();
+              }}
+              onCancel={() => setShowDirectInputModal(false)}
             />
           </div>
         </div>
@@ -1024,6 +1039,274 @@ function UrlInputModal({ onSuccess, onCancel }: { onSuccess: () => void; onCance
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
         >
           {processing ? '처리 중...' : '추가'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Project Creation Modal Component
+function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      setError('프로젝트 이름을 입력해주세요.');
+      return;
+    }
+
+    setCreating(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim() || null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || '프로젝트 생성 중 오류가 발생했습니다.');
+      }
+
+      onSuccess();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '프로젝트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="project-name" className="block text-sm font-medium text-gray-700">
+          프로젝트 이름 *
+        </label>
+        <input
+          id="project-name"
+          type="text"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError(null);
+          }}
+          placeholder="예: 웹 개발 프로젝트"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          disabled={creating}
+          maxLength={100}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700">
+          프로젝트 설명
+        </label>
+        <textarea
+          id="project-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          rows={3}
+          disabled={creating}
+          maxLength={500}
+        />
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <div className="flex gap-2 justify-end">
+        <button
+          onClick={onCancel}
+          disabled={creating}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+        >
+          취소
+        </button>
+        <button
+          onClick={handleCreate}
+          disabled={!name.trim() || creating}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {creating ? '생성 중...' : '생성'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Direct Input Modal Component
+function DirectInputModal({ 
+  projects, 
+  onSuccess, 
+  onCancel 
+}: { 
+  projects: Project[]; 
+  onSuccess: () => void; 
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      setError('제목을 입력해주세요.');
+      return;
+    }
+
+    if (!content.trim()) {
+      setError('내용을 입력해주세요.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      // 직접 입력 콘텐츠를 documents 테이블에 저장
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          content: content.trim(),
+          projectId: parseInt(projectId),
+          type: 'direct_input'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || '콘텐츠 저장 중 오류가 발생했습니다.');
+      }
+
+      onSuccess();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : '콘텐츠 저장 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="direct-title" className="block text-sm font-medium text-gray-700">
+                제목 *
+              </label>
+              <input
+                id="direct-title"
+                type="text"
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setError(null);
+                }}
+                placeholder="콘텐츠 제목을 입력하세요"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={saving}
+                maxLength={200}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="direct-project" className="block text-sm font-medium text-gray-700">
+                프로젝트
+              </label>
+              <select
+                id="direct-project"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={saving}
+              >
+                {projects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="direct-content" className="block text-sm font-medium text-gray-700">
+              내용 *
+            </label>
+            <textarea
+              id="direct-content"
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setError(null);
+              }}
+              placeholder="직접 입력할 내용을 작성하세요. 이 내용은 AI와의 대화에서 참조될 수 있습니다."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              rows={15}
+              disabled={saving}
+            />
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>마크다운 형식을 지원합니다</span>
+              <span>{content.length} 글자</span>
+            </div>
+          </div>
+
+          <div className="p-3 bg-purple-50 border border-purple-200 rounded-md">
+            <h4 className="text-sm font-medium text-purple-800 mb-1">직접 내용 입력 기능</h4>
+            <ul className="text-xs text-purple-700 space-y-1">
+              <li>• 문서 파일이나 웹 주소 없이 직접 텍스트를 입력할 수 있습니다</li>
+              <li>• 입력된 내용은 자동으로 청크 단위로 나뉘어 RAG 시스템에 저장됩니다</li>
+              <li>• 내용을 수정하면 RAG 데이터가 자동으로 재생성됩니다</li>
+              <li>• 마크다운 형식을 사용하여 구조화된 문서를 작성할 수 있습니다</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3 mx-6 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      <div className="flex gap-2 justify-end p-6 border-t border-gray-200">
+        <button
+          onClick={onCancel}
+          disabled={saving}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+        >
+          취소
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!title.trim() || !content.trim() || saving}
+          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+        >
+          {saving ? '저장 중...' : '저장'}
         </button>
       </div>
     </div>
