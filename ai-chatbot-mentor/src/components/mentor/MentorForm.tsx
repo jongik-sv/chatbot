@@ -29,16 +29,16 @@ const MBTI_TYPES = [
 ];
 
 const COMMON_TRAITS = [
-  '도움이 되는', '친근한', '전문적인', '창의적인', '논리적인',
-  '공감적인', '격려하는', '체계적인', '유연한', '인내심 있는',
-  '열정적인', '신중한', '직관적인', '분석적인', '협력적인'
+  '?��????�는', '친근??, '?�문?�인', '창의?�인', '?�리?�인',
+  '공감?�인', '격려?�는', '체계?�인', '?�연??, '?�내???�는',
+  '?�정?�인', '?�중??, '직�??�인', '분석?�인', '?�력?�인'
 ];
 
 const COMMON_EXPERTISE = [
-  '프로그래밍', '데이터 사이언스', '웹 개발', '모바일 개발',
-  '인공지능', '머신러닝', '디자인', 'UX/UI', '마케팅',
-  '비즈니스', '창업', '자기계발', '언어학습', '수학',
-  '과학', '문학', '역사', '철학', '심리학'
+  '?�로그래�?, '?�이???�이?�스', '??개발', '모바??개발',
+  '?�공지??, '머신?�닝', '?�자??, 'UX/UI', '마�???,
+  '비즈?�스', '창업', '?�기계발', '?�어?�습', '?�학',
+  '과학', '문학', '??��', '철학', '?�리??
 ];
 
 export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = false }: MentorFormProps) {
@@ -65,17 +65,17 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      alert('멘토 이름을 입력해주세요.');
+      alert('멘토 ?�름???�력?�주?�요.');
       return;
     }
     
     if (!formData.description.trim()) {
-      alert('멘토 설명을 입력해주세요.');
+      alert('멘토 ?�명???�력?�주?�요.');
       return;
     }
     
     if (!formData.systemPrompt.trim()) {
-      alert('시스템 프롬프트를 입력해주세요.');
+      alert('?�스???�롬?�트�??�력?�주?�요.');
       return;
     }
 
@@ -123,34 +123,34 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
   const generateDefaultPrompt = () => {
     const { name, description, personality, expertise, mbtiType } = formData;
     
-    let prompt = `당신은 "${name}"라는 이름의 AI 멘토입니다.\n\n`;
-    prompt += `설명: ${description}\n\n`;
+    let prompt = `?�신?� "${name}"?�는 ?�름??AI 멘토?�니??\n\n`;
+    prompt += `?�명: ${description}\n\n`;
     
     if (expertise.length > 0) {
-      prompt += `전문 분야: ${expertise.join(', ')}\n\n`;
+      prompt += `?�문 분야: ${expertise.join(', ')}\n\n`;
     }
     
     if (mbtiType) {
-      prompt += `MBTI 유형: ${mbtiType}\n\n`;
+      prompt += `MBTI ?�형: ${mbtiType}\n\n`;
     }
     
     if (personality.traits.length > 0) {
-      prompt += `성격 특성:\n`;
-      prompt += `- 특징: ${personality.traits.join(', ')}\n`;
+      prompt += `?�격 ?�성:\n`;
+      prompt += `- ?�징: ${personality.traits.join(', ')}\n`;
       if (personality.communicationStyle) {
-        prompt += `- 소통 스타일: ${personality.communicationStyle}\n`;
+        prompt += `- ?�통 ?��??? ${personality.communicationStyle}\n`;
       }
       if (personality.teachingApproach) {
         prompt += `- 교육 방식: ${personality.teachingApproach}\n`;
       }
       if (personality.responseStyle) {
-        prompt += `- 응답 스타일: ${personality.responseStyle}\n`;
+        prompt += `- ?�답 ?��??? ${personality.responseStyle}\n`;
       }
       prompt += '\n';
     }
     
-    prompt += `위의 특성을 바탕으로 사용자와 상호작용하며, 항상 도움이 되고 건설적인 조언을 제공하세요. `;
-    prompt += `사용자의 질문에 대해 전문성을 바탕으로 명확하고 이해하기 쉬운 답변을 제공하세요.`;
+    prompt += `?�의 ?�성??바탕?�로 ?�용?��? ?�호?�용?�며, ??�� ?��????�고 건설?�인 조언???�공?�세?? `;
+    prompt += `?�용?�의 질문???�???�문?�을 바탕?�로 명확?�고 ?�해?�기 ?�운 ?��????�공?�세??`;
     
     setFormData(prev => ({ ...prev, systemPrompt: prompt }));
   };
@@ -159,20 +159,20 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900">
-          {mentor ? '멘토 수정' : '새 멘토 생성'}
+          {mentor ? '멘토 ?�정' : '??멘토 ?�성'}
         </h2>
         <p className="mt-2 text-gray-600">
-          개인화된 AI 멘토를 생성하여 맞춤형 조언을 받아보세요.
+          개인?�된 AI 멘토�??�성?�여 맞춤??조언??받아보세??
         </p>
       </div>
 
-      {/* 탭 네비게이션 */}
+      {/* ???�비게이??*/}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8 px-6">
           {[
-            { id: 'basic', label: '기본 정보' },
-            { id: 'personality', label: '성격 설정' },
-            { id: 'prompt', label: '시스템 프롬프트' }
+            { id: 'basic', label: '기본 ?�보' },
+            { id: 'personality', label: '?�격 ?�정' },
+            { id: 'prompt', label: '?�스???�롬?�트' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -190,47 +190,47 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
       </div>
 
       <form onSubmit={handleSubmit} className="p-6">
-        {/* 기본 정보 탭 */}
+        {/* 기본 ?�보 ??*/}
         {activeTab === 'basic' && (
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                멘토 이름 *
+                멘토 ?�름 *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: 프로그래밍 멘토"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="?? ?�로그래�?멘토"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                멘토 설명 *
+                멘토 ?�명 *
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="이 멘토가 어떤 도움을 줄 수 있는지 설명해주세요."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="??멘토가 ?�떤 ?��???�????�는지 ?�명?�주?�요."
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                MBTI 유형 (선택사항)
+                MBTI ?�형 (?�택?�항)
               </label>
               <select
                 value={formData.mbtiType}
                 onChange={(e) => setFormData(prev => ({ ...prev, mbtiType: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">선택하지 않음</option>
+                <option value="">?�택?��? ?�음</option>
                 {MBTI_TYPES.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
@@ -239,7 +239,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                전문 분야
+                ?�문 분야
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.expertise.map((exp, index) => (
@@ -264,7 +264,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   value={newExpertise}
                   onChange={(e) => setNewExpertise(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="전문 분야 입력"
+                  placeholder="?�문 분야 ?�력"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -281,7 +281,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  추가
+                  추�?
                 </button>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -308,18 +308,18 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-900">
-                다른 사용자와 공유 (공개 멘토로 설정)
+                ?�른 ?�용?��? 공유 (공개 멘토�??�정)
               </label>
             </div>
           </div>
         )}
 
-        {/* 성격 설정 탭 */}
+        {/* ?�격 ?�정 ??*/}
         {activeTab === 'personality' && (
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                성격 특성
+                ?�격 ?�성
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.personality.traits.map((trait, index) => (
@@ -344,7 +344,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   value={newTrait}
                   onChange={(e) => setNewTrait(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="성격 특성 입력"
+                  placeholder="?�격 ?�성 ?�력"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -361,7 +361,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  추가
+                  추�?
                 </button>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -381,7 +381,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                소통 스타일
+                ?�통 ?��???
               </label>
               <textarea
                 value={formData.personality.communicationStyle}
@@ -390,8 +390,8 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, communicationStyle: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: 친근하고 이해하기 쉬운 방식으로 소통합니다"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="?? 친근?�고 ?�해?�기 ?�운 방식?�로 ?�통?�니??
               />
             </div>
 
@@ -406,14 +406,14 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, teachingApproach: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: 단계별로 차근차근 설명하며 실습을 통해 학습을 돕습니다"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="?? ?�계별로 차근차근 ?�명?�며 ?�습???�해 ?�습???�습?�다"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                응답 스타일
+                ?�답 ?��???
               </label>
               <textarea
                 value={formData.personality.responseStyle}
@@ -422,39 +422,39 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
                   personality: { ...prev.personality, responseStyle: e.target.value }
                 }))}
                 rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="예: 명확하고 구체적인 답변을 제공합니다"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="?? 명확?�고 구체?�인 ?��????�공?�니??
               />
             </div>
           </div>
         )}
 
-        {/* 시스템 프롬프트 탭 */}
+        {/* ?�스???�롬?�트 ??*/}
         {activeTab === 'prompt' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <label className="block text-sm font-medium text-gray-700">
-                시스템 프롬프트 *
+                ?�스???�롬?�트 *
               </label>
               <button
                 type="button"
                 onClick={generateDefaultPrompt}
                 className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
               >
-                자동 생성
+                ?�동 ?�성
               </button>
             </div>
             <textarea
               value={formData.systemPrompt}
               onChange={(e) => setFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
               rows={12}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              placeholder="멘토의 행동과 응답 방식을 정의하는 시스템 프롬프트를 입력하세요..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+              placeholder="멘토???�동�??�답 방식???�의?�는 ?�스???�롬?�트�??�력?�세??.."
               required
             />
             <p className="text-sm text-gray-500">
-              시스템 프롬프트는 AI 멘토의 성격과 행동 방식을 결정합니다. 
-              위의 기본 정보와 성격 설정을 바탕으로 자동 생성할 수 있습니다.
+              ?�스???�롬?�트??AI 멘토???�격�??�동 방식??결정?�니?? 
+              ?�의 기본 ?�보?� ?�격 ?�정??바탕?�로 ?�동 ?�성?????�습?�다.
             </p>
           </div>
         )}
@@ -474,7 +474,7 @@ export default function MentorForm({ mentor, onSubmit, onCancel, isLoading = fal
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             disabled={isLoading}
           >
-            {isLoading ? '저장 중...' : (mentor ? '수정' : '생성')}
+            {isLoading ? '?�??�?..' : (mentor ? '?�정' : '?�성')}
           </button>
         </div>
       </form>

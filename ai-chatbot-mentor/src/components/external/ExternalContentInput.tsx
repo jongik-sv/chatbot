@@ -234,7 +234,7 @@ export default function ExternalContentInput({
             value={url}
             onChange={handleUrlChange}
             placeholder="YouTube URL 또는 웹사이트 URL을 입력하세요..."
-            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md text-gray-900 placeholder-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md text-gray-900 placeholder-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={processing.isProcessing}
           />
           {url && (
