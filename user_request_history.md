@@ -350,3 +350,7 @@ kiro : 루트 디렉토리: .env.local 를 실제 사용하고 싶은데
 ------
 
 kiro: 데이터베이스를 잘 못찾는것 같아. 위치는 무조건 ./data/에 있어야 하는데 계속 ./ai-chatbot-mentor/data 에서 찾는 경우가 있어. 다음에 오는 오류도 마찬가지. 세션 목록 조회 오류: SqliteError: no such table: chat_sessions
+
+------
+
+엑셀파일 하나 열여줘.
