@@ -210,19 +210,19 @@ export async function DELETE(request: NextRequest) {
     const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
     const db = new Database(dbPath);
     
-    // 기본 프로젝트 삭제 방지
+    // 공통 프로젝트 삭제 방지
     if (id === '1') {
       db.close();
       return NextResponse.json(
         { 
           success: false, 
-          error: '기본 프로젝트는 삭제할 수 없습니다.' 
+          error: '공통 프로젝트는 삭제할 수 없습니다. 공통 프로젝트는 모든 프로젝트에 영향을 미치는 문서를 관리하는 기본 프로젝트입니다.' 
         },
         { status: 400 }
       );
     }
     
-    // 프로젝트에 속한 문서들을 기본 프로젝트로 이동
+    // 프로젝트에 속한 문서들을 공통 프로젝트로 이동
     const moveDocumentsQuery = `
       UPDATE documents 
       SET project_id = 1 
@@ -251,7 +251,7 @@ export async function DELETE(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      message: '프로젝트가 삭제되었습니다. 해당 문서들은 기본 프로젝트로 이동되었습니다.'
+      message: '프로젝트가 삭제되었습니다. 해당 문서들은 공통 프로젝트로 이동되었습니다.'
     });
     
   } catch (error) {

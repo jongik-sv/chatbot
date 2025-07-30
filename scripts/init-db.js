@@ -86,6 +86,7 @@ const createTablesSQL = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     mentor_id INTEGER,
+    project_id INTEGER,
     filename TEXT NOT NULL,
     file_type TEXT NOT NULL,
     file_path TEXT NOT NULL,
@@ -94,7 +95,8 @@ const createTablesSQL = [
     file_size INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE SET NULL
+    FOREIGN KEY (mentor_id) REFERENCES mentors(id) ON DELETE SET NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
   )`,
 
   // 벡터 임베딩 테이블
@@ -136,6 +138,17 @@ const createTablesSQL = [
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
   )`,
 
+  // 프로젝트 테이블
+  `CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+
   // 설정 테이블
   `CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -161,11 +174,13 @@ const createIndexesSQL = [
   'CREATE INDEX IF NOT EXISTS idx_mentors_is_public ON mentors(is_public)',
   'CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id)',
   'CREATE INDEX IF NOT EXISTS idx_documents_mentor_id ON documents(mentor_id)',
+  'CREATE INDEX IF NOT EXISTS idx_documents_project_id ON documents(project_id)',
   'CREATE INDEX IF NOT EXISTS idx_embeddings_document_id ON embeddings(document_id)',
   'CREATE INDEX IF NOT EXISTS idx_mentor_knowledge_sources_mentor_id ON mentor_knowledge_sources(mentor_id)',
   'CREATE INDEX IF NOT EXISTS idx_artifacts_session_id ON artifacts(session_id)',
   'CREATE INDEX IF NOT EXISTS idx_artifacts_message_id ON artifacts(message_id)',
-  'CREATE INDEX IF NOT EXISTS idx_settings_user_category ON settings(user_id, category)'
+  'CREATE INDEX IF NOT EXISTS idx_settings_user_category ON settings(user_id, category)',
+  'CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)'
 ];
 
 // 기본 데이터 삽입 SQL
@@ -185,7 +200,17 @@ const insertDefaultDataSQL = [
    (3, 1, 'ISTJ 관리자', 'ISTJ 성격 유형의 체계적이고 신뢰할 수 있는 멘토', '{"traits": ["systematic", "reliable", "practical"], "communicationStyle": "clear", "teachingApproach": "step-by-step", "responseStyle": "detailed"}', '["organization", "planning", "execution"]', 'ISTJ', 'You are an ISTJ personality type mentor. Be systematic, reliable, and practical in your responses. Focus on clear step-by-step guidance.', true)`,
 
   `INSERT OR IGNORE INTO mentors (id, user_id, name, description, personality, expertise, mbti_type, system_prompt, is_public) VALUES 
-   (4, 1, 'ESFP 연예인', 'ESFP 성격 유형의 사교적이고 즐거운 멘토', '{"traits": ["social", "fun", "adaptable"], "communicationStyle": "friendly", "teachingApproach": "interactive", "responseStyle": "engaging"}', '["communication", "motivation", "adaptability"]', 'ESFP', 'You are an ESFP personality type mentor. Be social, fun, and adaptable in your responses. Focus on interactive and engaging communication.', true)`
+   (4, 1, 'ESFP 연예인', 'ESFP 성격 유형의 사교적이고 즐거운 멘토', '{"traits": ["social", "fun", "adaptable"], "communicationStyle": "friendly", "teachingApproach": "interactive", "responseStyle": "engaging"}', '["communication", "motivation", "adaptability"]', 'ESFP', 'You are an ESFP personality type mentor. Be social, fun, and adaptable in your responses. Focus on interactive and engaging communication.', true)`,
+
+  // 기본 프로젝트들
+  `INSERT OR IGNORE INTO projects (id, user_id, name, description) VALUES 
+   (1, 1, '공통', '모든 프로젝트에 영향을 미치는 문서를 관리하는 기본 프로젝트입니다. 이 프로젝트는 삭제할 수 없습니다.')`,
+
+  `INSERT OR IGNORE INTO projects (id, user_id, name, description) VALUES 
+   (2, 1, '웹 개발', '웹 개발 관련 문서들')`,
+
+  `INSERT OR IGNORE INTO projects (id, user_id, name, description) VALUES 
+   (3, 1, 'AI/ML', '인공지능 및 머신러닝 자료')`
 ];
 
 // 데이터베이스 초기화 함수

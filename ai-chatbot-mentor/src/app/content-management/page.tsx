@@ -222,69 +222,177 @@ export default function ContentManagement() {
     }
   };
 
+  // 프로젝트 선택 전에는 프로젝트 선택 화면 렌더링
+  if (!selectedProject) {
+    return (
+      <MainLayout>
+        <div className="h-full bg-gray-50 p-4 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">콘텐츠 관리</h1>
+              <p className="text-gray-600">프로젝트를 선택하여 문서와 외부 콘텐츠를 관리하세요</p>
+            </div>
+
+            {/* Project Creation Button */}
+            <div className="mb-6">
+              <button
+                onClick={() => setShowProjectModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <PlusIcon className="h-5 w-5 mr-2" />
+                새 프로젝트 생성
+              </button>
+            </div>
+
+            {/* Projects Grid */}
+            {loading ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+                <div className="text-gray-500">프로젝트를 로딩 중...</div>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+                <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-600 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">프로젝트가 없습니다</h3>
+                <p className="text-gray-500 mb-4">새 프로젝트를 생성하여 문서와 콘텐츠를 관리해보세요</p>
+                <button
+                  onClick={() => setShowProjectModal(true)}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  첫 번째 프로젝트 생성
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {projects.map((project) => (
+                  <div 
+                    key={project.id} 
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedProject(project.id)}
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <div className="p-2 rounded-lg bg-blue-100">
+                            <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                          </div>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                          {project.contentCount}개 콘텐츠
+                        </span>
+                      </div>
+                      
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                        {project.name}
+                      </h3>
+                      
+                      {project.description && (
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                          {project.description}
+                        </p>
+                      )}
+                      
+                      <div className="text-xs text-gray-500">
+                        생성일: {formatDate(project.createdAt)}
+                      </div>
+                      
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-blue-600 font-medium">프로젝트 열기</span>
+                          <svg className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Project Creation Modal */}
+            {showProjectModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-lg max-w-lg w-full p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-700">새 프로젝트 생성</h3>
+                    <button
+                      onClick={() => setShowProjectModal(false)}
+                      className="p-1 text-gray-600 hover:text-gray-700"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  <ProjectCreationModal
+                    onSuccess={() => {
+                      setShowProjectModal(false);
+                      loadProjects();
+                    }}
+                    onCancel={() => setShowProjectModal(false)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // 프로젝트 선택 후 콘텐츠 관리 화면
+  const currentProject = projects.find(p => p.id === selectedProject);
+
   return (
     <MainLayout>
       <div className="h-full bg-gray-50 p-4 overflow-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">콘텐츠 관리</h1>
-          <p className="text-gray-600">문서 업로드, 웹사이트 및 YouTube 콘텐츠를 통합 관리하세요</p>
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => setSelectedProject(null)}
+              className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              프로젝트 목록으로
+            </button>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {currentProject?.name || '프로젝트'} - 콘텐츠 관리
+          </h1>
+          <p className="text-gray-600">
+            {currentProject?.description || '문서 업로드, 웹사이트 및 YouTube 콘텐츠를 관리하세요'}
+          </p>
         </div>
 
-        {/* Project Selection & Actions */}
+        {/* Content Actions */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            {/* Project Selection */}
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">프로젝트:</label>
-                <select
-                  value={selectedProject}
-                  onChange={(e) => setSelectedProject(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 min-w-[150px]"
-                >
-                  <option value="all">전체 프로젝트</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name} ({project.contentCount})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                onClick={() => setShowProjectModal(true)}
-                className="flex items-center justify-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors whitespace-nowrap"
-              >
-                <PlusIcon className="h-4 w-4 mr-1" />
-                프로젝트 생성
-              </button>
-            </div>
-
-            {/* Content Actions */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
-              >
-                <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-                문서 업로드
-              </button>
-              <button
-                onClick={() => setShowUrlModal(true)}
-                className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
-              >
-                <GlobeAltIcon className="h-5 w-5 mr-2" />
-                웹 주소 추가
-              </button>
-              <button
-                onClick={() => setShowDirectInputModal(true)}
-                className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
-              >
-                <DocumentTextIcon className="h-5 w-5 mr-2" />
-                직접 내용 입력
-              </button>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+            >
+              <CloudArrowUpIcon className="h-5 w-5 mr-2" />
+              문서 업로드
+            </button>
+            <button
+              onClick={() => setShowUrlModal(true)}
+              className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
+            >
+              <GlobeAltIcon className="h-5 w-5 mr-2" />
+              웹 주소 추가
+            </button>
+            <button
+              onClick={() => setShowDirectInputModal(true)}
+              className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
+            >
+              <DocumentTextIcon className="h-5 w-5 mr-2" />
+              직접 내용 입력
+            </button>
           </div>
         </div>
 
@@ -551,6 +659,7 @@ export default function ContentManagement() {
             
             <DocumentUploadModal
               projects={projects}
+              selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowUploadModal(false);
                 loadContents();
@@ -577,6 +686,7 @@ export default function ContentManagement() {
             
             <UrlInputModal
               projects={projects}
+              selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowUrlModal(false);
                 loadContents();
@@ -628,6 +738,7 @@ export default function ContentManagement() {
             
             <DirectInputModal
               projects={projects}
+              selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowDirectInputModal(false);
                 loadContents();
@@ -734,15 +845,17 @@ export default function ContentManagement() {
 // Document Upload Modal Component
 function DocumentUploadModal({ 
   projects, 
+  selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
   projects: Project[]; 
+  selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
+  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -949,15 +1062,17 @@ function DocumentUploadModal({
 // URL Input Modal Component
 function UrlInputModal({ 
   projects, 
+  selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
   projects: Project[]; 
+  selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [url, setUrl] = useState('');
-  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
+  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1220,16 +1335,18 @@ function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; 
 // Direct Input Modal Component
 function DirectInputModal({ 
   projects, 
+  selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
   projects: Project[]; 
+  selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
+  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
