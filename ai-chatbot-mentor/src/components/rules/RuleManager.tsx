@@ -253,7 +253,7 @@ export default function RuleManager() {
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">룰 관리</h1>
+        <h1 className="text-3xl font-bold text-gray-600">룰 관리</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"

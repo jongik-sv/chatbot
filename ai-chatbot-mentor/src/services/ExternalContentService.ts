@@ -349,7 +349,7 @@ export class ExternalContentService {
       
       // documents 테이블에서 외부 콘텐츠 조회 (isExternalContent가 true인 경우)
       const query = `
-        SELECT id, filename, content, metadata, created_at, updated_at 
+        SELECT id, filename, content, metadata, created_at 
         FROM documents 
         WHERE metadata IS NOT NULL 
         AND (json_extract(metadata, '$.isExternalContent') = 1 
