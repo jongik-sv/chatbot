@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
       ...options,
       projectId: projectId ? parseInt(projectId) : 1,
       customGptId: customGptId ? parseInt(customGptId) : null,
-      saveToDatabase: true
+      saveToDatabase: true,
+      addToKnowledgeBase: true
     });
 
     return NextResponse.json({
@@ -90,19 +91,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const contentType = searchParams.get('type') || 'all';
     const customGptId = searchParams.get('customGptId');
+    const projectId = searchParams.get('projectId');
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
     // TypeScript ExternalContentService 직접 사용
     const service = ExternalContentService.getInstance();
 
-    // 모든 콘텐츠 조회
-    const contents = service.getAllContents({
+    // 프로젝트별 필터링을 위한 옵션 추가
+    const options: any = {
       contentType: contentType === 'all' ? undefined : contentType,
       customGptId: customGptId ? parseInt(customGptId) : undefined,
       limit,
       offset
-    });
+    };
+
+    // 프로젝트 ID가 있으면 해당 프로젝트와 공통 프로젝트(id=1)의 콘텐츠만 조회
+    if (projectId) {
+      options.projectIds = [parseInt(projectId), 1]; // 선택된 프로젝트 + 공통 프로젝트
+    }
+
+    // 모든 콘텐츠 조회
+    const contents = service.getAllContents(options);
 
     // 데이터 형식 통일
     const formattedContents = contents.map((content: any) => ({
@@ -112,7 +122,8 @@ export async function GET(request: NextRequest) {
       title: content.title,
       summary: content.summary,
       metadata: content.metadata,
-      createdAt: content.created_at
+      createdAt: content.created_at,
+      project_id: content.project_id
     }));
 
     return NextResponse.json({

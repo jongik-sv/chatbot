@@ -8,9 +8,33 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     const mentorId = searchParams.get('mentorId');
+    const projectId = searchParams.get('projectId');
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
+    // 프로젝트별 문서 필터링을 위한 직접 DB 쿼리
+    if (projectId) {
+      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const db = new Database(dbPath);
+      
+      // 선택된 프로젝트와 공통 프로젝트(id=1)의 문서들을 조회
+      const query = `
+        SELECT * FROM documents 
+        WHERE project_id = ? OR project_id = 1
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      
+      const documents = db.prepare(query).all(parseInt(projectId), limit, offset);
+      db.close();
+      
+      return NextResponse.json({
+        success: true,
+        data: documents
+      });
+    }
+
+    // 기존 로직 (프로젝트 필터링 없음)
     const documents = documentRepository.listDocuments({
       userId: userId ? parseInt(userId) : undefined,
       mentorId: mentorId ? parseInt(mentorId) : undefined,

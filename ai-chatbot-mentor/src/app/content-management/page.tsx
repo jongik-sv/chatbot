@@ -195,15 +195,20 @@ export default function ContentManagement() {
   };
 
   const handleStartConversation = (content: ContentItem) => {
-    if (content.type === 'document') {
-      // 문서 기반 대화 시작
-      const docId = content.id.replace('doc-', '');
-      window.location.href = `/?mode=document&documentId=${docId}`;
-    } else {
-      // 외부 콘텐츠의 경우 RAG 모드로 대화 시작
-      const extId = content.id.replace('ext-', '');
-      window.location.href = `/?mode=rag&documentId=${extId}`;
-    }
+    // 모든 콘텐츠는 RAG 모드로 대화 시작 (문서 기반 대화)
+    const contentId = content.id.replace(/^(doc-|ext-)/, '');
+    const currentProject = projects.find(p => p.id === selectedProject);
+    
+    // RAG 파라미터 구성
+    const ragParams = new URLSearchParams({
+      mode: 'rag',
+      projectId: selectedProject || '',
+      projectName: currentProject?.name || '',
+      documentIds: JSON.stringify([contentId]),
+      documentTitles: JSON.stringify([content.title])
+    });
+
+    window.location.href = `/?${ragParams.toString()}`;
   };
 
   const deleteContent = async (content: ContentItem) => {
@@ -641,7 +646,6 @@ export default function ContentManagement() {
             </div>
             
             <DocumentUploadModal
-              projects={projects}
               selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowUploadModal(false);
@@ -668,7 +672,6 @@ export default function ContentManagement() {
             </div>
             
             <UrlInputModal
-              projects={projects}
               selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowUrlModal(false);
@@ -720,7 +723,6 @@ export default function ContentManagement() {
             </div>
             
             <DirectInputModal
-              projects={projects}
               selectedProjectId={selectedProject}
               onSuccess={() => {
                 setShowDirectInputModal(false);
@@ -827,18 +829,16 @@ export default function ContentManagement() {
 
 // Document Upload Modal Component
 function DocumentUploadModal({ 
-  projects, 
   selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
-  projects: Project[]; 
   selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
+  const projectId = selectedProjectId || '1'; // 현재 선택된 프로젝트 사용
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -939,25 +939,7 @@ function DocumentUploadModal({
 
   return (
     <div className="space-y-4">
-      {/* 프로젝트 선택 */}
-      <div className="space-y-2">
-        <label htmlFor="upload-project" className="block text-sm font-medium text-gray-700">
-          프로젝트 선택
-        </label>
-        <select
-          id="upload-project"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
-          disabled={uploading}
-        >
-          {projects.map(project => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* 프로젝트는 자동으로 현재 선택된 프로젝트로 설정됩니다 */}
 
       <div
         className={`
@@ -1044,18 +1026,16 @@ function DocumentUploadModal({
 
 // URL Input Modal Component
 function UrlInputModal({ 
-  projects, 
   selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
-  projects: Project[]; 
   selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [url, setUrl] = useState('');
-  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
+  const projectId = selectedProjectId || '1'; // 현재 선택된 프로젝트를 기본값으로
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1123,25 +1103,7 @@ function UrlInputModal({
 
   return (
     <div className="space-y-4">
-      {/* 프로젝트 선택 */}
-      <div className="space-y-2">
-        <label htmlFor="url-project" className="block text-sm font-medium text-gray-700">
-          프로젝트 선택
-        </label>
-        <select
-          id="url-project"
-          value={projectId}
-          onChange={(e) => setProjectId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          disabled={processing}
-        >
-          {projects.map(project => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* 프로젝트는 자동으로 현재 선택된 프로젝트로 설정됩니다 */}
 
       <div className="space-y-2">
         <label htmlFor="url-input" className="block text-sm font-medium text-gray-700">
@@ -1317,19 +1279,17 @@ function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; 
 
 // Direct Input Modal Component
 function DirectInputModal({ 
-  projects, 
   selectedProjectId,
   onSuccess, 
   onCancel 
 }: { 
-  projects: Project[]; 
   selectedProjectId?: string;
   onSuccess: () => void; 
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [projectId, setProjectId] = useState(selectedProjectId || '1'); // 현재 선택된 프로젝트를 기본값으로
+  const projectId = selectedProjectId || '1'; // 현재 선택된 프로젝트를 기본값으로
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1400,24 +1360,7 @@ function DirectInputModal({
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="direct-project" className="block text-sm font-medium text-gray-700">
-                프로젝트
-              </label>
-              <select
-                id="direct-project"
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                disabled={saving}
-              >
-                {projects.map(project => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* 프로젝트는 자동으로 현재 선택된 프로젝트로 설정됩니다 */}
           </div>
 
           <div className="space-y-2">

@@ -239,42 +239,83 @@ export class ExternalContentService {
     projectId: number = 1
   ): Promise<void> {
     try {
-      // 문서로 저장
-      const documentId = await this.documentStorageService.storeDocument({
-        filename: `${content.type}_${content.id}.txt`,
-        originalName: content.title,
-        mimeType: 'text/plain',
-        size: content.content.length,
-        uploadedAt: new Date(),
-        projectId: projectId,
-        customGptId: customGptId || null,
+      // SQLite 데이터베이스에 직접 저장
+      const Database = require('better-sqlite3');
+      const path = require('path');
+      
+      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const db = new Database(dbPath);
+      
+      // 외부 콘텐츠 메타데이터 구성
+      const metadata = {
+        isExternalContent: true,
         sourceUrl: content.url,
         sourceType: content.type,
-        externalTitle: content.title
-      }, content.content);
-
+        title: content.title,
+        originalTitle: content.title,
+        summary: content.summary,
+        createdAt: content.createdAt.toISOString(),
+        ...content.metadata
+      };
+      
+      // documents 테이블에 저장
+      const insertQuery = `
+        INSERT INTO documents (
+          user_id, project_id, filename, file_type, file_path, 
+          content, file_size, metadata, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+      
+      const result = db.prepare(insertQuery).run(
+        1, // user_id
+        projectId,
+        content.title, // filename으로 제목 사용
+        'text/plain',
+        '', // file_path는 빈 값 (외부 콘텐츠이므로)
+        content.content,
+        content.content.length,
+        JSON.stringify(metadata),
+        new Date().toISOString()
+      );
+      
+      const documentId = result.lastInsertRowid as number;
+      
       // 임베딩 생성 및 저장 (토큰 기반)
       if (content.content.length > 100) {
-        const chunks = this.chunkContent(content.content, 500); // 500 토큰으로 변경
+        const chunks = this.chunkContent(content.content, 500);
         
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
-          const embedding = await this.embeddingService.generateEmbedding(chunk);
           
-          await this.embeddingService.storeEmbedding({
-            documentId,
-            chunkIndex: i,
-            chunkText: chunk,
-            embedding,
-            metadata: {
-              sourceUrl: content.url,
-              sourceType: content.type,
-              title: content.title,
-              ...content.metadata
-            }
+          // embeddings 테이블에 청크 저장 (임베딩은 null로 저장)
+          const insertChunkQuery = `
+            INSERT INTO embeddings (document_id, chunk_text, chunk_index, embedding, metadata)
+            VALUES (?, ?, ?, ?, ?)
+          `;
+          
+          const chunkMetadata = JSON.stringify({
+            sourceUrl: content.url,
+            sourceType: content.type,
+            title: content.title,
+            chunkSize: chunk.length,
+            position: i,
+            totalChunks: chunks.length,
+            ...content.metadata
           });
+          
+          db.prepare(insertChunkQuery).run(
+            documentId,
+            chunk,
+            i,
+            null, // 임베딩은 나중에 별도 프로세스에서 생성
+            chunkMetadata
+          );
         }
       }
+      
+      db.close();
+      console.log(`외부 콘텐츠 저장 완료: ${content.title} (ID: ${documentId})`);
+      
     } catch (error) {
       console.error('지식 베이스 추가 실패:', error);
       // 지식 베이스 추가 실패는 전체 처리를 중단하지 않음
