@@ -148,10 +148,27 @@ export class VectorSearchService extends BaseRepository {
       
       for (const row of rows) {
         try {
-          // BLOB에서 Float32Array로 변환
-          const embeddingBuffer = Buffer.from(row.embedding);
-          const embeddingArray = new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4);
-          const embedding = Array.from(embeddingArray);
+          // 임베딩 데이터 파싱 - BLOB 또는 JSON 형식 처리
+          let embedding: number[];
+          
+          if (Buffer.isBuffer(row.embedding)) {
+            // BLOB로 저장된 경우 (Float32Array) - 우선 처리
+            const embeddingBuffer = Buffer.from(row.embedding);
+            const embeddingArray = new Float32Array(embeddingBuffer.buffer, embeddingBuffer.byteOffset, embeddingBuffer.length / 4);
+            embedding = Array.from(embeddingArray);
+          } else if (typeof row.embedding === 'string') {
+            // JSON 문자열로 저장된 경우 (레거시)
+            embedding = JSON.parse(row.embedding);
+          } else {
+            // 기타 형식 처리
+            console.warn(`Unknown embedding format for row ${row.id}:`, typeof row.embedding);
+            continue;
+          }
+
+          if (queryEmbedding.length !== embedding.length) {
+            console.warn(`Dimension mismatch for row ${row.id}: Query=${queryEmbedding.length}, Stored=${embedding.length}`);
+            continue;
+          }
 
           // 유사도 계산
           const similarity = this.cosineSimilarity(queryEmbedding, embedding);

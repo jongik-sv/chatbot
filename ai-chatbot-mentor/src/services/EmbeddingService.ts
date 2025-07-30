@@ -56,10 +56,11 @@ export class EmbeddingService {
     try {
       console.log('Initializing embedding pipeline...');
       
-      // 경량화된 문장 임베딩 모델 사용
+      // 다국어 지원 임베딩 모델 사용 (한국어 포함)
+      // paraphrase-multilingual-MiniLM-L12-v2는 50개 이상 언어 지원
       this.embeddingPipeline = await pipeline(
         'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2'
+        'Xenova/paraphrase-multilingual-MiniLM-L12-v2'
       );
       
       this.isInitialized = true;
@@ -88,11 +89,14 @@ export class EmbeddingService {
         ) VALUES (?, ?, ?, ?, ?)
       `);
 
+      // Float32Array로 변환하여 BLOB으로 저장
+      const embeddingBuffer = Buffer.from(new Float32Array(data.embedding).buffer);
+
       stmt.run([
         data.documentId,
         data.chunkIndex,
         data.chunkText,
-        JSON.stringify(data.embedding),
+        embeddingBuffer,
         JSON.stringify(data.metadata || {})
       ], function(err) {
         if (err) {
@@ -375,7 +379,8 @@ export class EmbeddingService {
     return text
       .trim()
       .replace(/\s+/g, ' ')  // 여러 공백을 하나로
-      .replace(/[^\w\s\.\,\!\?\-]/g, '')  // 특수문자 제거 (기본 문장부호 제외)
+      // 한국어, 영어, 숫자, 기본 문장부호만 유지 (한국어 유니코드 범위 포함)
+      .replace(/[^\w\s\.\,\!\?\-\u3131-\u314e\u314f-\u3163\uac00-\ud7a3]/g, '')
       .slice(0, 512);  // 모델 입력 길이 제한
   }
 
@@ -384,7 +389,8 @@ export class EmbeddingService {
    */
   private splitIntoSentences(text: string): string[] {
     return text
-      .split(/[.!?]+/)
+      // 한국어와 영어 문장 끝 패턴 모두 고려
+      .split(/[.!?。！？]+/)
       .map(s => s.trim())
       .filter(s => s.length > 0);
   }
