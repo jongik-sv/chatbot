@@ -85,7 +85,7 @@ export class VectorSearchService extends BaseRepository {
     documentId: number, 
     documentText: string, 
     mode: 'character' | 'page' = 'page',
-    chunkSize: number = 500
+    chunkSize: number = 1000
   ): Promise<void> {
     try {
       console.log(`Processing document ${documentId} for embeddings using ${mode} mode...`);

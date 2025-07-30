@@ -7,7 +7,7 @@ const documentService = new DocumentStorageService();
 
 export async function POST(request: NextRequest) {
   try {
-    const { documentId, chunkSize = 500 } = await request.json();
+    const { documentId, chunkSize = 1000 } = await request.json();
 
     if (!documentId) {
       return NextResponse.json(

@@ -71,7 +71,7 @@ function chunkDocumentByPage(text) {
   return chunks;
 }
 
-function chunkDocumentByCharacter(text, chunkSize = 500) {
+function chunkDocumentByCharacter(text, chunkSize = 1000) {
   const chunks = [];
   const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 0);
   

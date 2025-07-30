@@ -137,7 +137,7 @@ export class EmbeddingService {
   /**
    * 문서를 청크로 분할 (문자 기반)
    */
-  chunkDocumentByCharacter(text: string, chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+  chunkDocumentByCharacter(text: string, chunkSize: number = 1000, overlap: number = 50): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
     const sentences = this.splitIntoSentences(text);
     
@@ -273,7 +273,7 @@ export class EmbeddingService {
   /**
    * 문서를 청크로 분할 (통합 메서드)
    */
-  chunkDocument(text: string, mode: 'character' | 'page' = 'page', chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+  chunkDocument(text: string, mode: 'character' | 'page' = 'page', chunkSize: number = 1000, overlap: number = 50): DocumentChunk[] {
     if (mode === 'page') {
       return this.chunkDocumentByPage(text);
     } else {
@@ -287,7 +287,7 @@ export class EmbeddingService {
   async embedDocument(
     text: string, 
     mode: 'character' | 'page' = 'page', 
-    chunkSize: number = 500
+    chunkSize: number = 1000
   ): Promise<EmbeddingResult[]> {
     const chunks = this.chunkDocument(text, mode, chunkSize);
     const results: EmbeddingResult[] = [];
