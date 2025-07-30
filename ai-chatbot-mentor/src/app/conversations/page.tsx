@@ -114,7 +114,7 @@ export default function ConversationsPage() {
     if (!confirm('이 대화를 삭제하시겠습니까?')) return;
 
     try {
-      await ApiClient.deleteChatSession(id);
+      await ApiClient.deleteChatSession(id, 1); // 임시 사용자 ID
       await loadConversations();
     } catch (error) {
       console.error('대화 삭제 오류:', error);
@@ -216,7 +216,7 @@ export default function ConversationsPage() {
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                  viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <Squares2X2Icon className="h-5 w-5" />
@@ -224,7 +224,7 @@ export default function ConversationsPage() {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                  viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <ListBulletIcon className="h-5 w-5" />
@@ -239,7 +239,7 @@ export default function ConversationsPage() {
               <select
                 value={filters.mode}
                 onChange={(e) => setFilters(prev => ({ ...prev, mode: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="all">전체</option>
                 <option value="chat">일반 대화</option>
@@ -255,7 +255,7 @@ export default function ConversationsPage() {
               <select
                 value={filters.dateRange}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateRange: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="all">전체</option>
                 <option value="today">오늘</option>
@@ -270,7 +270,7 @@ export default function ConversationsPage() {
               <select
                 value={filters.sortBy}
                 onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="updated">최근 업데이트</option>
                 <option value="created">생성 시간</option>
@@ -284,7 +284,7 @@ export default function ConversationsPage() {
               <select
                 value={filters.sortOrder}
                 onChange={(e) => setFilters(prev => ({ ...prev, sortOrder: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
                 <option value="desc">내림차순</option>
                 <option value="asc">오름차순</option>

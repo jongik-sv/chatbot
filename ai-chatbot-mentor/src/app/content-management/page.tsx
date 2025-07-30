@@ -40,6 +40,7 @@ export default function ContentManagement() {
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showUrlModal, setShowUrlModal] = useState(false);
+  const [showContentModal, setShowContentModal] = useState(false);
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'all' | 'document' | 'website' | 'youtube'>('all');
@@ -244,7 +245,7 @@ export default function ContentManagement() {
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                  viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <Squares2X2Icon className="h-5 w-5" />
@@ -252,7 +253,7 @@ export default function ContentManagement() {
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
+                  viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
                 }`}
               >
                 <ListBulletIcon className="h-5 w-5" />
@@ -335,7 +336,10 @@ export default function ContentManagement() {
                         대화하기
                       </button>
                       <button
-                        onClick={() => setSelectedContent(content)}
+                        onClick={() => {
+                          setSelectedContent(content);
+                          setShowContentModal(true);
+                        }}
                         className="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors"
                       >
                         <EyeIcon className="h-4 w-4" />
@@ -420,7 +424,10 @@ export default function ContentManagement() {
                               대화하기
                             </button>
                             <button
-                              onClick={() => setSelectedContent(content)}
+                              onClick={() => {
+                                setSelectedContent(content);
+                                setShowContentModal(true);
+                              }}
                               className="text-gray-600 hover:text-gray-900"
                             >
                               보기
@@ -489,6 +496,95 @@ export default function ContentManagement() {
               }}
               onCancel={() => setShowUrlModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Content View Modal */}
+      {showContentModal && selectedContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h3 className="text-lg font-semibold">{selectedContent.title}</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {getContentTypeLabel(selectedContent.type)} • {formatDate(selectedContent.createdAt)}
+                </p>
+                {selectedContent.url && (
+                  <a 
+                    href={selectedContent.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 block"
+                  >
+                    {selectedContent.url}
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setShowContentModal(false);
+                  setSelectedContent(null);
+                }}
+                className="p-1 text-gray-600 hover:text-gray-700"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-6">
+              {selectedContent.summary && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">요약</h4>
+                  <p className="text-sm text-blue-700">{selectedContent.summary}</p>
+                </div>
+              )}
+              
+              {selectedContent.content ? (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-800">내용</h4>
+                  <div className="prose prose-sm max-w-none">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-md border">
+                      {selectedContent.content}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-600 mb-4" />
+                  <p className="text-gray-600">콘텐츠 내용이 없습니다.</p>
+                </div>
+              )}
+              
+              {selectedContent.metadata && Object.keys(selectedContent.metadata).length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-800 mb-3">메타데이터</h4>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <pre className="text-xs text-gray-600">
+                      {JSON.stringify(selectedContent.metadata, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2 justify-end p-6 border-t border-gray-200">
+              <button
+                onClick={() => handleStartConversation(selectedContent)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                이 콘텐츠로 대화하기
+              </button>
+              <button
+                onClick={() => {
+                  setShowContentModal(false);
+                  setSelectedContent(null);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -764,7 +860,7 @@ function UrlInputModal({ onSuccess, onCancel }: { onSuccess: () => void; onCance
             setError(null);
           }}
           placeholder="https://example.com 또는 YouTube 링크"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-600"
           disabled={processing}
         />
         {url && (
