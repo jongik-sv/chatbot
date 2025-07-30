@@ -282,7 +282,7 @@ export class LLMService {
       stream: false,
       options: {
         temperature: options.temperature || 0.7,
-        num_predict: options.maxTokens || 2048
+        num_predict: options.maxTokens || 20000
       }
     };
 
@@ -328,7 +328,7 @@ export class LLMService {
         model: options.model || 'gemini-1.5-flash',
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 2048,
+          maxOutputTokens: options.maxTokens || 20000,
         },
         systemInstruction: options.systemInstruction
       });
@@ -378,7 +378,7 @@ export class LLMService {
           stream: false,
           options: {
             temperature: options.temperature || 0.7,
-            num_predict: options.maxTokens || 2048
+            num_predict: options.maxTokens || 20000
           }
         };
 
@@ -446,7 +446,7 @@ export class LLMService {
         model: options.model || 'gemini-1.5-flash',
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 2048,
+          maxOutputTokens: options.maxTokens || 20000,
         },
         systemInstruction: options.systemInstruction
       };
@@ -543,7 +543,7 @@ export class LLMService {
         model,
         generationConfig: {
           temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 2048,
+          maxOutputTokens: options.maxTokens || 20000,
         }
       });
 
