@@ -214,6 +214,16 @@ ${context}
 5. 이전 대화 내용을 참고하여 맥락에 맞는 답변을 제공하세요`;
 
     // 4. LLM으로 답변 생성 (대화 히스토리 포함)
+    console.log('=== RAG API 디버깅 정보 ===');
+    console.log('시스템 프롬프트 길이:', systemPrompt.length);
+    console.log('시스템 프롬프트 일부:', systemPrompt.substring(0, 500) + '...');
+    console.log('대화 히스토리:', conversationHistory.map(msg => ({
+      role: msg.role,
+      content: msg.content.substring(0, 100) + '...'
+    })));
+    console.log('사용 모델:', model);
+    console.log('========================');
+
     const llmService = new LLMService();
     const response = await llmService.chat(conversationHistory, {
       model,
@@ -221,6 +231,17 @@ ${context}
       maxTokens: 1000,
       systemInstruction: systemPrompt
     });
+
+    console.log('=== LLM 응답 디버깅 ===');
+    console.log('응답 성공 여부:', response.success);
+    console.log('응답 내용 길이:', response.content ? response.content.length : 0);
+    console.log('응답 내용 일부:', response.content ? response.content.substring(0, 300) + '...' : 'No content');
+    console.log('사용된 모델:', response.model);
+    console.log('제공자:', response.provider);
+    if (response.error) {
+      console.log('오류:', response.error);
+    }
+    console.log('====================');
 
     // 5. 출처 정보 구성
     const sources = searchResults.map((result, index) => ({

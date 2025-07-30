@@ -430,31 +430,71 @@ export class LLMService {
     }
 
     try {
+      console.log('=== Gemini 채팅 디버깅 ===');
+      console.log('SystemInstruction 존재 여부:', !!options.systemInstruction);
+      console.log('SystemInstruction 길이:', options.systemInstruction?.length || 0);
+      console.log('SystemInstruction 일부:', options.systemInstruction?.substring(0, 300) + '...' || 'None');
+      console.log('메시지 수:', messages.length);
+      console.log('Temperature:', options.temperature || 0.7);
+      console.log('MaxTokens:', options.maxTokens || 2048);
+      console.log('========================');
+
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(this.geminiApiKey);
       
-      const model = genAI.getGenerativeModel({ 
+      const modelConfig = { 
         model: options.model || 'gemini-1.5-flash',
         generationConfig: {
           temperature: options.temperature || 0.7,
           maxOutputTokens: options.maxTokens || 2048,
         },
         systemInstruction: options.systemInstruction
+      };
+
+      console.log('Gemini 모델 설정:', {
+        model: modelConfig.model,
+        hasSystemInstruction: !!modelConfig.systemInstruction,
+        generationConfig: modelConfig.generationConfig
       });
 
+      const model = genAI.getGenerativeModel(modelConfig);
+
       // 채팅 세션 시작
+      const historyMessages = messages.slice(0, -1).map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      console.log('채팅 히스토리:', historyMessages.map(msg => ({
+        role: msg.role,
+        contentLength: msg.parts[0].text.length
+      })));
+
       const chat = model.startChat({
-        history: messages.slice(0, -1).map(msg => ({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
-        }))
+        history: historyMessages
       });
 
       // 마지막 메시지 전송
       const lastMessage = messages[messages.length - 1];
+      console.log('마지막 메시지:', {
+        role: lastMessage.role,
+        contentLength: lastMessage.content.length,
+        contentPreview: lastMessage.content.substring(0, 100) + '...'
+      });
+
       const result = await chat.sendMessage(lastMessage.content);
       const response = await result.response;
       const text = response.text();
+
+      console.log('=== Gemini 응답 ===');
+      console.log('응답 길이:', text.length);
+      console.log('응답 일부:', text.substring(0, 300) + '...');
+      console.log('토큰 사용량:', {
+        prompt: response.usageMetadata?.promptTokenCount,
+        completion: response.usageMetadata?.candidatesTokenCount,
+        total: response.usageMetadata?.totalTokenCount
+      });
+      console.log('==================');
 
       return {
         success: true,

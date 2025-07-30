@@ -256,3 +256,35 @@ kiro : AI 챗봇 멘토 프로젝트 내 MCP 도구 연결 문제 분석 요청
 - 프로젝트 내에서 MCP 도구 사용 시 "Server not connected" 오류
 - mcp-toolbox, mcp-sequential-thinking 서버 연결 실패
 - 서버는 실행되고 있지만 프로젝트에서 접근 불가
+
+------
+
+웹 주소 추가로 웹주소를 추가하면 데이터베이스에 documents, embeddings에는 값이 들어가는데 document_chunks에는 들어가지 않는다고 지금 몇번째 말하고 고치고 있는데도 개선이 되고 있지 않아. 좀 더 심도 있게 sequential-thinking MCP를 활용해서 문제를 찾아보자. 코드는 아직 수정하지말고 원인만 찾아.
+
+------
+
+문제발견 !!!, embedings 테이블의 embedding 칼럼의 값이 NULL이야. 그래서 아래의 결과가 나와.
+        SELECT e.*, d.filename, d.file_path
+        FROM embeddings e
+        LEFT JOIN documents d ON e.document_id = d.id
+       WHERE e.document_id IN (?)
+VectorSearchService - 파라미터: [ 26 ]
+
+VectorSearchService - 유사도 통계: {
+  '전체_계산된_유사도': 0,
+  '최고_유사도': -Infinity,
+  '최저_유사도': Infinity,
+  '평균_유사도': NaN,
+  threshold: 0.3,
+  'threshold_이상_결과': 0
+}
+
+------
+
+1. Option 1: embeddings 테이블만 사용 하도록 하자.
+2. chunkSize를 500으로 수정해줘. 겹치는 Size는 50으로 해줘.
+3. 직접 내용 입력을 할 경우 embedding이 NULL 인것도 수정해줘. ('웹 주소 추가'도 확인해줘.)
+
+------
+
+분명히 RAG에서 제대로 문서를 가져왔는데 대답은 왜 전혀 엉뚱하게 하는지 검토 해줄래?
