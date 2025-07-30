@@ -323,7 +323,7 @@ export default function MessageInput({
             type="button"
             onClick={handleSubmit}
             disabled={(!message.trim() && selectedFiles.length === 0 && !selectedImage) || disabled}
-            className="absolute right-2 bottom-2 p-2 text-blue-500 hover:text-blue-600 disabled:text-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="absolute right-2 bottom-2 p-2 text-blue-500 hover:text-blue-600 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
           >
             <PaperAirplaneIcon className="w-5 h-5" />
           </button>

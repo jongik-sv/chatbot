@@ -119,7 +119,7 @@ export default function MBTIMentorSelector({
       } else if (i === fullStars && hasHalfStar) {
         stars.push(<StarIcon key={i} className="w-4 h-4 text-yellow-400" />);
       } else {
-        stars.push(<StarIcon key={i} className="w-4 h-4 text-gray-300" />);
+        stars.push(<StarIcon key={i} className="w-4 h-4 text-gray-500" />);
       }
     }
     

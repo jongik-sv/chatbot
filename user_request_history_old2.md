@@ -267,8 +267,8 @@ window.alert = function(message) {
 placehold의 색깔이 너무 흐리다. 좀더 눈에 잘 띄게 해줘.
 
 **수정 사항**:
-- Input 컴포넌트의 placeholder 색상을 `placeholder-gray-400`에서 `placeholder-gray-600`으로 변경
-- Textarea 컴포넌트의 placeholder 색상을 `placeholder-gray-400`에서 `placeholder-gray-600`으로 변경
+- Input 컴포넌트의 placeholder 색상을 `placeholder-gray-600`에서 `placeholder-gray-600`으로 변경
+- Textarea 컴포넌트의 placeholder 색상을 `placeholder-gray-600`에서 `placeholder-gray-600`으로 변경
 - globals.css에 전역 placeholder 스타일 추가 (gray-500, #6b7280)
 - 모든 브라우저 호환성을 위한 CSS 벤더 프리픽스 추가
 
@@ -1341,7 +1341,7 @@ const mockResult = {
   - `:-ms-input-placeholder`
 
 #### ✅ 2. 다크 모드 지원 추가
-- 다크 모드에서는 `#9ca3af` (gray-400)로 설정하여 가독성 확보
+- 다크 모드에서는 `#9ca3af` (gray-600)로 설정하여 가독성 확보
 - `@media (prefers-color-scheme: dark)` 미디어 쿼리 사용
 
 #### ✅ 3. 개별 컴포넌트 일관성 통일
@@ -1375,7 +1375,7 @@ const mockResult = {
 
 ### 결과
 - 라이트 모드: `#4b5563` (gray-600) - 기존보다 더 진하고 선명함
-- 다크 모드: `#9ca3af` (gray-400) - 다크 배경에서 적절한 대비
+- 다크 모드: `#9ca3af` (gray-600) - 다크 배경에서 적절한 대비
 - 모든 입력 필드에서 placeholder 텍스트가 더 읽기 쉬워짐
 
 #### ✅ 5. 입력된 텍스트 색상 정상화

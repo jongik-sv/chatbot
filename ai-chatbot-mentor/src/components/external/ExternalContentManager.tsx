@@ -370,7 +370,7 @@ export default function ExternalContentManager({
             </div>
           ) : filteredContents.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-gray-500">
-              <Search className="w-12 h-12 mb-4 text-gray-300" />
+              <Search className="w-12 h-12 mb-4 text-gray-500" />
               <p className="text-center">
                 {searchQuery.trim() ? '검색 결과가 없습니다.' : '추가된 콘텐츠가 없습니다.'}
               </p>
@@ -429,7 +429,7 @@ export default function ExternalContentManager({
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
-                <Globe className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <Globe className="w-16 h-16 mx-auto mb-4 text-gray-500" />
                 <p className="text-lg mb-2">콘텐츠를 선택하세요</p>
                 <p className="text-sm">
                   왼쪽에서 콘텐츠를 클릭하면 상세 내용을 볼 수 있습니다.

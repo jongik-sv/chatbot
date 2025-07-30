@@ -12,7 +12,8 @@ import {
   Squares2X2Icon,
   ListBulletIcon,
   PlayIcon,
-  XMarkIcon
+  XMarkIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import { 
   DocumentArrowUpIcon,
@@ -30,10 +31,21 @@ interface ContentItem {
   summary?: string;
   createdAt: string;
   metadata?: any;
+  projectId?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  contentCount: number;
 }
 
 export default function ContentManagement() {
   const [contents, setContents] = useState<ContentItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -41,13 +53,52 @@ export default function ContentManagement() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [showContentModal, setShowContentModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [selectedContents, setSelectedContents] = useState<string[]>([]);
 
   // 탭 상태
   const [activeTab, setActiveTab] = useState<'all' | 'document' | 'website' | 'youtube'>('all');
 
   useEffect(() => {
+    loadProjects();
     loadContents();
   }, []);
+
+  useEffect(() => {
+    loadContents();
+  }, [selectedProject]);
+
+  const loadProjects = async () => {
+    try {
+      // Mock 프로젝트 데이터 (나중에 API로 교체)
+      const mockProjects: Project[] = [
+        {
+          id: 'default',
+          name: '기본 프로젝트',
+          description: '분류되지 않은 콘텐츠',
+          createdAt: new Date().toISOString(),
+          contentCount: 0
+        },
+        {
+          id: 'web-dev',
+          name: '웹 개발',
+          description: '웹 개발 관련 문서들',
+          createdAt: new Date().toISOString(),
+          contentCount: 0
+        },
+        {
+          id: 'ai-ml',
+          name: 'AI/ML',
+          description: '인공지능 및 머신러닝 자료',
+          createdAt: new Date().toISOString(),
+          contentCount: 0
+        }
+      ];
+      setProjects(mockProjects);
+    } catch (error) {
+      console.error('프로젝트 로딩 오류:', error);
+    }
+  };
 
   const loadContents = async () => {
     try {
@@ -96,7 +147,8 @@ export default function ContentManagement() {
     const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.summary?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTab = activeTab === 'all' || content.type === activeTab;
-    return matchesSearch && matchesTab;
+    const matchesProject = selectedProject === 'all' || content.projectId === selectedProject;
+    return matchesSearch && matchesTab && matchesProject;
   });
 
   const getContentIcon = (type: string) => {
@@ -146,11 +198,37 @@ export default function ContentManagement() {
 
   const handleStartConversation = (content: ContentItem) => {
     if (content.type === 'document') {
+      // 문서 기반 대화 시작
       const docId = content.id.replace('doc-', '');
-      window.location.href = `/documents/${docId}`;
+      window.location.href = `/?mode=document&documentId=${docId}`;
     } else {
       // 외부 콘텐츠의 경우 RAG 모드로 대화 시작
-      window.location.href = `/chat?mode=rag&contentId=${content.id}`;
+      const extId = content.id.replace('ext-', '');
+      window.location.href = `/?mode=rag&documentId=${extId}`;
+    }
+  };
+
+  const handleMultipleConversation = () => {
+    // 선택된 콘텐츠들로 대화 시작
+    const documentIds = selectedContents.map(id => 
+      id.startsWith('doc-') ? id.replace('doc-', '') : id.replace('ext-', '')
+    );
+    window.location.href = `/?mode=multi&documentIds=${documentIds.join(',')}`;
+  };
+
+  const toggleContentSelection = (contentId: string) => {
+    setSelectedContents(prev => 
+      prev.includes(contentId) 
+        ? prev.filter(id => id !== contentId)
+        : [...prev, contentId]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedContents.length === filteredContents.length) {
+      setSelectedContents([]);
+    } else {
+      setSelectedContents(filteredContents.map(content => content.id));
     }
   };
 
@@ -183,23 +261,61 @@ export default function ContentManagement() {
           <p className="text-gray-600">문서 업로드, 웹사이트 및 YouTube 콘텐츠를 통합 관리하세요</p>
         </div>
 
-        {/* Actions */}
+        {/* Project Selection & Actions */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-              문서 업로드
-            </button>
-            <button
-              onClick={() => setShowUrlModal(true)}
-              className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-            >
-              <GlobeAltIcon className="h-5 w-5 mr-2" />
-              웹 주소 추가
-            </button>
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            {/* Project Selection */}
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap">프로젝트:</label>
+                <select
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 min-w-[150px]"
+                >
+                  <option value="all">전체 프로젝트</option>
+                  {projects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name} ({project.contentCount})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={() => setShowProjectModal(true)}
+                className="flex items-center justify-center px-3 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >
+                <PlusIcon className="h-4 w-4 mr-1" />
+                프로젝트 생성
+              </button>
+            </div>
+
+            {/* Content Actions */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {selectedContents.length > 0 && (
+                <button
+                  onClick={() => handleMultipleConversation()}
+                  className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
+                >
+                  <PlayIcon className="h-5 w-5 mr-2" />
+                  선택한 콘텐츠로 대화 ({selectedContents.length})
+                </button>
+              )}
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                <CloudArrowUpIcon className="h-5 w-5 mr-2" />
+                문서 업로드
+              </button>
+              <button
+                onClick={() => setShowUrlModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
+              >
+                <GlobeAltIcon className="h-5 w-5 mr-2" />
+                웹 주소 추가
+              </button>
+            </div>
           </div>
         </div>
 
@@ -699,7 +815,7 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
           transition-colors duration-200 ease-in-out
-          ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray500 hover:border-gray-600'}
           ${uploading ? 'pointer-events-none opacity-60' : ''}
         `}
         onDragEnter={handleDragIn}

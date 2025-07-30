@@ -185,7 +185,7 @@ export default function DocumentUpload({
           border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
           ${isDragOver 
             ? 'border-blue-500 bg-blue-50' 
-            : 'border-gray-300 hover:border-gray-400 bg-gray-50 hover:bg-gray-100'
+            : 'border-gray-300 hover:border-gray-600 bg-gray-50 hover:bg-gray-100'
           }
         `}
         onDragOver={handleDragOver}

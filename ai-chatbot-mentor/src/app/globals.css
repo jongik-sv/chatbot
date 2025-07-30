@@ -157,7 +157,7 @@ body {
 /* 다크 모드에서의 placeholder 색상 */
 @media (prefers-color-scheme: dark) {
   ::placeholder {
-    color: #9ca3af; /* gray-400 - 다크 모드에서는 더 밝게 */
+    color: #9ca3af; /* gray-600 - 다크 모드에서는 더 밝게 */
     opacity: 1;
   }
 

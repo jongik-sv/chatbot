@@ -212,7 +212,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
           transition-colors duration-200 ease-in-out
-          ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-600'}
           ${uploadStatus.uploading ? 'pointer-events-none opacity-60' : ''}
           ${uploadStatus.success ? 'border-green-400 bg-green-50' : ''}
           ${uploadStatus.error ? 'border-red-400 bg-red-50' : ''}

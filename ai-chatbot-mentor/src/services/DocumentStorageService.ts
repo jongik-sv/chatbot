@@ -401,6 +401,9 @@ export class DocumentStorageService {
     size: number;
     uploadedAt: Date;
     customGptId?: string | null;
+    sourceUrl?: string;
+    sourceType?: string;
+    externalTitle?: string;
   }, content: string): Promise<string> {
     const transaction = this.db.transaction((meta: typeof metadata, contentText: string) => {
       // 파일 확장자 추출
@@ -425,7 +428,10 @@ export class DocumentStorageService {
         wordCount: contentText.split(/\s+/).length,
         language: 'auto-detect',
         summary: contentText.length > 200 ? contentText.substring(0, 200) + '...' : contentText,
-        isExternalContent: true
+        isExternalContent: true,
+        sourceUrl: meta.sourceUrl,
+        sourceType: meta.sourceType,
+        title: meta.externalTitle || meta.originalName
       };
 
       const result = insertDoc.run(

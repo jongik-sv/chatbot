@@ -244,7 +244,10 @@ export class ExternalContentService {
         mimeType: 'text/plain',
         size: content.content.length,
         uploadedAt: new Date(),
-        customGptId: customGptId || null
+        customGptId: customGptId || null,
+        sourceUrl: content.url,
+        sourceType: content.type,
+        externalTitle: content.title
       }, content.content);
 
       // 임베딩 생성 및 저장 (토큰 기반)
@@ -336,8 +339,67 @@ export class ExternalContentService {
   }
 
   public getAllContents(options: any = {}): ExternalContentResult[] {
-    // Mock implementation - JavaScript 서비스와 호환성을 위해
-    return [];
+    try {
+      // SQLite 데이터베이스에서 외부 콘텐츠 조회
+      const Database = require('better-sqlite3');
+      const path = require('path');
+      
+      const dbPath = path.join(process.cwd(), '..', 'data', 'chatbot.db');
+      const db = new Database(dbPath);
+      
+      // documents 테이블에서 외부 콘텐츠 조회 (isExternalContent가 true인 경우)
+      const query = `
+        SELECT id, filename, content, metadata, created_at, updated_at 
+        FROM documents 
+        WHERE metadata IS NOT NULL 
+        AND (json_extract(metadata, '$.isExternalContent') = 1 
+             OR json_extract(metadata, '$.sourceUrl') IS NOT NULL)
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+      
+      const limit = options.limit || 50;
+      const offset = options.offset || 0;
+      
+      const rows = db.prepare(query).all(limit, offset);
+      
+      const results: ExternalContentResult[] = rows.map((row: any) => {
+        let metadata = {};
+        try {
+          metadata = JSON.parse(row.metadata || '{}');
+        } catch (e) {
+          console.warn('Invalid metadata JSON:', row.metadata);
+        }
+        
+        // 타입 및 URL 정보 가져오기
+        const sourceUrl = metadata.sourceUrl || '';
+        const sourceType = metadata.sourceType || 'website';
+        const title = metadata.title || metadata.originalName || row.filename || '제목 없음';
+        
+        // YouTube URL이거나 sourceType이 youtube인 경우
+        const isYoutube = sourceType === 'youtube' || 
+                         sourceUrl.includes('youtube.com') || 
+                         sourceUrl.includes('youtu.be');
+        
+        return {
+          id: `ext-${row.id}`,
+          type: isYoutube ? 'youtube' : 'website',
+          url: sourceUrl,
+          title: title,
+          content: row.content || '',
+          summary: metadata.summary || (row.content ? row.content.substring(0, 200) + '...' : ''),
+          metadata: metadata,
+          createdAt: new Date(row.created_at)
+        };
+      });
+      
+      db.close();
+      return results;
+      
+    } catch (error) {
+      console.error('getAllContents 오류:', error);
+      return [];
+    }
   }
 
   public searchContents(query: string, options: any = {}): { results: ExternalContentResult[] } {
