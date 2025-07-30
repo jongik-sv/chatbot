@@ -26,6 +26,7 @@
       "disabled": false,
       "autoApprove": []
     },
+
     "sequential-thinking": {
       "command": "cmd",
       "args": [

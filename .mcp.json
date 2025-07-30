@@ -25,23 +25,7 @@
         "disabled": false,
         "autoApprove": []
       },
-      "toolbox": {
-        "command": "cmd",
-        "args": [
-          "/c",
-          "npx",
-          "-y",
-          "@smithery/cli@latest",
-          "run",
-          "@smithery/toolbox",
-          "--key",
-          "edd85a01-7988-4db5-8783-a1bc1ad22265",
-          "--profile",
-          "medical-krill-r0NdS4"
-        ],
-        "disabled": false,
-        "autoApprove": []
-      },
+
       "sequential-thinking": {
         "command": "cmd",
         "args": [
@@ -77,6 +61,14 @@
         ],
         "disabled": false,
         "autoApprove": []
-      }
+      },
+      "pyhub.mcptools": {
+        "command": "C:\\mcptools\\pyhub.mcptools\\pyhub.mcptools.exe",
+        "args": [
+          "run",
+          "stdio"
+        ],
+        "env": {}
+      }  
     }
   }

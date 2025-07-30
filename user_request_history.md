@@ -243,4 +243,16 @@ k
 iro : 웹페이지 추가 후 document_chunks 테이블에 데이터가 없는 문제 분석 요청
 - documents 테이블: 데이터 있음
 - embeddings 테이블: 데이터 있음  
-- document_chunks 테이블: 데이터 없음
+- document_chunks 테이블: 데이터 없음----
+--
+
+kiro : MCP 도구 연결 문제 분석 요청
+- sequential-thinking 서버: 연결되지 않음
+- mcp-toolbox 서버: 연결되지 않음
+- 서버 로그에서는 연결된 것으로 보이지만 실제 사용 시 "Server not connected" 오류------
+
+
+kiro : AI 챗봇 멘토 프로젝트 내 MCP 도구 연결 문제 분석 요청
+- 프로젝트 내에서 MCP 도구 사용 시 "Server not connected" 오류
+- mcp-toolbox, mcp-sequential-thinking 서버 연결 실패
+- 서버는 실행되고 있지만 프로젝트에서 접근 불가
