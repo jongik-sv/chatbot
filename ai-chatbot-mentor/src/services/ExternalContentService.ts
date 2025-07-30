@@ -375,6 +375,42 @@ export class ExternalContentService {
             chunkMetadata,
             new Date().toISOString()
           );
+          
+          // document_chunks 테이블에도 청크 저장
+          const insertDocumentChunkQuery = `
+            INSERT INTO document_chunks (
+              id, document_id, content, chunk_index, 
+              start_position, end_position, word_count, sentences, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+          
+          // 청크 ID 생성 (document_id + chunk_index 조합)
+          const chunkId = `${documentId}_${i}`;
+          
+          // 단어 수와 문장 수 계산
+          const wordCount = chunk.split(/\s+/).filter(word => word.length > 0).length;
+          const sentences = chunk.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0).length;
+          
+          // 시작/끝 위치 계산 (대략적)
+          const startPosition = i * Math.floor(content.content.length / chunks.length);
+          const endPosition = Math.min(startPosition + chunk.length, content.content.length);
+          
+          try {
+            db.prepare(insertDocumentChunkQuery).run(
+              chunkId,
+              documentId,
+              chunk,
+              i,
+              startPosition,
+              endPosition,
+              wordCount,
+              sentences,
+              new Date().toISOString()
+            );
+            console.log(`청크 ${i} document_chunks 테이블에 저장 완료`);
+          } catch (chunkError) {
+            console.warn(`청크 ${i} document_chunks 저장 실패:`, chunkError.message);
+          }
         }
         
         console.log(`임베딩 처리 완료: ${chunks.length}개 청크 저장`);

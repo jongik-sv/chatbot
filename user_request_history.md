@@ -237,4 +237,10 @@ kiro : 웹사이트 중복 생성 문제 해결 계속 진행-
 kiro : 웹페이지, 유튜브 추가 시 chunk와 embeddings 생성 확인 요청-----
 -
 
-kiro : 임베딩 생성 다음 단계 진행 요청
+kiro : 임베딩 생성 다음 단계 진행 요청------
+
+k
+iro : 웹페이지 추가 후 document_chunks 테이블에 데이터가 없는 문제 분석 요청
+- documents 테이블: 데이터 있음
+- embeddings 테이블: 데이터 있음  
+- document_chunks 테이블: 데이터 없음
