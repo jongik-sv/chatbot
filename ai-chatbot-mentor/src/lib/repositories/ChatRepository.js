@@ -178,11 +178,17 @@ class ChatRepository {
   deleteSession(sessionId) {
     // 트랜잭션으로 안전하게 삭제
     const deleteTransaction = this.db.transaction((sessionId) => {
-      // 먼저 관련 메시지들 삭제
-      const deleteMessages = this.db.prepare(`DELETE FROM messages WHERE session_id = ?`);
-      deleteMessages.run(sessionId);
+      // 1. 관련 아티팩트들 삭제
+      const deleteArtifacts = this.db.prepare(`DELETE FROM artifacts WHERE session_id = ?`);
+      const artifactsDeleted = deleteArtifacts.run(sessionId);
+      console.log(`세션 ${sessionId}의 아티팩트 ${artifactsDeleted.changes}개 삭제됨`);
       
-      // 그 다음 세션 삭제
+      // 2. 관련 메시지들 삭제
+      const deleteMessages = this.db.prepare(`DELETE FROM messages WHERE session_id = ?`);
+      const messagesDeleted = deleteMessages.run(sessionId);
+      console.log(`세션 ${sessionId}의 메시지 ${messagesDeleted.changes}개 삭제됨`);
+      
+      // 3. 세션 삭제
       const deleteSession = this.db.prepare(`DELETE FROM chat_sessions WHERE id = ?`);
       return deleteSession.run(sessionId);
     });
@@ -203,11 +209,21 @@ class ChatRepository {
         return { changes: 0 };
       }
       
-      // 각 세션의 메시지들 삭제
+      let totalArtifactsDeleted = 0;
+      let totalMessagesDeleted = 0;
+      
+      // 각 세션의 아티팩트와 메시지들 삭제
+      const deleteArtifacts = this.db.prepare(`DELETE FROM artifacts WHERE session_id = ?`);
       const deleteMessages = this.db.prepare(`DELETE FROM messages WHERE session_id = ?`);
+      
       sessionIds.forEach(session => {
-        deleteMessages.run(session.id);
+        const artifactsDeleted = deleteArtifacts.run(session.id);
+        const messagesDeleted = deleteMessages.run(session.id);
+        totalArtifactsDeleted += artifactsDeleted.changes;
+        totalMessagesDeleted += messagesDeleted.changes;
       });
+      
+      console.log(`사용자 ${userId}의 아티팩트 ${totalArtifactsDeleted}개, 메시지 ${totalMessagesDeleted}개 삭제됨`);
       
       // 모든 세션 삭제
       const deleteSessions = this.db.prepare(`DELETE FROM chat_sessions WHERE user_id = ?`);

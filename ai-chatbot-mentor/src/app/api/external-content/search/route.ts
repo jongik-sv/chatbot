@@ -4,11 +4,23 @@ import ExternalContentService from '@/services/ExternalContentService';
 // JavaScript ExternalContentService 사용
 function getJavaScriptExternalContentService() {
   try {
-    const { getInstance } = require('../../../../services/ExternalContentServiceWrapper');
+    // 절대 경로 사용
+    const path = require('path');
+    const servicePath = path.resolve(process.cwd(), 'services', 'ExternalContentService.js');
+    const { getInstance } = require(servicePath);
     return getInstance();
   } catch (error) {
     console.error('ExternalContentService 로드 실패:', error);
-    throw error;
+    console.error('현재 작업 디렉토리:', process.cwd());
+    
+    // 폴백으로 직접 경로 시도
+    try {
+      const { getInstance } = require('../../../../../../../services/ExternalContentService');
+      return getInstance();
+    } catch (fallbackError) {
+      console.error('폴백 경로도 실패:', fallbackError);
+      throw new Error(`ExternalContentService를 로드할 수 없습니다: ${error.message}`);
+    }
   }
 }
 

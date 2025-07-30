@@ -151,13 +151,22 @@ export class DocumentRepository extends BaseRepository {
       const result = this.run(query, params);
       const isDeleted = (result as any).changes > 0;
 
-      // 데이터베이스에서 삭제되었으면 관련 임베딩과 실제 파일도 삭제
+      // 데이터베이스에서 삭제되었으면 관련 청크, 임베딩과 실제 파일도 삭제
       if (isDeleted) {
+        // 관련 문서 청크 삭제
+        try {
+          const deleteChunksQuery = `DELETE FROM document_chunks WHERE document_id = ?`;
+          const chunksResult = this.run(deleteChunksQuery, [id]);
+          console.log(`문서 ${id}의 청크 ${(chunksResult as any).changes}개 삭제 완료`);
+        } catch (chunkError) {
+          console.error('문서 청크 삭제 실패:', chunkError);
+        }
+
         // 관련 임베딩 삭제
         try {
           const deleteEmbeddingsQuery = `DELETE FROM embeddings WHERE document_id = ?`;
-          this.run(deleteEmbeddingsQuery, [id]);
-          console.log(`문서 ${id}의 임베딩 삭제 완료`);
+          const embeddingsResult = this.run(deleteEmbeddingsQuery, [id]);
+          console.log(`문서 ${id}의 임베딩 ${(embeddingsResult as any).changes}개 삭제 완료`);
         } catch (embeddingError) {
           console.error('임베딩 삭제 실패:', embeddingError);
         }
