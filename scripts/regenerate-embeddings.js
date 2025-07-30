@@ -75,12 +75,12 @@ async function regenerateEmbeddings() {
       try {
         console.log(`처리 중: ${doc.filename} (ID: ${doc.id})`);
         
-        // 문서 임베딩 생성 및 저장
+        // 문서 임베딩 생성 및 저장 (토큰 기반)
         await vectorSearchService.processAndStoreDocument(
           doc.id,
           doc.content,
-          'character', // 문자 기반 청킹
-          1000        // 청크 크기
+          'token',    // 토큰 기반 청킹
+          500         // 500 토큰 크기
         );
         
         processedCount++;

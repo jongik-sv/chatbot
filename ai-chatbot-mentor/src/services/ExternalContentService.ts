@@ -247,9 +247,9 @@ export class ExternalContentService {
         customGptId: customGptId || null
       }, content.content);
 
-      // 임베딩 생성 및 저장
+      // 임베딩 생성 및 저장 (토큰 기반)
       if (content.content.length > 100) {
-        const chunks = this.chunkContent(content.content, 1000);
+        const chunks = this.chunkContent(content.content, 500); // 500 토큰으로 변경
         
         for (let i = 0; i < chunks.length; i++) {
           const chunk = chunks[i];
@@ -276,32 +276,50 @@ export class ExternalContentService {
   }
 
   /**
-   * 콘텐츠를 청크로 분할
+   * 콘텐츠를 토큰 기반으로 청크 분할
    */
-  private chunkContent(content: string, chunkSize: number = 1000): string[] {
-    const chunks: string[] = [];
-    const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    
-    let currentChunk = '';
-    
-    for (const sentence of sentences) {
-      const trimmedSentence = sentence.trim();
+  private chunkContent(content: string, maxTokens: number = 500): string[] {
+    try {
+      // 토큰 기반 청킹 라이브러리 사용
+      const { chunkTextByTokens } = require('@/lib/text-chunking');
       
-      if (currentChunk.length + trimmedSentence.length + 1 <= chunkSize) {
-        currentChunk += (currentChunk ? '. ' : '') + trimmedSentence;
-      } else {
-        if (currentChunk) {
-          chunks.push(currentChunk + '.');
+      const chunks = chunkTextByTokens(content, {
+        maxTokens,
+        overlapTokens: 50,
+        preserveSentences: true
+      });
+      
+      return chunks.map((chunk: any) => chunk.text);
+    } catch (error) {
+      console.warn('토큰 기반 청킹 실패, 문자 기반으로 대체:', error);
+      
+      // 폴백: 기존 문자 기반 청킹
+      const chunks: string[] = [];
+      const sentences = content.split(/[.!?。！？]+/).filter(s => s.trim().length > 0);
+      
+      let currentChunk = '';
+      const approxCharsPerToken = 2; // 대략적인 토큰-문자 비율
+      const targetCharsPerChunk = maxTokens * approxCharsPerToken;
+      
+      for (const sentence of sentences) {
+        const trimmedSentence = sentence.trim();
+        
+        if (currentChunk.length + trimmedSentence.length + 1 <= targetCharsPerChunk) {
+          currentChunk += (currentChunk ? '. ' : '') + trimmedSentence;
+        } else {
+          if (currentChunk) {
+            chunks.push(currentChunk + '.');
+          }
+          currentChunk = trimmedSentence;
         }
-        currentChunk = trimmedSentence;
       }
+      
+      if (currentChunk) {
+        chunks.push(currentChunk + '.');
+      }
+      
+      return chunks;
     }
-    
-    if (currentChunk) {
-      chunks.push(currentChunk + '.');
-    }
-    
-    return chunks;
   }
 
   /**

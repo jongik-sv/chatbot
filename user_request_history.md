@@ -95,3 +95,27 @@ markdown component가 교체가 안된것 같아. 다른 컴포넌트로 바꿔�
 2. 에러 처리 해줘.
 
 ------
+
+RAG API - 검색 시작: { message: '나무위키가 뭐야?', documentIds: [ 10 ], topK: 5, threshold: 0.3 }
+VectorSearchService - 검색 쿼리: 
+        SELECT e.*, d.filename, d.file_path
+        FROM embeddings e
+        LEFT JOIN documents d ON e.document_id = d.id
+       WHERE e.document_id IN (?)
+VectorSearchService - 파라미터: [ 10 ]
+VectorSearchService - DB 행 수: 21
+Failed to process embedding for row 107: Error: Vectors must have the same length
+    at VectorSearchService.cosineSimilarity (src\services\VectorSearchService.ts:265:12)
+    at VectorSearchService.searchSimilarChunks (src\services\VectorSearchService.ts:157:34)
+    at async POST (src\app\api\rag\chat\route.ts:101:26)
+  263 |   private cosineSimilarity(vecA: number[], vecB: number[]): number {
+  264 |     if (vecA.length !== vecB.length) {
+> 265 |       throw new Error('Vectors must have the same length');
+      |            ^
+  266 |     }
+  267 |
+  268 |     let dotProduct = 0;
+
+나무위키에 대한 문서에 대해 '나무위키가 뭐야?'라고 물었는데 전혀 검색이 안된다. 왜 그런건지 분석 해줘. 한국어 임베딩이 문제라면 한국어가 잘되는 임베딩 모델을 바꾸자.
+
+------

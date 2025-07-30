@@ -7,7 +7,7 @@ const documentService = new DocumentStorageService();
 
 export async function POST(request: NextRequest) {
   try {
-    const { documentId, chunkSize = 1000 } = await request.json();
+    const { documentId, chunkSize = 500 } = await request.json();
 
     if (!documentId) {
       return NextResponse.json(
@@ -25,10 +25,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 문서 내용 임베딩 처리 및 저장
+    // 문서 내용 임베딩 처리 및 저장 (토큰 기반)
     await vectorSearchService.processAndStoreDocument(
       documentId, 
       document.content, 
+      'token',  // 토큰 기반 청킹 사용
       chunkSize
     );
 

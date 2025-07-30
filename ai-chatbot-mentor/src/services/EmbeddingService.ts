@@ -2,6 +2,7 @@
 import { pipeline, env } from '@xenova/transformers';
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import { chunkTextByTokens, estimateTokenCount, type TextChunk } from '@/lib/text-chunking';
 
 // 브라우저에서 로컬 모델 사용 설정
 env.allowLocalModels = false;
@@ -275,13 +276,45 @@ export class EmbeddingService {
   }
 
   /**
+   * 문서를 토큰 기반으로 청크 분할 (NEW - 기본 권장)
+   */
+  chunkDocumentByTokens(text: string, maxTokens: number = 500, overlapTokens: number = 50): DocumentChunk[] {
+    const chunks = chunkTextByTokens(text, {
+      maxTokens,
+      overlapTokens,
+      preserveSentences: true
+    });
+    
+    return chunks.map(chunk => ({
+      text: chunk.text,
+      index: chunk.chunkIndex,
+      metadata: {
+        chunkType: 'token-based',
+        tokenCount: chunk.tokenCount,
+        characterCount: chunk.text.length,
+        startIndex: chunk.startIndex,
+        endIndex: chunk.endIndex,
+        maxTokens,
+        overlapTokens
+      }
+    }));
+  }
+
+  /**
    * 문서를 청크로 분할 (통합 메서드)
    */
-  chunkDocument(text: string, mode: 'character' | 'page' = 'page', chunkSize: number = 1000, overlap: number = 50): DocumentChunk[] {
-    if (mode === 'page') {
-      return this.chunkDocumentByPage(text);
-    } else {
-      return this.chunkDocumentByCharacter(text, chunkSize, overlap);
+  chunkDocument(text: string, mode: 'character' | 'page' | 'token' = 'token', chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
+    console.log(`청킹 모드: ${mode}, 크기: ${chunkSize}, 오버랩: ${overlap}`);
+    
+    switch (mode) {
+      case 'token':
+        return this.chunkDocumentByTokens(text, chunkSize, overlap);
+      case 'page':
+        return this.chunkDocumentByPage(text);
+      case 'character':
+        return this.chunkDocumentByCharacter(text, chunkSize, overlap);
+      default:
+        return this.chunkDocumentByTokens(text, chunkSize, overlap);
     }
   }
 
@@ -290,8 +323,8 @@ export class EmbeddingService {
    */
   async embedDocument(
     text: string, 
-    mode: 'character' | 'page' = 'page', 
-    chunkSize: number = 1000
+    mode: 'character' | 'page' | 'token' = 'token', 
+    chunkSize: number = 500
   ): Promise<EmbeddingResult[]> {
     const chunks = this.chunkDocument(text, mode, chunkSize);
     const results: EmbeddingResult[] = [];
@@ -307,11 +340,13 @@ export class EmbeddingService {
           chunkIndex: chunk.index
         });
         
-        // 진행률 표시 (페이지 모드에서는 더 자주 표시)
-        const progressInterval = mode === 'page' ? 1 : 10;
+        // 진행률 표시 (모드별 간격 조정)
+        const progressInterval = mode === 'page' ? 1 : (mode === 'token' ? 5 : 10);
         if ((chunk.index + 1) % progressInterval === 0 || chunk.index === chunks.length - 1) {
           if (mode === 'page') {
             console.log(`Embedded page ${chunk.index + 1}/${chunks.length} (${chunk.metadata?.characterCount || 0} chars)`);
+          } else if (mode === 'token') {
+            console.log(`Embedded ${chunk.index + 1}/${chunks.length} token chunks (${chunk.metadata?.tokenCount || 0} tokens)`);
           } else {
             console.log(`Embedded ${chunk.index + 1}/${chunks.length} chunks`);
           }
