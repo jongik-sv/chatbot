@@ -18,9 +18,11 @@ export async function GET(request: NextRequest) {
       const db = new Database(dbPath);
       
       // 선택된 프로젝트와 공통 프로젝트(id=1)의 문서들을 조회
+      // 외부 콘텐츠는 제외 (isExternalContent가 true가 아닌 것만)
       const query = `
         SELECT * FROM documents 
-        WHERE project_id = ? OR project_id = 1
+        WHERE (project_id = ? OR project_id = 1)
+        AND (metadata IS NULL OR json_extract(metadata, '$.isExternalContent') IS NOT 1)
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
       `;

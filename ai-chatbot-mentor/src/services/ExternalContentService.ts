@@ -392,20 +392,27 @@ export class ExternalContentService {
       const db = new Database(dbPath);
       
       // documents 테이블에서 외부 콘텐츠 조회 (isExternalContent가 true인 경우)
-      const query = `
-        SELECT id, filename, content, metadata, created_at 
+      let query = `
+        SELECT id, filename, content, metadata, created_at, project_id
         FROM documents 
         WHERE metadata IS NOT NULL 
         AND (json_extract(metadata, '$.isExternalContent') = 1 
              OR json_extract(metadata, '$.sourceUrl') IS NOT NULL)
-        ORDER BY created_at DESC
-        LIMIT ? OFFSET ?
       `;
       
-      const limit = options.limit || 50;
-      const offset = options.offset || 0;
+      const queryParams = [];
       
-      const rows = db.prepare(query).all(limit, offset);
+      // 프로젝트 필터링 추가
+      if (options.projectIds && Array.isArray(options.projectIds)) {
+        const placeholders = options.projectIds.map(() => '?').join(',');
+        query += ` AND project_id IN (${placeholders})`;
+        queryParams.push(...options.projectIds);
+      }
+      
+      query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+      queryParams.push(options.limit || 50, options.offset || 0);
+      
+      const rows = db.prepare(query).all(...queryParams);
       
       const results: ExternalContentResult[] = rows.map((row: any) => {
         let metadata = {};
@@ -433,7 +440,8 @@ export class ExternalContentService {
           content: row.content || '',
           summary: metadata.summary || (row.content ? row.content.substring(0, 200) + '...' : ''),
           metadata: metadata,
-          createdAt: new Date(row.created_at)
+          createdAt: new Date(row.created_at),
+          project_id: row.project_id
         };
       });
       
