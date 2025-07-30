@@ -8,8 +8,8 @@ const fs = require("fs");
 
 class ChatRepository {
   constructor() {
-    // 통일된 데이터베이스 경로 사용 (절대 경로로 수정)
-    this.dbPath = process.env.DATABASE_PATH || path.resolve(process.cwd(), "..", "data", "chatbot.db");
+    // 안전한 경로 설정: __dirname 기준으로 프로젝트 루트까지 이동
+    this.dbPath = process.env.DATABASE_PATH || path.join(__dirname, "..", "..", "..", "..", "data", "chatbot.db");
     this.db = null;
     this.initDatabase();
   }
@@ -22,7 +22,19 @@ class ChatRepository {
         fs.mkdirSync(dbDir, { recursive: true });
       }
 
+      // 데이터베이스 파일이 존재하지 않으면 에러
+      if (!fs.existsSync(this.dbPath)) {
+        throw new Error(`데이터베이스 파일이 존재하지 않습니다: ${this.dbPath}. 먼저 init-db.js를 실행하세요.`);
+      }
+
       this.db = new Database(this.dbPath);
+      
+      // chat_sessions 테이블 존재 확인
+      const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='chat_sessions'").all();
+      if (tables.length === 0) {
+        throw new Error('chat_sessions 테이블이 존재하지 않습니다. 데이터베이스 초기화가 필요합니다.');
+      }
+      
     } catch (error) {
       console.error("데이터베이스 초기화 실패:", error);
       throw error;

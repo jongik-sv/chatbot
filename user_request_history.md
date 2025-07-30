@@ -435,3 +435,33 @@ Next.js 앱의 여러 파일에서 `path.join()` 대신 `path.resolve()`를 사�
 모든 Next.js 앱 내 파일이 올바른 데이터베이스 경로를 참조하도록 수정 완료
 
 ------
+
+## 2025-07-30 - chat_sessions 테이블 접근 오류 재발 및 해결
+
+### 문제 상황
+이전 수정 후에도 동일한 "SqliteError: no such table: chat_sessions" 오류가 계속 발생
+
+### 근본 원인 분석
+1. **새로운 데이터베이스 파일 생성**: ChatRepository가 빈 데이터베이스 파일을 새로 생성하고 있었음
+2. **경로 문제**: `path.resolve()`도 Next.js 빌드 환경에서 올바르게 작동하지 않음
+3. **__dirname 활용 필요**: 컴파일된 파일의 실제 위치를 기준으로 경로 설정 필요
+
+### 최종 해결 방법
+1. **데이터베이스 강제 재초기화**: 12개 테이블 모두 정상 생성 확인
+2. **ChatRepository 경로 수정**: `__dirname` 기준으로 상대 경로 설정
+   ```javascript
+   this.dbPath = path.join(__dirname, "..", "..", "..", "..", "data", "chatbot.db");
+   ```
+3. **안전장치 추가**: 
+   - 데이터베이스 파일 존재 여부 사전 확인
+   - chat_sessions 테이블 존재 여부 검증
+   - 명확한 에러 메시지 제공
+
+### 테이블 현황
+- ✅ 총 12개 테이블 생성 완료 (기존 11개 + document_chunks 1개 추가)
+- ✅ chat_sessions 테이블 정상 존재
+- ✅ 모든 인덱스 및 기본 데이터 삽입 완료
+
+이제 ChatRepository가 올바른 데이터베이스 파일에 확실히 연결됩니다.
+
+------
