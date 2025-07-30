@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import ModelSelector from './ModelSelector';
@@ -9,7 +10,7 @@ import { ApiClient } from '../../lib/api';
 import { LLMModel, Message as MessageType } from '../../types';
 import { useChatContext } from '../../contexts/ChatContext';
 import { getCurrentKoreanTime } from '../../utils/dateUtils';
-import { DocumentTextIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ChevronLeftIcon, ChevronRightIcon, FolderIcon } from '@heroicons/react/24/outline';
 import { ArtifactPanel } from '../artifacts/ArtifactPanel';
 import { Artifact } from '../../types';
 
@@ -44,6 +45,7 @@ export default function ChatInterface({
   mbtiContext,
   onSessionUpdate
 }: ChatInterfaceProps) {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<string>(initialMode || 'chat');
@@ -53,12 +55,37 @@ export default function ChatInterface({
   const [isArtifactPanelOpen, setIsArtifactPanelOpen] = useState<boolean>(false);
   const [artifactPanelWidth, setArtifactPanelWidth] = useState<number>(33); // percentage
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [ragInfo, setRagInfo] = useState<{
+    projectId: string;
+    projectName: string;
+    documentIds: string[];
+    documentTitles: string[];
+  } | null>(null);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();
 
   // 컴포넌트 마운트 시 모델 목록 로드
   useEffect(() => {
     loadAvailableModels();
   }, []);
+
+  // URL 파라미터에서 RAG 정보 읽기
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    const projectId = searchParams.get('projectId');
+    const projectName = searchParams.get('projectName');
+    const documentIds = searchParams.get('documentIds');
+    const documentTitles = searchParams.get('documentTitles');
+
+    if (mode === 'rag' && projectId && documentIds && documentTitles) {
+      setSessionMode('rag');
+      setRagInfo({
+        projectId,
+        projectName: projectName || '',
+        documentIds: JSON.parse(documentIds),
+        documentTitles: JSON.parse(documentTitles)
+      });
+    }
+  }, [searchParams]);
 
   // 기존 세션이 있으면 로드
   useEffect(() => {
@@ -116,7 +143,7 @@ export default function ChatInterface({
 
       // 문서 기반 세션인 경우 문서 정보 추출
       if (response.session.mode === 'document' || response.session.mode === 'rag') {
-        extractDocumentInfo(loadedMessages);
+        extractDocumentInfo(loadedMessages, response.session);
       }
 
       // 세션의 아티팩트 로드
@@ -130,8 +157,29 @@ export default function ChatInterface({
     }
   };
 
-  const extractDocumentInfo = (messages: Message[]) => {
-    // 메시지 메타데이터에서 문서 정보 추출
+  const extractDocumentInfo = (messages: Message[], session?: any) => {
+    // 세션에서 RAG 메타데이터 복원 (우선순위)
+    if (session && session.metadata) {
+      try {
+        const sessionMetadata = typeof session.metadata === 'string' 
+          ? JSON.parse(session.metadata) 
+          : session.metadata;
+        
+        if (sessionMetadata.ragMetadata) {
+          setRagInfo({
+            projectId: sessionMetadata.ragMetadata.projectId,
+            projectName: sessionMetadata.ragMetadata.projectName,
+            documentIds: sessionMetadata.ragMetadata.documentIds,
+            documentTitles: sessionMetadata.ragMetadata.documentTitles
+          });
+          return; // RAG 정보를 찾았으면 더 이상 메시지를 검사하지 않음
+        }
+      } catch (error) {
+        console.error('세션 메타데이터 파싱 오류:', error);
+      }
+    }
+
+    // 메시지 메타데이터에서 문서 정보 추출 (fallback)
     for (const message of messages) {
       if (message.metadata) {
         // RAG 메타데이터에서 문서 정보 찾기
@@ -257,6 +305,12 @@ export default function ChatInterface({
       
       console.log('ChatInterface - 메시지 전송 전 선택된 문서 IDs:', selectedDocumentIds);
       console.log('ChatInterface - 세션 모드:', sessionMode);
+      console.log('ChatInterface - RAG 정보:', ragInfo);
+
+      // RAG 모드일 때는 ragInfo의 documentIds 사용, 그 외에는 기존 selectedDocumentIds 사용
+      const documentIdsToUse = sessionMode === 'rag' && ragInfo 
+        ? ragInfo.documentIds.map(id => parseInt(id))
+        : selectedDocumentIds;
 
       await ApiClient.sendMessageStream(
         {
@@ -265,7 +319,7 @@ export default function ChatInterface({
           mode: sessionMode,
           sessionId: state.currentSessionId,
           mentorId: initialMentorId,
-          documentIds: selectedDocumentIds,
+          documentIds: documentIdsToUse,
           files
         },
         // onChunk
@@ -303,7 +357,16 @@ export default function ChatInterface({
                 role: 'assistant',
                 createdAt: new Date().toISOString()
               },
-              updatedAt: new Date().toISOString()
+              updatedAt: new Date().toISOString(),
+              // RAG 정보 포함
+              ...(sessionMode === 'rag' && ragInfo && {
+                ragMetadata: {
+                  projectId: ragInfo.projectId,
+                  projectName: ragInfo.projectName,
+                  documentIds: ragInfo.documentIds,
+                  documentTitles: ragInfo.documentTitles
+                }
+              })
             });
           }
 
@@ -536,12 +599,39 @@ export default function ChatInterface({
         </div>
 
         {/* Document Info Banner */}
-        {documentInfo && (sessionMode === 'document' || sessionMode === 'rag') && (
+        {documentInfo && sessionMode === 'document' && (
           <div className="flex-shrink-0 bg-blue-50 border-b border-blue-200 p-3">
             <div className="flex items-center text-sm text-blue-800">
               <DocumentTextIcon className="w-4 h-4 mr-2 flex-shrink-0" />
               <span className="font-medium">선택된 문서:</span>
               <span className="ml-1 truncate">{documentInfo.name}</span>
+            </div>
+          </div>
+        )}
+
+        {/* RAG Info Banner */}
+        {ragInfo && sessionMode === 'rag' && (
+          <div className="flex-shrink-0 bg-green-50 border-b border-green-200 p-3">
+            <div className="space-y-2">
+              <div className="flex items-center text-sm text-green-800">
+                <FolderIcon className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="font-medium">프로젝트:</span>
+                <span className="ml-1 font-semibold">{ragInfo.projectName}</span>
+              </div>
+              <div className="flex items-start text-sm text-green-800">
+                <DocumentTextIcon className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
+                <span className="font-medium">선택된 문서 ({ragInfo.documentTitles.length}개):</span>
+                <div className="ml-1 flex flex-wrap gap-1">
+                  {ragInfo.documentTitles.map((title, index) => (
+                    <span 
+                      key={index}
+                      className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium"
+                    >
+                      {title}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}

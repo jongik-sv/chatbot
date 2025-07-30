@@ -225,6 +225,32 @@ export default function ContentManagement() {
     }
   };
 
+  const handleStartRAGConversation = () => {
+    if (selectedContents.length === 0) return;
+
+    // 선택된 문서들의 정보 수집
+    const selectedDocuments = contents.filter(content => selectedContents.includes(content.id));
+    const documentIds = selectedDocuments.map(doc => {
+      if (doc.type === 'document') {
+        return doc.id.replace('doc-', '');
+      } else {
+        return doc.id.replace('ext-', '');
+      }
+    });
+
+    // 프로젝트 정보와 함께 RAG 채팅 페이지로 이동
+    const currentProject = projects.find(p => p.id === selectedProject);
+    const ragParams = new URLSearchParams({
+      mode: 'rag',
+      projectId: selectedProject || '',
+      projectName: currentProject?.name || '',
+      documentIds: JSON.stringify(documentIds),
+      documentTitles: JSON.stringify(selectedDocuments.map(doc => doc.title))
+    });
+
+    window.location.href = `/?${ragParams.toString()}`;
+  };
+
   // 프로젝트 선택 전에는 프로젝트 선택 화면 렌더링
   if (!selectedProject) {
     return (
@@ -374,27 +400,37 @@ export default function ContentManagement() {
 
         {/* Content Actions */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 justify-between">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                <CloudArrowUpIcon className="h-5 w-5 mr-2" />
+                문서 업로드
+              </button>
+              <button
+                onClick={() => setShowUrlModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
+              >
+                <GlobeAltIcon className="h-5 w-5 mr-2" />
+                웹 주소 추가
+              </button>
+              <button
+                onClick={() => setShowDirectInputModal(true)}
+                className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
+              >
+                <DocumentTextIcon className="h-5 w-5 mr-2" />
+                직접 내용 입력
+              </button>
+            </div>
             <button
-              onClick={() => setShowUploadModal(true)}
-              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
+              onClick={handleStartRAGConversation}
+              disabled={selectedContents.length === 0}
+              className="flex items-center justify-center px-6 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
             >
-              <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-              문서 업로드
-            </button>
-            <button
-              onClick={() => setShowUrlModal(true)}
-              className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors whitespace-nowrap"
-            >
-              <GlobeAltIcon className="h-5 w-5 mr-2" />
-              웹 주소 추가
-            </button>
-            <button
-              onClick={() => setShowDirectInputModal(true)}
-              className="flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors whitespace-nowrap"
-            >
-              <DocumentTextIcon className="h-5 w-5 mr-2" />
-              직접 내용 입력
+              <PlayIcon className="h-5 w-5 mr-2" />
+              대화하기 ({selectedContents.length}개 선택)
             </button>
           </div>
         </div>
@@ -436,23 +472,19 @@ export default function ContentManagement() {
               />
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex bg-gray-100 p-1 rounded-lg">
+            {/* Select All/None */}
+            <div className="flex gap-2">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
-                }`}
+                onClick={() => setSelectedContents(contents.map(c => c.id))}
+                className="text-sm text-blue-600 hover:text-blue-800"
               >
-                <Squares2X2Icon className="h-5 w-5" />
+                전체 선택
               </button>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-white shadow-sm text-gray-900' : 'hover:bg-gray-200 text-gray-700'
-                }`}
+                onClick={() => setSelectedContents([])}
+                className="text-sm text-gray-600 hover:text-gray-800"
               >
-                <ListBulletIcon className="h-5 w-5" />
+                선택 해제
               </button>
             </div>
           </div>
@@ -471,87 +503,26 @@ export default function ContentManagement() {
               {searchTerm ? '검색 조건에 맞는 콘텐츠가 없습니다' : '문서를 업로드하거나 웹 주소를 추가해보세요'}
             </p>
           </div>
-        ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredContents.map((content) => {
-              const IconComponent = getContentIcon(content.type);
-              return (
-                <div key={content.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center">
-                        <div className={`p-2 rounded-lg ${
-                          content.type === 'document' ? 'bg-blue-100' :
-                          content.type === 'youtube' ? 'bg-red-100' : 'bg-green-100'
-                        }`}>
-                          <IconComponent className={`h-6 w-6 ${
-                            content.type === 'document' ? 'text-blue-600' :
-                            content.type === 'youtube' ? 'text-red-600' : 'text-green-600'
-                          }`} />
-                        </div>
-                        <div className="ml-3">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            content.type === 'document' ? 'bg-blue-100 text-blue-800' :
-                            content.type === 'youtube' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {getContentTypeLabel(content.type)}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => deleteContent(content)}
-                        className="p-1 text-gray-600 hover:text-red-600 transition-colors"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                    
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-                      {content.title}
-                    </h3>
-                    
-                    {content.summary && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {content.summary}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                      <span>{formatDate(content.createdAt)}</span>
-                      {content.fileSize && (
-                        <span>{formatFileSize(content.fileSize)}</span>
-                      )}
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleStartConversation(content)}
-                        className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                        <PlayIcon className="h-4 w-4 mr-1" />
-                        대화하기
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedContent(content);
-                          setShowContentModal(true);
-                        }}
-                        className="px-3 py-2 border border-gray-300 text-gray-700 text-sm rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedContents.length === filteredContents.length && filteredContents.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedContents(filteredContents.map(c => c.id));
+                          } else {
+                            setSelectedContents([]);
+                          }
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       콘텐츠
                     </th>
@@ -572,8 +543,23 @@ export default function ContentManagement() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredContents.map((content) => {
                     const IconComponent = getContentIcon(content.type);
+                    const isSelected = selectedContents.includes(content.id);
                     return (
-                      <tr key={content.id} className="hover:bg-gray-50">
+                      <tr key={content.id} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                        <td className="px-6 py-4 whitespace-nowrap w-12">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedContents([...selectedContents, content.id]);
+                              } else {
+                                setSelectedContents(selectedContents.filter(id => id !== content.id));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className={`p-2 rounded-lg ${
@@ -613,12 +599,6 @@ export default function ContentManagement() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleStartConversation(content)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              대화하기
-                            </button>
                             <button
                               onClick={() => {
                                 setSelectedContent(content);
@@ -727,7 +707,7 @@ export default function ContentManagement() {
 
       {/* Direct Input Modal */}
       {showDirectInputModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 text-gray-900">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold">직접 내용 입력</h3>
@@ -1414,7 +1394,7 @@ function DirectInputModal({
                   setError(null);
                 }}
                 placeholder="콘텐츠 제목을 입력하세요"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                 disabled={saving}
                 maxLength={200}
               />
