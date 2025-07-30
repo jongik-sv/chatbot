@@ -74,9 +74,12 @@ const LLMServiceJS = require('../../../services/LLMService');
 This path is critical and frequently breaks during refactoring.
 
 #### Environment Configuration
-Two `.env` patterns:
-- Root level: For JavaScript services (DATABASE_PATH, GOOGLE_API_KEY)
-- Next.js level: Standard Next.js env vars (prefixed with NEXT_PUBLIC_)
+Centralized `.env.local` at project root:
+- **Database**: DATABASE_PATH, GOOGLE_GEMINI_API_KEY
+- **RAG Settings**: RAG_TOP_K, RAG_THRESHOLD, RAG_DEFAULT_MODEL  
+- **Server**: OLLAMA_BASE_URL, NEXT_PUBLIC_APP_URL
+- **Security**: JWT_SECRET, ENCRYPTION_KEY
+- Next.js automatically loads root-level .env files
 
 #### API Route Handling
 The `/api/chat` route handles both JSON and FormData:
