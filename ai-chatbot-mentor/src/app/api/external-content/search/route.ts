@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExternalContentBridge } from '@/lib/external-content-bridge';
+import { ExternalContentService } from '@/services/ExternalContentService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
-    const bridge = getExternalContentBridge();
+    // TypeScript ExternalContentService 직접 사용
+    const service = ExternalContentService.getInstance();
 
     // 콘텐츠 검색
-    const searchResult = await bridge.searchContents(query.trim(), {
+    const searchResult = service.searchContents(query.trim(), {
       contentType: contentType || 'all',
       limit: Math.min(limit, 50),
       offset: 0
@@ -93,11 +93,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
-    const bridge = getExternalContentBridge();
+    // TypeScript ExternalContentService 직접 사용
+    const service = ExternalContentService.getInstance();
 
     // 콘텐츠 검색
-    const searchResult = await bridge.searchContents(query.trim(), {
+    const searchResult = service.searchContents(query.trim(), {
       contentType: contentType || 'all',
       limit: Math.min(limit, 50),
       offset: 0

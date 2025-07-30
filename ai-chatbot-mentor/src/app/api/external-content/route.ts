@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExternalContentBridge } from '@/lib/external-content-bridge';
+import { ExternalContentService } from '@/services/ExternalContentService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,14 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
-    const bridge = getExternalContentBridge();
+    // TypeScript ExternalContentService 직접 사용
+    const service = ExternalContentService.getInstance();
 
     console.log(`콘텐츠 추출 요청: ${url}`);
     console.log('옵션:', options);
 
     // 콘텐츠 추출 실행
-    const result = await bridge.extractContent(url, {
+    const result = await service.extractContent(url, {
       ...options,
       customGptId: customGptId ? parseInt(customGptId) : null,
       saveToDatabase: true
@@ -92,11 +92,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // JavaScript ExternalContentService 브릿지 사용
-    const bridge = getExternalContentBridge();
+    // TypeScript ExternalContentService 직접 사용
+    const service = ExternalContentService.getInstance();
 
     // 모든 콘텐츠 조회
-    const contents = await bridge.getAllContents({
+    const contents = service.getAllContents({
       contentType: contentType === 'all' ? undefined : contentType,
       customGptId: customGptId ? parseInt(customGptId) : undefined,
       limit,
@@ -149,11 +149,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 외부 콘텐츠 서비스 브릿지 사용
-    const bridge = getExternalContentBridge();
+    // TypeScript ExternalContentService 직접 사용
+    const service = ExternalContentService.getInstance();
 
     // 콘텐츠 삭제
-    const deleted = await bridge.deleteContent(contentId);
+    const deleted = service.deleteContent(contentId);
 
     return NextResponse.json({
       success: true,

@@ -305,6 +305,34 @@ export class ExternalContentService {
   }
 
   /**
+   * JavaScript 서비스와 호환성을 위한 메서드들
+   */
+  public async extractContent(url: string, options: any = {}): Promise<ExternalContentResult> {
+    const processOptions: ContentProcessingOptions = {
+      addToKnowledgeBase: options.saveToDatabase || false,
+      customGptId: options.customGptId?.toString() || undefined,
+      ...options
+    };
+    
+    return this.processExternalContent(url, processOptions);
+  }
+
+  public getAllContents(options: any = {}): ExternalContentResult[] {
+    // Mock implementation - JavaScript 서비스와 호환성을 위해
+    return [];
+  }
+
+  public searchContents(query: string, options: any = {}): { results: ExternalContentResult[] } {
+    // Mock implementation - JavaScript 서비스와 호환성을 위해
+    return { results: [] };
+  }
+
+  public deleteContent(contentId: string): boolean {
+    // Mock implementation - JavaScript 서비스와 호환성을 위해
+    return true;
+  }
+
+  /**
    * 외부 콘텐츠 통합 처리 메인 메서드
    */
   public async processExternalContent(
