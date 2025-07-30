@@ -311,4 +311,32 @@ topK, threshold 하드코딩 설정을  .env.local에 넣어주면 좋겠어.
 
 ------
 
-프로젝트 루트에도 .env.local 파일이 있는데. 이렇게 하면 어디 것을 설정해야 하지?
+프로젝트 루트에도 .env.local 파일이 있는데. 이렇게 하면 어디 것을 설정해야 하지?-----
+-
+
+kiro : 임시 파일 및 테스트 파일 정리 요청------
+
+
+kiro : Gemini API 키 설정 위치 확인 요청----
+--
+
+kiro : Gemini API 키 설정 위치 확인 요청------
+
+
+kiro : 환경 변수 참조 경로 수정 및 chat_sessions 테이블 오류 해결 요청
+- ./ai-chatbot-mentor/.env.local → ./.env.local로 변경
+- SqliteError: no such table: chat_sessions 오류 해결-----
+-
+
+kiro : 환경 변수 참조 경로 수정 및 chat_sessions 테이블 오류 해결 요청
+- ./ai-chatbot-mentor/.env.local → ./.env.local로 변경
+- SqliteError: no such table: chat_sessions 오류 해결-
+-----
+
+kiro : 환경 변수 참조 경로 수정 및 chat_sessions 테이블 오류 해결 요청
+- ./ai-chatbot-mentor/.env.local → ./.env.local로 변경
+- SqliteError: no such table: chat_sessions 오류 해결
+---
+---
+
+kiro : ./ai-chatbot-mentor/.env.local → ./.env.local로 변경
