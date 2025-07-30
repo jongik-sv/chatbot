@@ -3,8 +3,13 @@ import ExternalContentService from '@/services/ExternalContentService';
 
 // JavaScript ExternalContentService 사용
 function getJavaScriptExternalContentService() {
-  const { getInstance } = require('../../../services/ExternalContentService');
-  return getInstance();
+  try {
+    const { getInstance } = require('../../../services/ExternalContentServiceWrapper');
+    return getInstance();
+  } catch (error) {
+    console.error('ExternalContentService 로드 실패:', error);
+    throw error;
+  }
 }
 
 export async function POST(request: NextRequest) {
