@@ -948,7 +948,7 @@ function DocumentUploadModal({
           id="upload-project"
           value={projectId}
           onChange={(e) => setProjectId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700"
           disabled={uploading}
         >
           {projects.map(project => (

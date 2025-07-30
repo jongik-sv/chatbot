@@ -26,7 +26,7 @@ export default function MBTIPage() {
   const handleMentorSelect = async (mentorType: MBTIType, mentorCompatibility?: MBTICompatibility) => {
     setSelectedMentorType(mentorType);
     setCompatibility(mentorCompatibility);
-    
+
     // MBTI 멘토 생성
     try {
       const response = await fetch('/api/mbti/mentor', {
@@ -82,7 +82,7 @@ export default function MBTIPage() {
                   이전
                 </button>
               )}
-              
+
               <div className="flex items-center space-x-2">
                 <SparklesIcon className="w-6 h-6 text-purple-600" />
                 <h1 className="text-xl font-bold text-gray-900">MBTI 멘토링</h1>
@@ -91,22 +91,19 @@ export default function MBTIPage() {
 
             {/* 진행 단계 표시 */}
             <div className="flex items-center space-x-2">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                currentStep === 'user-mbti' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${currentStep === 'user-mbti' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
                 1
               </div>
               <div className="w-8 h-0.5 bg-gray-200"></div>
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                currentStep === 'mentor-select' ? 'bg-blue-600 text-white' : 
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${currentStep === 'mentor-select' ? 'bg-blue-600 text-white' :
                 currentStep === 'chat' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
+                }`}>
                 2
               </div>
               <div className="w-8 h-0.5 bg-gray-200"></div>
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                currentStep === 'chat' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-              }`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${currentStep === 'chat' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                }`}>
                 3
               </div>
             </div>
@@ -129,9 +126,9 @@ export default function MBTIPage() {
                 </p>
                 {compatibility && (
                   <p className="text-sm text-gray-500">
-                    호환성: {compatibility.compatibilityScore}/10 
-                    {compatibility.compatibilityScore >= 8 ? ' 🟢 매우 좋음' : 
-                     compatibility.compatibilityScore >= 6 ? ' 🟡 좋음' : ' 🔴 보통'}
+                    호환성: {compatibility.compatibilityScore}/10
+                    {compatibility.compatibilityScore >= 8 ? ' 🟢 매우 좋음' :
+                      compatibility.compatibilityScore >= 6 ? ' 🟡 좋음' : ' 🔴 보통'}
                   </p>
                 )}
               </div>
@@ -168,7 +165,7 @@ export default function MBTIPage() {
 
           {currentStep === 'chat' && mentorId && (
             <ChatProvider>
-              <ChatInterface 
+              <ChatInterface
                 className="h-full"
                 initialMode="mbti"
                 initialMentorId={mentorId}
