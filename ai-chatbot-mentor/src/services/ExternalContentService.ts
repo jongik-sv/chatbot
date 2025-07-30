@@ -50,9 +50,15 @@ export class ExternalContentService {
       // DocumentStorageService 초기화 (일반 constructor 사용)
       this.documentStorageService = new DocumentStorageService();
       
-      // EmbeddingService 초기화 (getInstance가 있는 경우)  
-      this.embeddingService = EmbeddingService.getInstance ? 
-        EmbeddingService.getInstance() : new EmbeddingService();
+      // EmbeddingService 초기화 (getInstance가 있는 경우)
+      try {
+        this.embeddingService = EmbeddingService.getInstance ? 
+          EmbeddingService.getInstance() : new EmbeddingService();
+        console.log('EmbeddingService 초기화 성공');
+      } catch (embeddingError) {
+        console.warn('EmbeddingService 초기화 실패, Mock 서비스 사용:', embeddingError.message);
+        this.embeddingService = this.createMockEmbeddingService();
+      }
     } catch (error) {
       console.error('ExternalContentService 의존성 초기화 실패:', error);
       // Mock 서비스들로 대체
@@ -123,10 +129,31 @@ export class ExternalContentService {
 
   private createMockEmbeddingService(): any {
     return {
-      generateEmbedding: async (text: string) => new Array(768).fill(0.1),
+      generateEmbedding: async (text: string) => {
+        // 텍스트 기반 간단한 해시 임베딩 생성 (개발/테스트용)
+        const hash = this.simpleHash(text);
+        const embedding = new Array(384).fill(0).map((_, i) => {
+          return Math.sin(hash + i) * 0.5; // -0.5 ~ 0.5 범위의 값
+        });
+        console.log(`Mock 임베딩 생성: ${text.substring(0, 50)}... -> ${embedding.length}차원`);
+        return embedding;
+      },
+      initialize: async () => {
+        console.log('Mock EmbeddingService 초기화 완료');
+      },
       storeEmbedding: async (embeddingData: any) => `mock_embedding_${Date.now()}`,
       searchSimilarChunks: async (query: string, limit: number = 10) => []
     };
+  }
+
+  private simpleHash(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 32bit integer로 변환
+    }
+    return Math.abs(hash);
   }
 
   /**

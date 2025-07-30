@@ -37,6 +37,7 @@
     "mermaid": "^11.9.0",
     "multer": "^2.0.2",
     "next": "15.4.4",
+    "node-fetch": "^3.3.2",
     "ollama": "^0.5.16",
     "pdf-parse": "^1.1.1",
     "puppeteer": "^24.15.0",
