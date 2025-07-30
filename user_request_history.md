@@ -465,3 +465,31 @@ Next.js 앱의 여러 파일에서 `path.join()` 대신 `path.resolve()`를 사�
 이제 ChatRepository가 올바른 데이터베이스 파일에 확실히 연결됩니다.
 
 ------
+
+## 2025-07-30 - 환경 변수 기반 데이터베이스 경로 통일
+
+### 문제 파악
+사용자 지적에 따라 문제를 차근차근 분석:
+- `.env.local`의 `DATABASE_PATH=./data/chatbot.db`가 Next.js 앱 디렉토리 기준이어서 잘못된 경로를 가리킴
+- 실제 DB: `C:\Project\chatbot\data\chatbot.db`
+- Next.js가 찾는 경로: `C:\Project\chatbot\ai-chatbot-mentor\data\chatbot.db`
+
+### 해결 방법
+1. **환경 변수 수정**: `DATABASE_PATH=../data/chatbot.db`로 변경
+2. **모든 파일 통일**: ChatRepository, 서비스들, API 라우트들이 모두 환경 변수를 우선 사용하도록 수정
+3. **일관된 패턴 적용**:
+   ```javascript
+   const dbPath = process.env.DATABASE_PATH 
+     ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+     : path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
+   ```
+
+### 수정된 파일들
+- `ChatRepository.js`
+- `database.ts`  
+- 4개 서비스 파일 (ExternalContentService, CustomGPTService, DocumentStorageService, EmbeddingService)
+- 3개 API 라우트 (projects, documents, documents/upload)
+
+이제 모든 코드가 동일한 데이터베이스 파일을 참조합니다.
+
+------

@@ -3,7 +3,9 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const DB_PATH = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
+const DB_PATH = process.env.DATABASE_PATH 
+  ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+  : path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
 // const SCHEMA_PATH = path.join(process.cwd(), 'database', 'schema.sql'); // 사용하지 않음
 
 let db: Database.Database | null = null;

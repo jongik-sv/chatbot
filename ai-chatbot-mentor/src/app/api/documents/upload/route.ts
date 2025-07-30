@@ -81,7 +81,9 @@ export async function POST(request: NextRequest) {
       const Database = require('better-sqlite3');
       const path = require('path');
       
-      const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
+      const dbPath = process.env.DATABASE_PATH 
+        ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+        : path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
       const db = new Database(dbPath);
       
       // documents 테이블에 직접 저장

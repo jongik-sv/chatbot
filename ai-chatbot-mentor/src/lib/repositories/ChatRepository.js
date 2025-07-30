@@ -8,8 +8,11 @@ const fs = require("fs");
 
 class ChatRepository {
   constructor() {
-    // 안전한 경로 설정: __dirname 기준으로 프로젝트 루트까지 이동
-    this.dbPath = process.env.DATABASE_PATH || path.join(__dirname, "..", "..", "..", "..", "data", "chatbot.db");
+    // 환경 변수 DATABASE_PATH를 우선 사용
+    this.dbPath = process.env.DATABASE_PATH 
+      ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+      : path.join(__dirname, "..", "..", "..", "..", "data", "chatbot.db");
+    
     this.db = null;
     this.initDatabase();
   }

@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
 
     // 프로젝트별 문서 필터링을 위한 직접 DB 쿼리
     if (projectId) {
-      const dbPath = path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
+      const dbPath = process.env.DATABASE_PATH 
+        ? path.resolve(process.cwd(), process.env.DATABASE_PATH)
+        : path.resolve(process.cwd(), '..', 'data', 'chatbot.db');
       const db = new Database(dbPath);
       
       // 선택된 프로젝트와 공통 프로젝트(id=1)의 문서들을 조회
