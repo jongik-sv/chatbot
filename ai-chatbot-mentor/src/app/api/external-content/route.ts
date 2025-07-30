@@ -1,28 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ExternalContentService from '@/services/ExternalContentService';
-
-// JavaScript ExternalContentService 사용
-function getJavaScriptExternalContentService() {
-  try {
-    // 절대 경로 사용
-    const path = require('path');
-    const servicePath = path.resolve(process.cwd(), 'services', 'ExternalContentService.js');
-    const { getInstance } = require(servicePath);
-    return getInstance();
-  } catch (error) {
-    console.error('ExternalContentService 로드 실패:', error);
-    console.error('현재 작업 디렉토리:', process.cwd());
-    
-    // 폴백으로 직접 경로 시도
-    try {
-      const { getInstance } = require('../../../../../../services/ExternalContentService');
-      return getInstance();
-    } catch (fallbackError) {
-      console.error('폴백 경로도 실패:', fallbackError);
-      throw new Error(`ExternalContentService를 로드할 수 없습니다: ${error.message}`);
-    }
-  }
-}
+import { getExternalContentBridge } from '@/lib/external-content-bridge';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,14 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 사용
-    const jsService = getJavaScriptExternalContentService();
+    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
+    const bridge = getExternalContentBridge();
 
     console.log(`콘텐츠 추출 요청: ${url}`);
     console.log('옵션:', options);
 
     // 콘텐츠 추출 실행
-    const result = await jsService.extractContent(url, {
+    const result = await bridge.extractContent(url, {
       ...options,
       customGptId: customGptId ? parseInt(customGptId) : null,
       saveToDatabase: true
@@ -115,11 +92,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // JavaScript ExternalContentService 사용
-    const jsService = getJavaScriptExternalContentService();
+    // JavaScript ExternalContentService 브릿지 사용
+    const bridge = getExternalContentBridge();
 
     // 모든 콘텐츠 조회
-    const contents = jsService.getAllContents({
+    const contents = await bridge.getAllContents({
       contentType: contentType === 'all' ? undefined : contentType,
       customGptId: customGptId ? parseInt(customGptId) : undefined,
       limit,
@@ -172,11 +149,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 외부 콘텐츠 서비스 초기화
-    const contentService = await getExternalContentService();
+    // 외부 콘텐츠 서비스 브릿지 사용
+    const bridge = getExternalContentBridge();
 
-    // 콘텐츠 삭제 (Mock으로 항상 성공)
-    const deleted = true;
+    // 콘텐츠 삭제
+    const deleted = await bridge.deleteContent(contentId);
 
     return NextResponse.json({
       success: true,
@@ -219,11 +196,8 @@ export async function PUT(request: NextRequest) {
 
     // 각 URL 처리 (mock)
     const results = urls.map((url: string, index: number) => {
-      const contentType = detectContentType(url);
-      
-      if (contentType === 'unknown') {
-        return new Error(`지원하지 않는 URL 형식: ${url}`);
-      }
+      // 간단한 URL 타입 감지
+      const contentType = url.includes('youtube.com') || url.includes('youtu.be') ? 'youtube' : 'website';
 
       return {
         id: `${contentType}_${Date.now()}_${index}`,

@@ -1,28 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ExternalContentService from '@/services/ExternalContentService';
-
-// JavaScript ExternalContentService 사용
-function getJavaScriptExternalContentService() {
-  try {
-    // 절대 경로 사용
-    const path = require('path');
-    const servicePath = path.resolve(process.cwd(), 'services', 'ExternalContentService.js');
-    const { getInstance } = require(servicePath);
-    return getInstance();
-  } catch (error) {
-    console.error('ExternalContentService 로드 실패:', error);
-    console.error('현재 작업 디렉토리:', process.cwd());
-    
-    // 폴백으로 직접 경로 시도
-    try {
-      const { getInstance } = require('../../../../../../../services/ExternalContentService');
-      return getInstance();
-    } catch (fallbackError) {
-      console.error('폴백 경로도 실패:', fallbackError);
-      throw new Error(`ExternalContentService를 로드할 수 없습니다: ${error.message}`);
-    }
-  }
-}
+import { getExternalContentBridge } from '@/lib/external-content-bridge';
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,11 +23,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 사용
-    const jsService = getJavaScriptExternalContentService();
+    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
+    const bridge = getExternalContentBridge();
 
     // 콘텐츠 검색
-    const searchResult = jsService.searchContents(query.trim(), {
+    const searchResult = await bridge.searchContents(query.trim(), {
       contentType: contentType || 'all',
       limit: Math.min(limit, 50),
       offset: 0
@@ -116,11 +93,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // JavaScript 외부 콘텐츠 서비스 사용
-    const jsService = getJavaScriptExternalContentService();
+    // JavaScript 외부 콘텐츠 서비스 브릿지 사용
+    const bridge = getExternalContentBridge();
 
     // 콘텐츠 검색
-    const searchResult = jsService.searchContents(query.trim(), {
+    const searchResult = await bridge.searchContents(query.trim(), {
       contentType: contentType || 'all',
       limit: Math.min(limit, 50),
       offset: 0
