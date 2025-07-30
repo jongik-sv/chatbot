@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import { config } from 'dotenv';
+import path from 'path';
+
+// 상위 디렉토리의 .env.local 파일 로드
+config({ path: path.resolve(__dirname, '../.env.local') });
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['better-sqlite3', 'pdf-parse', 'sqlite3', '@google/generative-ai'],
