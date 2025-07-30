@@ -14,6 +14,52 @@ import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
+/**
+ * 스트림 응답 생성
+ */
+function createStreamResponse(response: ChatResponse, content: string) {
+  const encoder = new TextEncoder();
+  
+  const stream = new ReadableStream({
+    start(controller) {
+      // 콘텐츠를 청크로 나누어 전송
+      const words = content.split(' ');
+      let currentIndex = 0;
+      
+      const sendChunk = () => {
+        if (currentIndex < words.length) {
+          const chunk = words[currentIndex] + (currentIndex < words.length - 1 ? ' ' : '');
+          const data = `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
+          controller.enqueue(encoder.encode(data));
+          currentIndex++;
+          
+          // 다음 청크를 약간의 지연 후 전송
+          setTimeout(sendChunk, 50);
+        } else {
+          // 완료 정보 전송
+          const completeData = `data: ${JSON.stringify({ type: 'complete', response })}\n\n`;
+          controller.enqueue(encoder.encode(completeData));
+          
+          // 스트림 종료
+          const doneData = `data: [DONE]\n\n`;
+          controller.enqueue(encoder.encode(doneData));
+          controller.close();
+        }
+      };
+      
+      sendChunk();
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
 const chatRepo = new ChatRepository();
 const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
@@ -210,7 +256,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     }
 
-    const { message, model, mode, sessionId, mentorId, userId } = body;
+    const { message, model, mode, sessionId, mentorId, userId, stream } = body;
 
     // 입력 검증
     if (!message || !message.trim()) {
@@ -619,6 +665,11 @@ export async function POST(request: NextRequest) {
           artifactsProcessed: createdArtifacts.length
         } : undefined
       };
+
+      // 스트림 요청인 경우
+      if (stream) {
+        return createStreamResponse(response, llmResponse.content);
+      }
 
       return NextResponse.json(response);
 

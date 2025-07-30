@@ -8,6 +8,52 @@ import { LLMService } from '@/services/LLMService';
 // JavaScript Repository 사용 (히스토리 API와 호환성을 위해)
 const ChatRepository = require('../../../../lib/repositories/ChatRepository');
 
+/**
+ * 스트림 응답 생성
+ */
+function createStreamResponse(response: any, content: string) {
+  const encoder = new TextEncoder();
+  
+  const stream = new ReadableStream({
+    start(controller) {
+      // 콘텐츠를 청크로 나누어 전송
+      const words = content.split(' ');
+      let currentIndex = 0;
+      
+      const sendChunk = () => {
+        if (currentIndex < words.length) {
+          const chunk = words[currentIndex] + (currentIndex < words.length - 1 ? ' ' : '');
+          const data = `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
+          controller.enqueue(encoder.encode(data));
+          currentIndex++;
+          
+          // 다음 청크를 약간의 지연 후 전송
+          setTimeout(sendChunk, 50);
+        } else {
+          // 완료 정보 전송
+          const completeData = `data: ${JSON.stringify({ type: 'complete', response })}\n\n`;
+          controller.enqueue(encoder.encode(completeData));
+          
+          // 스트림 종료
+          const doneData = `data: [DONE]\n\n`;
+          controller.enqueue(encoder.encode(doneData));
+          controller.close();
+        }
+      };
+      
+      sendChunk();
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { 
@@ -17,7 +63,8 @@ export async function POST(request: NextRequest) {
       topK = 5, 
       threshold = 0.3,
       sessionId,
-      userId = 1 
+      userId = 1,
+      stream = false
     } = await request.json();
 
     if (!message || message.trim().length === 0) {
@@ -206,7 +253,7 @@ ${context}
     // 세션 마지막 활동 시간 업데이트
     chatRepo.updateSessionTimestamp(currentSession.id);
 
-    return NextResponse.json({
+    const apiResponse = {
       success: true,
       response: responseContent,
       sessionId: currentSession.id,
@@ -225,7 +272,14 @@ ${context}
         contextLength: context.length,
         promptLength: systemPrompt.length
       }
-    });
+    };
+
+    // 스트림 요청인 경우
+    if (stream) {
+      return createStreamResponse(apiResponse, responseContent);
+    }
+
+    return NextResponse.json(apiResponse);
 
   } catch (error) {
     console.error('RAG 채팅 오류:', error);

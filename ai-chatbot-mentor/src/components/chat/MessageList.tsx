@@ -20,6 +20,7 @@ interface Message {
 interface MessageListProps {
   messages: Message[];
   mentorId?: number;
+  isStreaming?: boolean;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -52,7 +53,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export default function MessageList({ messages, mentorId }: MessageListProps) {
+export default function MessageList({ messages, mentorId, isStreaming }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { state } = useChatContext();
 

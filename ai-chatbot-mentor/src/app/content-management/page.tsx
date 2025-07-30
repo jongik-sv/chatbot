@@ -493,7 +493,6 @@ export default function ContentManagement() {
         </div>
       )}
       </div>
-      </div>
     </MainLayout>
   );
 }

@@ -5,7 +5,109 @@ const API_BASE_URL = '/api';
 
 export class ApiClient {
   /**
-   * 채팅 메시지 전송
+   * 채팅 메시지 전송 (스트림)
+   */
+  static async sendMessageStream(
+    request: ChatRequest,
+    onChunk: (chunk: string) => void,
+    onComplete: (response: ChatResponse) => void,
+    onError: (error: Error) => void
+  ): Promise<void> {
+    try {
+      // 파일이 있는 경우 일반 전송 사용 (스트림 미지원)
+      if (request.files && request.files.length > 0) {
+        const response = await this.sendMessageWithFiles(request);
+        onComplete(response);
+        return;
+      }
+
+      // 문서 기반 대화인 경우 RAG 엔드포인트 사용
+      const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
+
+      // 요청 데이터 구조화
+      const requestData = {
+        message: request.message,
+        model: request.model,
+        mode: request.mode || 'chat',
+        stream: true, // 스트림 요청
+        ...(request.sessionId && { sessionId: request.sessionId }),
+        ...(request.mentorId && { mentorId: request.mentorId }),
+        ...(request.documentIds && request.documentIds.length > 0 && { documentIds: request.documentIds })
+      };
+
+      console.log('API 스트림 요청 데이터:', requestData);
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '메시지 전송에 실패했습니다.');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('스트림을 읽을 수 없습니다.');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let completeResponse: ChatResponse | null = null;
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              
+              if (data === '[DONE]') {
+                if (completeResponse) {
+                  onComplete(completeResponse);
+                }
+                return;
+              }
+
+              try {
+                const parsed = JSON.parse(data);
+                
+                if (parsed.type === 'chunk') {
+                  onChunk(parsed.content);
+                } else if (parsed.type === 'complete') {
+                  completeResponse = parsed.response;
+                }
+              } catch (e) {
+                console.warn('스트림 파싱 오류:', e);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      if (completeResponse) {
+        onComplete(completeResponse);
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error : new Error('알 수 없는 오류가 발생했습니다.'));
+    }
+  }
+
+  /**
+   * 채팅 메시지 전송 (기존 방식)
    */
   static async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     // 파일이 있는 경우 FormData 사용, 없으면 JSON 사용
