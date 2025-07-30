@@ -92,8 +92,8 @@ export class DocumentStorageService {
   /**
    * 처리된 문서를 데이터베이스에 저장
    */
-  async saveDocument(processedDoc: ProcessedDocument, originalFilePath: string): Promise<string> {
-    const transaction = this.db.transaction((doc: ProcessedDocument, filePath: string) => {
+  async saveDocument(processedDoc: ProcessedDocument, originalFilePath: string, projectId: number = 1): Promise<string> {
+    const transaction = this.db.transaction((doc: ProcessedDocument, filePath: string, projId: number) => {
       // 파일을 업로드 디렉터리로 이동
       const fileExtension = path.extname(doc.filename);
       const savedFilename = `${doc.id}${fileExtension}`;
@@ -105,8 +105,8 @@ export class DocumentStorageService {
       // 문서 정보 저장 (기존 schema에 맞춰 수정)
       const insertDoc = this.db.prepare(`
         INSERT INTO documents (
-          filename, file_type, file_path, content, metadata, file_size
-        ) VALUES (?, ?, ?, ?, ?, ?)
+          user_id, project_id, filename, file_type, file_path, content, metadata, file_size
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const metadata = {
@@ -118,6 +118,8 @@ export class DocumentStorageService {
       };
 
       const result = insertDoc.run(
+        1, // user_id (시스템 사용자)
+        projId, // project_id
         doc.filename,
         doc.fileType,
         savedFilePath,
@@ -156,7 +158,7 @@ export class DocumentStorageService {
     });
 
     try {
-      return transaction(processedDoc, originalFilePath);
+      return transaction(processedDoc, originalFilePath, projectId);
     } catch (error) {
       console.error('문서 저장 중 오류:', error);
       throw new Error(`문서 저장 실패: ${error.message}`);
@@ -400,6 +402,7 @@ export class DocumentStorageService {
     mimeType: string;
     size: number;
     uploadedAt: Date;
+    projectId?: number;
     customGptId?: string | null;
     sourceUrl?: string;
     sourceType?: string;
@@ -416,8 +419,8 @@ export class DocumentStorageService {
       // 문서 정보 저장
       const insertDoc = this.db.prepare(`
         INSERT INTO documents (
-          filename, file_type, file_path, content, metadata, file_size
-        ) VALUES (?, ?, ?, ?, ?, ?)
+          user_id, project_id, filename, file_type, file_path, content, metadata, file_size
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const documentMetadata = {
@@ -435,6 +438,8 @@ export class DocumentStorageService {
       };
 
       const result = insertDoc.run(
+        1, // user_id (시스템 사용자)
+        meta.projectId || 1, // project_id
         meta.filename,
         fileType,
         virtualFilePath,

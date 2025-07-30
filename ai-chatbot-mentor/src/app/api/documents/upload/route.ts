@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const projectId = formData.get('projectId') as string;
 
     if (!file) {
       return NextResponse.json(
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       
       // 데이터베이스에 저장
       const storageService = new DocumentStorageService();
-      const documentId = await storageService.saveDocument(processedDoc, tempFilePath);
+      const documentId = await storageService.saveDocument(processedDoc, tempFilePath, parseInt(projectId) || 1);
       
       // 임시 파일 정리
       fs.unlinkSync(tempFilePath);

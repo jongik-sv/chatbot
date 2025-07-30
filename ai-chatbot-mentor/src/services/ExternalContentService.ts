@@ -18,6 +18,7 @@ interface ExternalContentResult {
 interface ContentProcessingOptions {
   addToKnowledgeBase?: boolean;
   generateEmbedding?: boolean;
+  projectId?: number;
   customGptId?: string;
   summarize?: boolean;
   extractKeywords?: boolean;
@@ -169,7 +170,7 @@ export class ExternalContentService {
 
       // 지식 베이스에 추가
       if (options.addToKnowledgeBase && youtubeContent.transcript) {
-        await this.addToKnowledgeBase(result, options.customGptId);
+        await this.addToKnowledgeBase(result, options.customGptId, options.projectId);
       }
 
       return result;
@@ -219,7 +220,7 @@ export class ExternalContentService {
 
       // 지식 베이스에 추가
       if (options.addToKnowledgeBase && scrapedContent.content) {
-        await this.addToKnowledgeBase(result, options.customGptId);
+        await this.addToKnowledgeBase(result, options.customGptId, options.projectId);
       }
 
       return result;
@@ -234,7 +235,8 @@ export class ExternalContentService {
    */
   private async addToKnowledgeBase(
     content: ExternalContentResult, 
-    customGptId?: string
+    customGptId?: string,
+    projectId: number = 1
   ): Promise<void> {
     try {
       // 문서로 저장
@@ -244,6 +246,7 @@ export class ExternalContentService {
         mimeType: 'text/plain',
         size: content.content.length,
         uploadedAt: new Date(),
+        projectId: projectId,
         customGptId: customGptId || null,
         sourceUrl: content.url,
         sourceType: content.type,

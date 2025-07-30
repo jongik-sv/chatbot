@@ -545,6 +545,7 @@ export default function ContentManagement() {
             </div>
             
             <DocumentUploadModal
+              projects={projects}
               onSuccess={() => {
                 setShowUploadModal(false);
                 loadContents();
@@ -570,6 +571,7 @@ export default function ContentManagement() {
             </div>
             
             <UrlInputModal
+              projects={projects}
               onSuccess={() => {
                 setShowUrlModal(false);
                 loadContents();
@@ -582,10 +584,10 @@ export default function ContentManagement() {
 
       {/* Project Creation Modal */}
       {showProjectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-centtext-gray-700er justify-center p-4 z-50 ">
           <div className="bg-white rounded-lg max-w-lg w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">새 프로젝트 생성</h3>
+              <h3 className="text-lg font-semibold text-gray-700 hover:text-gray-900">새 프로젝트 생성</h3>
               <button
                 onClick={() => setShowProjectModal(false)}
                 className="p-1 text-gray-600 hover:text-gray-700"
@@ -725,8 +727,17 @@ export default function ContentManagement() {
 }
 
 // Document Upload Modal Component
-function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+function DocumentUploadModal({ 
+  projects, 
+  onSuccess, 
+  onCancel 
+}: { 
+  projects: Project[]; 
+  onSuccess: () => void; 
+  onCancel: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
+  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -781,6 +792,7 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('projectId', projectId);
 
       // XMLHttpRequest를 사용하여 업로드 진행률 추적
       const xhr = new XMLHttpRequest();
@@ -826,6 +838,26 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
 
   return (
     <div className="space-y-4">
+      {/* 프로젝트 선택 */}
+      <div className="space-y-2">
+        <label htmlFor="upload-project" className="block text-sm font-medium text-gray-700">
+          프로젝트 선택
+        </label>
+        <select
+          id="upload-project"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          disabled={uploading}
+        >
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
@@ -910,8 +942,17 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
 }
 
 // URL Input Modal Component
-function UrlInputModal({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
+function UrlInputModal({ 
+  projects, 
+  onSuccess, 
+  onCancel 
+}: { 
+  projects: Project[]; 
+  onSuccess: () => void; 
+  onCancel: () => void;
+}) {
   const [url, setUrl] = useState('');
+  const [projectId, setProjectId] = useState('1'); // 기본 프로젝트
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -947,6 +988,7 @@ function UrlInputModal({ onSuccess, onCancel }: { onSuccess: () => void; onCance
         },
         body: JSON.stringify({
           url: url.trim(),
+          projectId: parseInt(projectId),
           saveToDatabase: true
         }),
       });
@@ -978,6 +1020,26 @@ function UrlInputModal({ onSuccess, onCancel }: { onSuccess: () => void; onCance
 
   return (
     <div className="space-y-4">
+      {/* 프로젝트 선택 */}
+      <div className="space-y-2">
+        <label htmlFor="url-project" className="block text-sm font-medium text-gray-700">
+          프로젝트 선택
+        </label>
+        <select
+          id="url-project"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          disabled={processing}
+        >
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="space-y-2">
         <label htmlFor="url-input" className="block text-sm font-medium text-gray-700">
           웹 주소 (URL)
@@ -1090,7 +1152,7 @@ function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="project-name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 hover:text-gray-900">
           프로젝트 이름 *
         </label>
         <input
@@ -1102,14 +1164,14 @@ function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; 
             setError(null);
           }}
           placeholder="예: 웹 개발 프로젝트"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
           disabled={creating}
           maxLength={100}
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="project-description" className="block text-sm font-medium text-gray-700  hover:text-gray-900">
           프로젝트 설명
         </label>
         <textarea
@@ -1117,7 +1179,7 @@ function ProjectCreationModal({ onSuccess, onCancel }: { onSuccess: () => void; 
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
           rows={3}
           disabled={creating}
           maxLength={500}

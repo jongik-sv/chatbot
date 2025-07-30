@@ -4,7 +4,7 @@ import { ExternalContentService } from '@/services/ExternalContentService';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url, options = {}, customGptId } = body;
+    const { url, projectId, options = {}, customGptId } = body;
 
     // URL 유효성 검사
     if (!url || typeof url !== 'string') {
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     // 콘텐츠 추출 실행
     const result = await service.extractContent(url, {
       ...options,
+      projectId: projectId ? parseInt(projectId) : 1,
       customGptId: customGptId ? parseInt(customGptId) : null,
       saveToDatabase: true
     });
