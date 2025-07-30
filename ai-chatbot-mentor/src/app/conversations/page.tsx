@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import MainLayout from '@/components/layout/MainLayout';
 import { 
   Squares2X2Icon, 
   ListBulletIcon,
@@ -187,7 +188,8 @@ export default function ConversationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <MainLayout>
+      <div className="h-full bg-gray-50 p-4 overflow-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -200,7 +202,7 @@ export default function ConversationsPage() {
           {/* Search and View Mode */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-4">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-600" />
               <input
                 type="text"
                 placeholder="대화 검색..."
@@ -298,7 +300,7 @@ export default function ConversationsPage() {
           </div>
         ) : conversations.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <ChatBubbleLeftRightIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <ChatBubbleLeftRightIcon className="mx-auto h-12 w-12 text-gray-600 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">대화가 없습니다</h3>
             <p className="text-gray-500 mb-4">
               {filters.search || filters.mode !== 'all' || filters.dateRange !== 'all' 
@@ -332,7 +334,7 @@ export default function ConversationsPage() {
                       </div>
                       <button
                         onClick={() => deleteConversation(conversation.id)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-gray-600 hover:text-red-600 transition-colors"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -456,7 +458,7 @@ export default function ConversationsPage() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400">없음</span>
+                            <span className="text-gray-600">없음</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -493,6 +495,7 @@ export default function ConversationsPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

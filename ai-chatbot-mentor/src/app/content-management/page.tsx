@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import MainLayout from '@/components/layout/MainLayout';
 import { 
   DocumentTextIcon, 
   GlobeAltIcon, 
@@ -172,7 +173,8 @@ export default function ContentManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <MainLayout>
+      <div className="h-full bg-gray-50 p-4 overflow-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -227,7 +229,7 @@ export default function ContentManagement() {
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-600" />
               <input
                 type="text"
                 placeholder="콘텐츠 검색..."
@@ -266,7 +268,7 @@ export default function ContentManagement() {
           </div>
         ) : filteredContents.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-600 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">콘텐츠가 없습니다</h3>
             <p className="text-gray-500 mb-4">
               {searchTerm ? '검색 조건에 맞는 콘텐츠가 없습니다' : '문서를 업로드하거나 웹 주소를 추가해보세요'}
@@ -301,7 +303,7 @@ export default function ContentManagement() {
                       </div>
                       <button
                         onClick={() => deleteContent(content)}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-gray-600 hover:text-red-600 transition-colors"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -449,7 +451,7 @@ export default function ContentManagement() {
               <h3 className="text-lg font-semibold">문서 업로드</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-gray-600 hover:text-gray-700"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -474,7 +476,7 @@ export default function ContentManagement() {
               <h3 className="text-lg font-semibold">웹 주소 추가</h3>
               <button
                 onClick={() => setShowUrlModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className="p-1 text-gray-600 hover:text-gray-700"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -490,7 +492,9 @@ export default function ContentManagement() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+      </div>
+    </MainLayout>
   );
 }
 
@@ -619,7 +623,7 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
         />
 
         <div className="flex flex-col items-center space-y-4">
-          <DocumentArrowUpIcon className="w-12 h-12 text-gray-400" />
+          <DocumentArrowUpIcon className="w-12 h-12 text-gray-600" />
           
           {file ? (
             <div className="space-y-2">
@@ -630,7 +634,7 @@ function DocumentUploadModal({ onSuccess, onCancel }: { onSuccess: () => void; o
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-900">문서를 업로드하세요</p>
               <p className="text-xs text-gray-500">파일을 드래그하거나 클릭하여 선택하세요</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600">
                 지원 형식: PDF, DOCX, TXT, DOC, PPTX, XLSX (최대 50MB)
               </p>
             </div>

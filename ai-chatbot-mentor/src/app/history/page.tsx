@@ -58,7 +58,7 @@ export default function HistoryPage() {
                 {view === 'detail' && (
                   <button
                     onClick={handleBackToList}
-                    className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
+                    className="p-2 text-gray-600 hover:text-gray-700 rounded-md"
                   >
                     <ArrowLeftIcon className="w-5 h-5" />
                   </button>

@@ -165,7 +165,7 @@ export default function ChatsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {sessions.length === 0 ? (
           <div className="text-center py-12">
-            <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">아직 대화가 없습니다</h3>
             <p className="text-gray-500 mb-6">새로운 대화를 시작해보세요!</p>
             <a
@@ -186,7 +186,7 @@ export default function ChatsPage() {
                 <button
                   onClick={(e) => handleDeleteSession(session.id, e)}
                   disabled={deletingSessionId === session.id}
-                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                  className="absolute top-2 right-2 p-1 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                   title="대화 삭제"
                 >
                   {deletingSessionId === session.id ? (
@@ -207,7 +207,7 @@ export default function ChatsPage() {
                       {getModeIcon(session.mode)}
                       <span className="ml-2">{getModeLabel(session.mode)}</span>
                     </div>
-                    <div className="flex items-center text-xs text-gray-400">
+                    <div className="flex items-center text-xs text-gray-600">
                       <CalendarIcon className="h-4 w-4 mr-1" />
                       {formatDate(session.updated_at)}
                     </div>
