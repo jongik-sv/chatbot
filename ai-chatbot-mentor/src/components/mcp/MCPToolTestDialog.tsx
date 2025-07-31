@@ -186,10 +186,10 @@ export default function MCPToolTestDialog({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
+        <div className="flex items-start justify-between p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex-1 min-w-0 mr-4">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <Code className="h-5 w-5" />
               MCP 도구 테스트
@@ -198,24 +198,26 @@ export default function MCPToolTestDialog({
               <Badge variant="outline">{serverId}</Badge>
               <Badge variant="secondary">{toolName}</Badge>
             </div>
-            <p className="text-sm text-gray-600 mt-1">{toolDescription}</p>
+            <div className="mt-2 max-h-20 overflow-y-auto">
+              <p className="text-sm text-gray-600">{toolDescription}</p>
+            </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* 컨텐츠 */}
-        <div className="flex h-[calc(90vh-120px)]">
+        <div className="flex flex-1 min-h-0">
           {/* 왼쪽: 파라미터 입력 */}
-          <div className="w-1/2 p-6 border-r border-gray-200 overflow-y-auto">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+          <div className="w-1/2 p-6 border-r border-gray-200 overflow-y-auto flex flex-col">
+            <div className="flex-1 flex flex-col space-y-4">
+              <div className="flex items-center justify-between flex-shrink-0">
                 <Label className="text-sm font-medium text-gray-900">
                   도구 파라미터
                 </Label>
@@ -231,35 +233,37 @@ export default function MCPToolTestDialog({
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex-1 flex flex-col space-y-2 min-h-0">
                 <Textarea
                   value={rawParams}
                   onChange={(e) => handleRawParamsChange(e.target.value)}
                   placeholder="JSON 형식으로 파라미터를 입력하세요..."
-                  className={`min-h-[200px] font-mono text-sm ${
+                  className={`flex-1 min-h-[150px] font-mono text-sm resize-none ${
                     !isValidJson ? 'border-red-300 focus:border-red-500' : ''
                   }`}
                 />
                 {!isValidJson && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm">
+                  <div className="flex items-center gap-2 text-red-600 text-sm flex-shrink-0">
                     <AlertCircle className="h-4 w-4" />
                     유효하지 않은 JSON 형식입니다
                   </div>
                 )}
               </div>
 
-              <Button
-                onClick={executeTest}
-                disabled={!isValidJson || isLoading}
-                className="w-full flex items-center gap-2"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                {isLoading ? '실행 중...' : '도구 실행'}
-              </Button>
+              <div className="flex-shrink-0">
+                <Button
+                  onClick={executeTest}
+                  disabled={!isValidJson || isLoading}
+                  className="w-full flex items-center gap-2"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {isLoading ? '실행 중...' : '도구 실행'}
+                </Button>
+              </div>
             </div>
           </div>
 
