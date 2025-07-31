@@ -209,14 +209,59 @@ export class MCPService extends EventEmitter {
    */
   async connectAllServers(): Promise<void> {
     const serverIds = Array.from(this.servers.keys());
+    const connectionPromises = [];
     
     for (const serverId of serverIds) {
+      const connectionPromise = this.connectToServerWithRetry(serverId, 2);
+      connectionPromises.push(connectionPromise);
+    }
+
+    // 모든 연결을 병렬로 시도하되, 실패해도 계속 진행
+    const results = await Promise.allSettled(connectionPromises);
+    
+    let connectedCount = 0;
+    let failedCount = 0;
+    
+    results.forEach((result, index) => {
+      const serverId = serverIds[index];
+      if (result.status === 'fulfilled') {
+        connectedCount++;
+        this.log('info', `Successfully connected to server: ${serverId}`);
+      } else {
+        failedCount++;
+        this.log('warn', `Failed to connect to server ${serverId}:`, result.reason);
+      }
+    });
+
+    this.log('info', `Connection summary: ${connectedCount} connected, ${failedCount} failed`);
+  }
+
+  /**
+   * 재시도를 포함한 서버 연결
+   */
+  private async connectToServerWithRetry(serverId: string, maxRetries: number = 3): Promise<void> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        this.log('info', `Connecting to ${serverId} (attempt ${attempt}/${maxRetries})`);
         await this.connectToServer(serverId);
+        return; // 성공시 즉시 반환
       } catch (error) {
-        this.log('warn', `Failed to connect to server ${serverId}:`, error);
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        this.log('warn', `Connection attempt ${attempt} failed for ${serverId}: ${lastError.message}`);
+        
+        // 마지막 시도가 아니면 잠시 대기
+        if (attempt < maxRetries) {
+          const delay = 1000 * attempt; // 점진적으로 대기 시간 증가
+          this.log('info', `Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     }
+    
+    // 모든 재시도 실패
+    throw lastError || new Error(`Failed to connect to ${serverId} after ${maxRetries} attempts`);
   }
 
   /**
@@ -229,6 +274,7 @@ export class MCPService extends EventEmitter {
     }
 
     try {
+      this.log('info', `Attempting to connect to server: ${serverId}`);
       this.connections.set(serverId, {
         serverId,
         status: 'connecting'
@@ -252,6 +298,7 @@ export class MCPService extends EventEmitter {
       // 기존 클라이언트가 있으면 연결 해제
       const existingClient = this.clients.get(serverId);
       if (existingClient) {
+        this.log('info', `Disconnecting existing client for server: ${serverId}`);
         await existingClient.disconnect();
       }
 
@@ -267,6 +314,8 @@ export class MCPService extends EventEmitter {
         tools: server.tools,
         autoApprove: server.autoApprove
       };
+
+      this.log('info', `Creating MCP client for ${serverId} with command: ${config.command} ${config.args?.join(' ') || ''}`);
 
       const client = new MCPClient(config, {
         timeout: this.settings.timeout,
@@ -285,6 +334,7 @@ export class MCPService extends EventEmitter {
           lastPing: new Date(),
           latency: 0
         });
+        this.log('info', `Successfully connected to MCP server: ${server.name}`);
         this.emitEvent('server_connected', serverId);
       });
 
@@ -294,6 +344,7 @@ export class MCPService extends EventEmitter {
           serverId,
           status: 'disconnected'
         });
+        this.log('warn', `MCP server disconnected: ${server.name}`);
         this.emitEvent('server_disconnected', serverId);
       });
 
@@ -305,30 +356,51 @@ export class MCPService extends EventEmitter {
           status: 'error',
           error: error.message
         });
+        this.log('error', `MCP server error for ${server.name}:`, error);
         this.emitEvent('server_error', serverId, { error: error.message });
       });
 
-      // 클라이언트 저장 및 연결
+      // 클라이언트 저장 및 연결 시도
       this.clients.set(serverId, client);
-      await client.connect();
+      
+      // 연결 타임아웃 설정
+      const connectPromise = client.connect();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Connection timeout after ${this.settings.timeout}ms`)), this.settings.timeout);
+      });
+
+      await Promise.race([connectPromise, timeoutPromise]);
 
       // 서버의 도구 목록 로드
       await this.loadServerTools(serverId);
 
-      this.log('info', `Connected to MCP server: ${server.name}`);
+      this.log('info', `Successfully initialized MCP server: ${server.name}`);
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Connection failed';
       server.status = 'error';
-      server.error = error instanceof Error ? error.message : 'Connection failed';
+      server.error = errorMessage;
       
       this.connections.set(serverId, {
         serverId,
         status: 'error',
-        error: server.error
+        error: errorMessage
       });
 
-      this.log('error', `Failed to connect to server ${serverId}:`, error);
-      this.emitEvent('server_error', serverId, { error: server.error });
+      this.log('error', `Failed to connect to server ${serverId}: ${errorMessage}`, error);
+      this.emitEvent('server_error', serverId, { error: errorMessage });
+      
+      // 실패한 클라이언트 정리
+      const failedClient = this.clients.get(serverId);
+      if (failedClient) {
+        try {
+          await failedClient.disconnect();
+        } catch (disconnectError) {
+          this.log('warn', `Failed to disconnect failed client for ${serverId}:`, disconnectError);
+        }
+        this.clients.delete(serverId);
+      }
+      
       throw error;
     }
   }

@@ -125,14 +125,30 @@ export class MCPClient extends EventEmitter {
           });
         }
 
-        // 프로세스가 시작될 때까지 잠시 대기
-        setTimeout(() => {
-          if (this.process && !this.process.killed) {
-            resolve();
-          } else {
-            reject(new Error('Server process failed to start'));
+        // 프로세스 시작 확인
+        let processStarted = false;
+        const startTimeout = setTimeout(() => {
+          if (!processStarted) {
+            reject(new Error('Server process start timeout'));
           }
-        }, 2000);
+        }, 10000); // 10초 타임아웃
+
+        // 프로세스가 정상적으로 시작되었는지 확인
+        const checkProcess = () => {
+          if (this.process && !this.process.killed) {
+            processStarted = true;
+            clearTimeout(startTimeout);
+            resolve();
+          }
+        };
+
+        // 즉시 확인하고, 1초 후 재확인
+        setTimeout(checkProcess, 100);
+        setTimeout(() => {
+          if (!processStarted) {
+            checkProcess();
+          }
+        }, 1000);
 
       } catch (error) {
         reject(error);
@@ -209,6 +225,11 @@ export class MCPClient extends EventEmitter {
     // JSON-RPC over stdio 통신 설정
     this.setupStdioTransport();
 
+    // 프로세스가 준비될 때까지 약간 대기
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    this.log('info', 'Starting MCP initialization handshake...');
+
     // 초기화 요청
     const initRequest: MCPRequest = {
       jsonrpc: '2.0',
@@ -229,20 +250,25 @@ export class MCPClient extends EventEmitter {
       }
     };
 
+    this.log('debug', 'Sending initialize request:', JSON.stringify(initRequest));
     const response = await this.sendRequest(initRequest);
+    this.log('debug', 'Received initialize response:', JSON.stringify(response));
     
     if (response.error) {
       throw new Error(`Initialization failed: ${response.error.message}`);
     }
 
     // 초기화 완료 알림
-    await this.sendNotification({
+    const notification = {
       jsonrpc: '2.0',
       method: 'notifications/initialized',
       params: {}
-    });
+    };
+    
+    this.log('debug', 'Sending initialized notification:', JSON.stringify(notification));
+    await this.sendNotification(notification);
 
-    this.log('info', 'MCP initialization completed');
+    this.log('info', 'MCP initialization completed successfully');
   }
 
   /**

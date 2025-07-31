@@ -1,32 +1,6 @@
 {
   "mcpServers": {
-    "mcp-fetch": {
-      "name": "MCP Fetch",
-      "description": "Web content fetching and processing",
-      "type": "builtin",
-      "disabled": false,
-      "tools": [
-        "fetch"
-      ],
-      "autoApprove": []
-    },
-    "supabase": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--read-only",
-        "--project-ref=bifocdkfviqeonfmfwvs"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_b6dc12f28750977c5a939f8ccc0dc6a34f49ec5d"
-      },
-      "disabled": false,
-      "autoApprove": []
-    },
-
+    
     "sequential-thinking": {
       "command": "cmd",
       "args": [
@@ -39,29 +13,7 @@
       "autoApprove": [
         "sequentialthinking"
       ]
-    },
-    "Context7": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
-      "disabled": false,
-      "autoApprove": []
-    },
-    "@21st-dev/magic": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "@21st-dev/magic@latest",
-        "API_KEY=\"5a2851de36b1edb88a791501330cd242686723563bbe7c625aa3a3317a467b51\""
-      ],
-      "disabled": false,
-      "autoApprove": []
     }
+    
   }
 }
