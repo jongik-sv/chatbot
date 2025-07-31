@@ -762,3 +762,7 @@ const endpoint = (request.mode === 'document' || request.mode === 'rag' ||
 http://localhost:3000/?mode=rag&projectId=4&projectName=LLM+%ED%85%8C%EC%8A%A4%ED%8A%B8&documentIds=%5B%223%22%5D&documentTitles=%5B%22RE-%EC%9D%B8%EC%82%AC-004+%EA%B8%89%EC%97%AC%EA%B7%9C%EC%A0%95+v1.5.docx%22%5D
 
 ------
+
+채팅창에 답변하는 AI의 모델을 같이 보여줘. 어떤 모델이 어떤 대답을 했는지 알고 싶어.
+
+------

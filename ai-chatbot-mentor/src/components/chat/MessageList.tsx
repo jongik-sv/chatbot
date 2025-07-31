@@ -23,6 +23,33 @@ interface MessageListProps {
   isStreaming?: boolean;
 }
 
+// 모델명을 사용자 친화적으로 표시
+function getModelDisplayName(model: string, provider?: string): string {
+  // RAG provider인 경우
+  if (provider === 'rag') {
+    return `${model} (RAG)`;
+  }
+  
+  // 모델명 단축 및 정리
+  const modelMappings: Record<string, string> = {
+    'gemini-2.0-flash-exp': 'Gemini 2.0 Flash',
+    'gemini-1.5-flash': 'Gemini 1.5 Flash', 
+    'gemini-1.5-pro': 'Gemini 1.5 Pro',
+    'gpt-4o': 'GPT-4o',
+    'gpt-4o-mini': 'GPT-4o Mini',
+    'gpt-4': 'GPT-4',
+    'gpt-3.5-turbo': 'GPT-3.5 Turbo',
+    'claude-3-opus': 'Claude 3 Opus',
+    'claude-3-sonnet': 'Claude 3 Sonnet',
+    'claude-3-haiku': 'Claude 3 Haiku',
+    'llama2': 'Llama 2',
+    'llava': 'LLaVA',
+    'codellama': 'Code Llama'
+  };
+  
+  return modelMappings[model] || model;
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
@@ -147,7 +174,18 @@ export default function MessageList({ messages, mentorId, isStreaming }: Message
                     message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}
                 >
-                  {formatChatTime(message.timestamp)}
+                  <div className="flex items-center gap-2">
+                    <span>{formatChatTime(message.timestamp)}</span>
+                    {/* AI 모델 정보 표시 */}
+                    {message.role === 'assistant' && message.metadata?.model && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full">
+                        <CpuChipIcon className="h-3 w-3 text-gray-600" />
+                        <span className="text-xs text-gray-600 font-medium">
+                          {getModelDisplayName(message.metadata.model, message.metadata.provider)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
