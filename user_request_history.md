@@ -689,7 +689,7 @@ Result: Error: Server mcp-sequential-thinking is not connected
    - MCP 도구 사용 전 `connectAllServers()` 호출
    - 연결 실패 시에도 계속 진행
 
-3. **사용자 친화적 오류 메시지**:
+3. **사용자 친화적 오러 메시지**:
    - 기술적 오류 대신 이해하기 쉬운 메시지 제공
    - "도구가 현재 사용할 수 없습니다. 서버 연결을 확인해주세요."
 
@@ -702,5 +702,52 @@ Result: Error: Server mcp-sequential-thinking is not connected
 ### 다음 단계
 - MCP 서버들의 실제 연결 상태 확인 필요
 - 필요시 서버 실행 명령어 및 환경 설정 점검
+
+------
+
+1. 문서 기반 대화는 /api/rag/chat 엔드포인트를 사용해주세요. 라고 나와.
+2. 왜 채팅을 할 때마다 새롭게 MCP를 실행하는 것 같지? 확인해줘.
+
+## 2025-07-31 - MCP 연결 문제 해결 및 사용자 친화적 오류 처리 개선
+
+### 요청 내용
+1. 문서 기반 대화가 `/api/rag/chat` 엔드포인트를 사용하도록 해달라는 메시지 해결
+2. 채팅할 때마다 불필요하게 MCP 도구가 실행되는 문제 해결
+
+### 문제 원인 분석
+1. **잘못된 엔드포인트 사용**: `src/lib/api.ts`에서 RAG/문서 기반 대화 시 `/api/chat` 사용
+2. **MCP 도구 과도한 실행**: `analyzeMCPToolsNeeded` 함수에서 "분석", "생각", "도구", "서버" 등 일반적인 키워드로 MCP 도구 실행
+
+### 해결 방법
+
+#### 1. API 엔드포인트 수정 (`src/lib/api.ts`)
+```typescript
+// 수정 전: 모든 대화가 /chat 사용
+// 수정 후: RAG/문서 기반 대화는 /rag/chat 사용
+const endpoint = (request.mode === 'document' || request.mode === 'rag' || 
+                 (request.documentIds && request.documentIds.length > 0)) ? 
+                 '/rag/chat' : '/chat';
+```
+
+#### 2. MCP 도구 실행 조건 개선 (`src/app/api/chat/route.ts`)
+```typescript
+// 수정 전: 너무 광범위한 키워드 ("분석", "생각", "도구" 등)
+// 수정 후: 더 구체적인 조건들로 변경
+- 복잡한 분석이 필요한 경우
+- 단계별 사고가 필요한 경우  
+- Excel/MCP 관련 명시적 요청
+- 순차적 사고나 체계적 분석이 명시된 경우
+```
+
+### 수정된 기능
+✅ RAG/문서 기반 대화가 올바른 `/api/rag/chat` 엔드포인트 사용
+✅ MCP 도구 실행 조건을 더 구체적으로 개선하여 불필요한 실행 방지
+✅ 일반적인 채팅에서는 MCP 도구가 실행되지 않도록 필터링 강화
+✅ 사용자 경험 개선: 불필요한 도구 실행으로 인한 지연 시간 단축
+
+### 결과
+- 문서 기반 대화 시 올바른 API 엔드포인트 사용
+- 일반 채팅에서 MCP 도구 과다 실행 문제 해결
+- 더 빠르고 효율적인 채팅 경험 제공
 
 ------

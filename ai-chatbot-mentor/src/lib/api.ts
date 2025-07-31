@@ -116,7 +116,7 @@ export class ApiClient {
     }
 
     // 문서 기반 대화인 경우 RAG 엔드포인트 사용
-    const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
+    const endpoint = (request.mode === 'document' || request.mode === 'rag' || (request.documentIds && request.documentIds.length > 0)) ? '/rag/chat' : '/chat';
 
     // 요청 데이터 구조화
     const requestData = {
@@ -178,7 +178,7 @@ export class ApiClient {
     }
 
     // 문서 기반 대화인 경우 RAG 엔드포인트 사용
-    const endpoint = request.mode === 'document' ? '/rag/chat' : '/chat';
+    const endpoint = (request.mode === 'document' || request.mode === 'rag' || (request.documentIds && request.documentIds.length > 0)) ? '/rag/chat' : '/chat';
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',

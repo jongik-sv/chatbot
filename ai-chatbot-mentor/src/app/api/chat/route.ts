@@ -137,10 +137,10 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     }
   }
 
-  // MCP 서버 검색 관련
-  if (lowerMessage.includes('mcp') || lowerMessage.includes('도구') ||
-      lowerMessage.includes('서버') || lowerMessage.includes('tool') ||
-      lowerMessage.includes('server')) {
+  // MCP 서버 검색 관련 (더 구체적인 조건)
+  if ((lowerMessage.includes('mcp') && (lowerMessage.includes('검색') || lowerMessage.includes('찾기'))) ||
+      (lowerMessage.includes('도구') && lowerMessage.includes('검색')) ||
+      lowerMessage.includes('mcp 서버') || lowerMessage.includes('mcp tool')) {
     
     tools.push({
       serverId: 'mcp-toolbox',
@@ -153,11 +153,13 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     });
   }
 
-  // 복잡한 사고/분석이 필요한 경우
-  if (lowerMessage.includes('분석') || lowerMessage.includes('생각') ||
-      lowerMessage.includes('계획') || lowerMessage.includes('단계') ||
-      lowerMessage.includes('analyze') || lowerMessage.includes('think') ||
-      lowerMessage.includes('plan') || lowerMessage.includes('step')) {
+  // 복잡한 사고/분석이 필요한 경우 (더 구체적인 조건)
+  if ((lowerMessage.includes('복잡한') && lowerMessage.includes('분석')) ||
+      (lowerMessage.includes('단계별') && (lowerMessage.includes('분석') || lowerMessage.includes('계획'))) ||
+      (lowerMessage.includes('생각해') && lowerMessage.includes('단계')) ||
+      lowerMessage.includes('순차적 사고') ||
+      lowerMessage.includes('체계적으로 분석') ||
+      (lowerMessage.includes('문제 해결') && lowerMessage.includes('단계'))) {
     
     tools.push({
       serverId: 'mcp-sequential-thinking',
