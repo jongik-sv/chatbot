@@ -48,6 +48,63 @@ const formatJSON = (str: string | undefined | null): string => {
   }
 };
 
+// Sequential Thinking 단계별 파싱 함수
+const parseSequentialThinkingSteps = (content: string): Array<{
+  stepNumber: number;
+  thought: string;
+  reasoning?: string;
+  nextThoughtNeeded?: boolean;
+  totalThoughts?: number;
+}> => {
+  try {
+    // 마크다운 형식의 Sequential Thinking 결과를 파싱
+    const steps: Array<{
+      stepNumber: number;
+      thought: string;
+      reasoning?: string;
+      nextThoughtNeeded?: boolean;
+      totalThoughts?: number;
+    }> = [];
+
+    // "단계 X:" 패턴으로 단계 분리
+    const stepMatches = content.match(/### 🤔 단계 (\d+): 사고 과정\n\n(.*?)\n\n\*\*추론\*\*: (.*?)(?=\n\n---|\n\n### |$)/gs);
+    
+    if (stepMatches) {
+      stepMatches.forEach((match, index) => {
+        const stepMatch = match.match(/### 🤔 단계 (\d+): 사고 과정\n\n(.*?)\n\n\*\*추론\*\*: (.*?)$/s);
+        if (stepMatch) {
+          steps.push({
+            stepNumber: parseInt(stepMatch[1]),
+            thought: stepMatch[2].trim(),
+            reasoning: stepMatch[3].trim(),
+            nextThoughtNeeded: index < stepMatches.length - 1,
+            totalThoughts: stepMatches.length
+          });
+        }
+      });
+    }
+
+    // JSON 형태의 단계별 정보도 파싱 시도
+    if (steps.length === 0 && isValidJSON(content)) {
+      const parsed = JSON.parse(content);
+      if (parsed.thoughtNumber && parsed.thought) {
+        steps.push({
+          stepNumber: parsed.thoughtNumber,
+          thought: parsed.thought,
+          reasoning: parsed.reasoning || 'No reasoning provided',
+          nextThoughtNeeded: parsed.nextThoughtNeeded,
+          totalThoughts: parsed.totalThoughts
+        });
+      }
+    }
+
+    return steps;
+  } catch (error) {
+    console.warn('Sequential Thinking 단계 파싱 오류:', error);
+    return [];
+  }
+};
+
 export default function MCPToolsDisplay({ mcpTools, className = '' }: MCPToolsDisplayProps) {
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
 
@@ -90,6 +147,114 @@ export default function MCPToolsDisplay({ mcpTools, className = '' }: MCPToolsDi
     };
     return serverNames[serverId] || serverId;
   };
+
+// Sequential Thinking 단계별 표시 컴포넌트
+function SequentialThinkingStepsDisplay({ content }: { content: string }) {
+  const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  const steps = parseSequentialThinkingSteps(content);
+
+  const toggleStep = (stepNumber: number) => {
+    const newExpanded = new Set(expandedSteps);
+    if (newExpanded.has(stepNumber)) {
+      newExpanded.delete(stepNumber);
+    } else {
+      newExpanded.add(stepNumber);
+    }
+    setExpandedSteps(newExpanded);
+  };
+
+  // 단계가 파싱되지 않은 경우 원본 내용 표시
+  if (steps.length === 0) {
+    return (
+      <div>
+        {/* JSON 형태인 경우 코드 블록으로 표시 */}
+        {isValidJSON(content) ? (
+          <div className="bg-gray-800 text-green-400 p-3 rounded font-mono text-xs overflow-x-auto">
+            <pre className="whitespace-pre-wrap">
+              {formatJSON(content)}
+            </pre>
+          </div>
+        ) : (
+          <div className="text-gray-800 whitespace-pre-wrap max-h-40 overflow-y-auto">
+            {content && content.length > 500 ? `${content.substring(0, 500)}...` : (content || 'No content')}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs text-purple-600 font-medium mb-2">
+        🧠 Sequential Thinking Process ({steps.length} steps)
+      </div>
+      
+      {steps.map((step) => {
+        const isExpanded = expandedSteps.has(step.stepNumber);
+        
+        return (
+          <div key={step.stepNumber} className="border border-purple-200 rounded-md bg-purple-50">
+            <button
+              onClick={() => toggleStep(step.stepNumber)}
+              className="w-full px-3 py-2 flex items-center justify-between hover:bg-purple-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                {isExpanded ? (
+                  <ChevronDownIcon className="w-4 h-4 text-purple-600" />
+                ) : (
+                  <ChevronRightIcon className="w-4 h-4 text-purple-600" />
+                )}
+                <span className="text-sm font-medium text-purple-800">
+                  Step {step.stepNumber}
+                  {step.totalThoughts && ` / ${step.totalThoughts}`}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {step.nextThoughtNeeded ? (
+                  <div className="w-2 h-2 bg-orange-400 rounded-full" title="More thinking needed" />
+                ) : (
+                  <div className="w-2 h-2 bg-green-400 rounded-full" title="Thinking complete" />
+                )}
+              </div>
+            </button>
+
+            {isExpanded && (
+              <div className="px-3 pb-3 border-t border-purple-200">
+                <div className="mt-2 space-y-2">
+                  {/* 사고 내용 */}
+                  <div>
+                    <div className="text-xs font-medium text-purple-700 mb-1">💭 Thought:</div>
+                    <div className="text-xs text-gray-800 bg-white rounded p-2 border">
+                      {step.thought}
+                    </div>
+                  </div>
+
+                  {/* 추론 과정 */}
+                  {step.reasoning && (
+                    <div>
+                      <div className="text-xs font-medium text-purple-700 mb-1">🔍 Reasoning:</div>
+                      <div className="text-xs text-gray-700 bg-gray-50 rounded p-2 border">
+                        {step.reasoning}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 메타 정보 */}
+                  <div className="flex justify-between text-xs text-purple-600 pt-1 border-t border-purple-100">
+                    <span>Step {step.stepNumber}</span>
+                    <span>
+                      {step.nextThoughtNeeded ? '🔄 Continuing...' : '✅ Complete'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
   const getToolDisplayName = (toolName: string) => {
     const toolNames: Record<string, string> = {
@@ -185,13 +350,9 @@ export default function MCPToolsDisplay({ mcpTools, className = '' }: MCPToolsDi
                               <div key={contentIndex}>
                                 {content && content.type === 'text' && (
                                   <div>
-                                    {/* Sequential Thinking JSON 응답을 특별히 처리 */}
-                                    {tool.toolName === 'sequentialthinking' && content.text && isValidJSON(content.text) ? (
-                                      <div className="bg-gray-800 text-green-400 p-3 rounded font-mono text-xs overflow-x-auto">
-                                        <pre className="whitespace-pre-wrap">
-                                          {formatJSON(content.text)}
-                                        </pre>
-                                      </div>
+                                    {/* Sequential Thinking을 단계별로 표시 */}
+                                    {tool.toolName === 'sequentialthinking' && content.text ? (
+                                      <SequentialThinkingStepsDisplay content={content.text} />
                                     ) : (
                                       <div className="text-gray-800 whitespace-pre-wrap max-h-40 overflow-y-auto">
                                         {content.text && typeof content.text === 'string' && content.text.length > 500 
@@ -223,7 +384,7 @@ export default function MCPToolsDisplay({ mcpTools, className = '' }: MCPToolsDi
 
                     {/* 메타데이터 */}
                     <div className="flex justify-between text-xs text-gray-500 pt-1 border-t border-gray-200">
-                      <span>ID: {tool.result.id.substring(0, 8)}...</span>
+                      <span>ID: {tool.result.id ? tool.result.id.substring(0, 8) + '...' : 'N/A'}</span>
                       <span>
                         {new Date(tool.result.timestamp).toLocaleTimeString()}
                       </span>

@@ -112,7 +112,8 @@ export function useMessageHandler({
           contentPreview: response.content?.substring(0, 100) || 'No content',
           mcpToolsCount: response.mcpTools?.length || 0,
           sessionId: response.sessionId,
-          messageId: response.messageId
+          messageId: response.messageId,
+          fullResponse: response
         });
 
         setIsStreaming(false);

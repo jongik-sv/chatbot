@@ -920,7 +920,9 @@ export async function POST(request: NextRequest) {
         contentLength: llmResponse.content?.length || 0,
         contentPreview: llmResponse.content?.substring(0, 100) || 'No content',
         mcpToolsCount: mcpResults.length,
-        mcpToolsPreview: mcpResults.map(t => ({ tool: t.toolName, success: t.result.success }))
+        mcpToolsPreview: mcpResults.map(t => ({ tool: t.toolName, success: t.result?.success })),
+        sessionId: currentSession.id,
+        messageId: assistantMessage.id
       });
 
       const response: ChatResponse = {
