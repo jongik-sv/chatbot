@@ -46,7 +46,11 @@ export default function ChatSessionPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updates),
+        body: JSON.stringify({
+          title: updates.title,
+          userId: 1, // 기본 사용자 ID
+          ragMetadata: updates.ragMetadata
+        }),
       });
 
       if (!response.ok) {

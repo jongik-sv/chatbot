@@ -7,8 +7,6 @@ config({ path: path.resolve(__dirname, '../.env.local') });
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ['better-sqlite3', 'pdf-parse', 'sqlite3', '@google/generative-ai'],
-  optimizeFonts: true,
-  swcMinify: true,
   webpack: (config) => {
     config.externals.push({
       'better-sqlite3': 'commonjs better-sqlite3',

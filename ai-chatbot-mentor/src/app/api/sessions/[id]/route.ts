@@ -75,7 +75,8 @@ export async function PUT(
   try {
     const { id } = await params;
     const sessionId = parseInt(id);
-    const { title, userId } = await request.json();
+    const updates = await request.json();
+    const { title, userId, ragMetadata } = updates;
 
     if (!sessionId) {
       return NextResponse.json(
@@ -93,10 +94,18 @@ export async function PUT(
       );
     }
 
-    // 세션 제목 업데이트
-    const updatedSession = chatRepo.updateSession(sessionId, {
-      title: title || session.title
-    });
+    // 세션 업데이트 데이터 구성
+    const updateData: any = {};
+    
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+    
+    if (ragMetadata !== undefined) {
+      updateData.ragMetadata = ragMetadata;
+    }
+
+    const updatedSession = chatRepo.updateSession(sessionId, updateData);
 
     return NextResponse.json({
       success: true,

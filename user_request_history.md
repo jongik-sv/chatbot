@@ -502,4 +502,10 @@ Next.js 앱의 여러 파일에서 `path.join()` 대신 `path.resolve()`를 사�
 
 스트림처리가 너무 억지스럽다. 내가 의도한 것은 서버에서 답변이 스트림으로 와서 그게 화면에 출력되기를 원했는데. 지금 확인해보면 이미 서버에서는 결과가 만들어진 것을 억지로 스트림으로 보여주고 있네. 답변 길이가 긴 것을 확인하면 서버에 만들어진 긴 메시지의 답변(이미 서버에는 로그로 출력됨)이 챗봇 화면에서는 아주 오랫동안 천천히 출력됨을 알 수가 있어. 제대로 고쳐야 되지 않아?
 
+⚠ Invalid next.config.ts options detected:
+ ⚠     Unrecognized key(s) in object: 'optimizeFonts', 'swcMinify'
+ ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+Creating turbopack project { dir: 'C:\\Project\\chatbot\\ai-chatbot-mentor', testMode: true }
+[Error: You cannot use different slug names for the same dynamic path ('sessionId' !== 'id').] 서버가 실행이 안된다.
+
 ------
