@@ -108,7 +108,7 @@ export class MCPService extends EventEmitter {
   private async loadFallbackServers() {
     const fallbackServers = [
       {
-        id: 'mcp-fetch',
+        id: 'fetch',
         name: 'MCP Fetch',
         description: 'Web content fetching and processing',
         type: 'builtin',
@@ -132,7 +132,7 @@ export class MCPService extends EventEmitter {
    * 내장 fetch 서버 설정
    */
   private async setupBuiltinFetchServer() {
-    const serverId = 'mcp-fetch';
+    const serverId = 'fetch';
     const server = this.servers.get(serverId);
     
     if (server) {
@@ -281,7 +281,7 @@ export class MCPService extends EventEmitter {
       });
 
       // 내장 fetch 서버는 별도 연결 과정 없이 즉시 연결 상태로 설정
-      if (serverId === 'mcp-fetch') {
+      if (serverId === 'fetch') {
         server.status = 'connected';
         server.lastConnected = new Date();
         this.connections.set(serverId, {
@@ -502,7 +502,7 @@ export class MCPService extends EventEmitter {
       let result: MCPToolResult;
 
       // 내장 fetch 서버 처리
-      if (serverId === 'mcp-fetch' && toolName === 'fetch') {
+      if (serverId === 'fetch' && toolName === 'fetch') {
         result = await this.executeBuiltinFetch(args, toolCallId);
         result.executionTime = Date.now() - startTime;
       } else {

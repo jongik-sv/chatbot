@@ -201,7 +201,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     if (urls && urls.length > 0) {
       for (const url of urls) {
         tools.push({
-          serverId: 'mcp-fetch',
+          serverId: 'fetch',
           toolName: 'fetch',
           arguments: {
             url: url.trim(),
@@ -225,7 +225,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     for (const keyword of libraryKeywords) {
       if (lowerMessage.includes(keyword)) {
         tools.push({
-          serverId: 'mcp-context7',
+          serverId: 'Context7',
           toolName: 'resolve-library-id',
           arguments: {
             libraryName: keyword
@@ -256,7 +256,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     }
     
     tools.push({
-      serverId: 'mcp-21st-dev-magic',
+      serverId: '@21st-dev/magic',
       toolName: '21st_magic_component_builder',
       arguments: {
         message: message,
@@ -281,7 +281,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     
     if (foundBrands.length > 0) {
       tools.push({
-        serverId: 'mcp-21st-dev-magic',
+        serverId: '@21st-dev/magic',
         toolName: 'logo_search',
         arguments: {
           queries: foundBrands,
@@ -298,7 +298,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
       lowerMessage.includes('mcp 서버') || lowerMessage.includes('mcp tool')) {
     
     tools.push({
-      serverId: 'mcp-toolbox',
+      serverId: 'pyhub.mcptools',
       toolName: 'search_servers',
       arguments: {
         query: message.substring(0, 100), // 메시지의 첫 100자를 검색어로 사용
@@ -317,7 +317,7 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
       (lowerMessage.includes('문제 해결') && lowerMessage.includes('단계'))) {
     
     tools.push({
-      serverId: 'mcp-sequential-thinking',
+      serverId: 'sequential-thinking',
       toolName: 'sequentialthinking',
       arguments: {
         thought: `사용자 요청 분석: ${message}`,
@@ -525,7 +525,7 @@ export async function POST(request: NextRequest) {
             let mcpResult;
             
             // Sequential Thinking의 경우 대체 실행 시도
-            if (toolInfo.serverId === 'mcp-sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
+            if (toolInfo.serverId === 'sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
               try {
                 mcpResult = await mcpService.executeTool(
                   toolInfo.serverId,
@@ -575,7 +575,7 @@ export async function POST(request: NextRequest) {
             console.error(`MCP 도구 실행 오류 (${toolInfo.toolName}):`, toolError);
             
             // Sequential Thinking 오류 시 대체 실행
-            if (toolInfo.serverId === 'mcp-sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
+            if (toolInfo.serverId === 'sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
               try {
                 const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage);
                 mcpResults.push({

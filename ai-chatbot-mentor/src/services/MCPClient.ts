@@ -184,11 +184,11 @@ export class MCPClient extends EventEmitter {
 
     // 기본 MCP 서버 명령어 매핑 (설정 파일에 command가 없는 경우만)
     const serverCommands: Record<string, string> = {
-      'mcp-fetch': process.platform === 'win32' ? 'npx' : 'uvx',
-      'mcp-toolbox': process.platform === 'win32' ? 'npx' : 'uvx',
-      'mcp-context7': process.platform === 'win32' ? 'npx' : 'uvx',
-      'mcp-21st-dev-magic': process.platform === 'win32' ? 'npx' : 'uvx',
-      'mcp-sequential-thinking': process.platform === 'win32' ? 'npx' : 'uvx'
+      'fetch': process.platform === 'win32' ? 'npx' : 'uvx',
+      'pyhub.mcptools': process.platform === 'win32' ? 'npx' : 'uvx',
+      'Context7': process.platform === 'win32' ? 'npx' : 'uvx',
+      '@21st-dev/magic': process.platform === 'win32' ? 'npx' : 'uvx',
+      'sequential-thinking': process.platform === 'win32' ? 'npx' : 'uvx'
     };
 
     const defaultCommand = serverCommands[this.config.id] || 'npx';
@@ -208,19 +208,19 @@ export class MCPClient extends EventEmitter {
 
     // 기본 MCP 서버 인수 매핑 (설정 파일에 args가 없는 경우만)
     const serverArgs: Record<string, string[]> = {
-      'mcp-fetch': process.platform === 'win32' 
+      'fetch': process.platform === 'win32' 
         ? ['-y', '@modelcontextprotocol/server-fetch'] 
         : ['@modelcontextprotocol/server-fetch'],
-      'mcp-toolbox': process.platform === 'win32'
+      'pyhub.mcptools': process.platform === 'win32'
         ? ['-y', '@smithery/cli@latest', 'run', '@smithery/toolbox']
         : ['@smithery/cli@latest', 'run', '@smithery/toolbox'],
-      'mcp-context7': process.platform === 'win32'
+      'Context7': process.platform === 'win32'
         ? ['-y', '@upstash/context7-mcp@latest']
         : ['@upstash/context7-mcp@latest'],
-      'mcp-21st-dev-magic': process.platform === 'win32'
+      '@21st-dev/magic': process.platform === 'win32'
         ? ['-y', '@21st-dev/magic@latest']
         : ['@21st-dev/magic@latest'],
-      'mcp-sequential-thinking': process.platform === 'win32'
+      'sequential-thinking': process.platform === 'win32'
         ? ['-y', '@modelcontextprotocol/server-sequential-thinking']
         : ['@modelcontextprotocol/server-sequential-thinking']
     };
