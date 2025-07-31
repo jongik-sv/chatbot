@@ -474,16 +474,29 @@ export class MCPService extends EventEmitter {
     };
 
     try {
-      // 서버와 도구 유효성 검증
+      // 서버 존재 확인
       const server = this.servers.get(serverId);
-      if (!server || server.status !== 'connected') {
-        throw new Error(`Server ${serverId} is not connected`);
+      if (!server) {
+        throw new Error(`Server ${serverId} not found`);
       }
 
-      const tools = this.tools.get(serverId) || [];
-      const tool = tools.find(t => t.name === toolName);
-      if (!tool) {
-        throw new Error(`Tool ${toolName} not found on server ${serverId}`);
+      // 서버 상태 확인 - connecting도 허용 (프로세스가 실행 중이면 시도)
+      if (server.status !== 'connected' && server.status !== 'connecting') {
+        this.log('warn', `Server ${serverId} status is ${server.status}, attempting reconnection...`);
+        
+        // 재연결 시도
+        try {
+          await this.connectToServer(serverId);
+        } catch (reconnectError) {
+          this.log('error', `Reconnection failed for ${serverId}:`, reconnectError);
+          throw new Error(`Server ${serverId} is not connected and reconnection failed`);
+        }
+      }
+
+      // 클라이언트 확인
+      const client = this.clients.get(serverId);
+      if (!client || !client.isConnectedToServer()) {
+        throw new Error(`MCP client for server ${serverId} not available`);
       }
 
       let result: MCPToolResult;

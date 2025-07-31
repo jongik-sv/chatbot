@@ -27,12 +27,11 @@
       },
 
       "sequential-thinking": {
-        "command": "cmd",
+        "command": "powershell",
         "args": [
-          "/c",
-          "npx",
-          "-y",
-          "@modelcontextprotocol/server-sequential-thinking"
+          "-WindowStyle", "Hidden",
+          "-Command",
+          "npx -y @modelcontextprotocol/server-sequential-thinking"
         ],
         "disabled": false,
         "autoApprove": [

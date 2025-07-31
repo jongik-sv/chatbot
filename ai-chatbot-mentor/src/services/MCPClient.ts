@@ -56,18 +56,34 @@ export class MCPClient extends EventEmitter {
       // 서버 프로세스 시작
       await this.startServerProcess();
 
-      // 초기화 핸드셰이크
-      await this.initialize();
-
-      // 도구 목록 로드
-      await this.loadTools();
-
+      // 연결 상태를 먼저 true로 설정 (프로세스 시작 성공)
       this.isConnected = true;
       this.emit('connected');
+
+      // 초기화 핸드셰이크 시도 (실패해도 연결은 유지)
+      try {
+        await this.initialize();
+        this.log('info', `MCP initialization successful for: ${this.config.name}`);
+      } catch (initError) {
+        this.log('warn', `MCP initialization failed for ${this.config.name}, but process is running:`, initError);
+        // 초기화 실패해도 프로세스는 실행 중이므로 연결 상태 유지
+      }
+
+      // 도구 목록 로드 시도 (실패해도 연결은 유지)
+      try {
+        await this.loadTools();
+        this.log('info', `Tools loaded successfully for: ${this.config.name}`);
+      } catch (toolsError) {
+        this.log('warn', `Failed to load tools for ${this.config.name}, but connection maintained:`, toolsError);
+        // 도구 로드 실패해도 기본 상태로 유지
+        this.tools = [];
+      }
+
       this.log('info', `Successfully connected to MCP server: ${this.config.name}`);
 
     } catch (error) {
       this.log('error', `Failed to connect to MCP server: ${this.config.name}`, error);
+      this.isConnected = false;
       await this.disconnect();
       throw error;
     }
@@ -288,6 +304,12 @@ export class MCPClient extends EventEmitter {
 
       for (const line of lines) {
         if (line.trim()) {
+          // Windows cmd.exe 노이즈 필터링
+          if (this.isWindowsCommandNoise(line.trim())) {
+            this.log('debug', 'Filtered Windows command noise:', line.trim());
+            continue;
+          }
+          
           try {
             const message = JSON.parse(line.trim());
             this.handleMessage(message);
@@ -297,6 +319,34 @@ export class MCPClient extends EventEmitter {
         }
       }
     });
+  }
+
+  /**
+   * Windows 명령어 프롬프트 노이즈 필터링
+   */
+  private isWindowsCommandNoise(line: string): boolean {
+    // Windows 시스템 메시지들 필터링
+    const noisePatterns = [
+      /^Microsoft Windows \[Version/,
+      /^\(c\) Microsoft Corporation/,
+      /^C:\\.*>$/,
+      /^C:\\.*>\s*$/,
+      /^PS C:\\.*>$/,
+      /^PS C:\\.*>\s*$/,
+      /^내부 또는 외부 명령/,
+      /^'.*'은\(는\) 내부 또는 외부 명령/,
+      /^'.*' is not recognized as an internal or external command/,
+      /^The system cannot find the path specified/,
+      /^파일 이름, 디렉터리 이름 또는 볼륨 레이블 구문이 잘못되었습니다/,
+      /^액세스가 거부되었습니다/,
+      /^Access is denied/,
+      /^Windows PowerShell/,
+      /^Copyright \(C\) Microsoft Corporation/,
+      /^All rights reserved/,
+      /^\s*$/  // 빈 줄 필터링
+    ];
+
+    return noisePatterns.some(pattern => pattern.test(line));
   }
 
   /**
