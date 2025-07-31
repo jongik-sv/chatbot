@@ -773,3 +773,7 @@ RAG 기반 대화 일때 나오는 주소: http://localhost:3000/?mode=rag&proje
 chat/11 이 부분이 달라.
 
 ------
+
+MCP 관리 페이지에서 각 MCP를 tool을 클릭해서 테스트 할 수 있는 기능을 넣어줘.
+
+------

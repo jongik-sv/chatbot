@@ -20,8 +20,12 @@ import {
   Clock,
   Zap,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  X,
+  Code,
+  Send
 } from 'lucide-react';
+import MCPToolTestDialog from './MCPToolTestDialog';
 
 interface MCPServer {
   id: string;
@@ -70,6 +74,17 @@ export default function MCPStatusPanel() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+  const [testDialog, setTestDialog] = useState<{
+    open: boolean;
+    serverId: string;
+    toolName: string;
+    toolDescription: string;
+  }>({
+    open: false,
+    serverId: '',
+    toolName: '',
+    toolDescription: ''
+  });
 
   // MCP 상태 조회
   const fetchMCPStatus = async () => {
@@ -153,6 +168,26 @@ export default function MCPStatusPanel() {
       ...prev,
       [serverId]: !prev[serverId]
     }));
+  };
+
+  // 도구 테스트 다이얼로그 열기
+  const handleTestTool = (serverId: string, toolName: string, toolDescription: string) => {
+    setTestDialog({
+      open: true,
+      serverId,
+      toolName,
+      toolDescription
+    });
+  };
+
+  // 도구 테스트 다이얼로그 닫기
+  const handleCloseTestDialog = () => {
+    setTestDialog({
+      open: false,
+      serverId: '',
+      toolName: '',
+      toolDescription: ''
+    });
   };
 
   // 컴포넌트 마운트 시 데이터 로드
@@ -380,8 +415,21 @@ export default function MCPStatusPanel() {
                         <div className="space-y-2">
                           {server.tools.map((tool, index) => (
                             <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="font-medium text-blue-900">{tool.name}</div>
-                              <div className="text-sm text-blue-700 mt-1">{tool.description}</div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-blue-900">{tool.name}</div>
+                                  <div className="text-sm text-blue-700 mt-1">{tool.description}</div>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleTestTool(server.id, tool.name, tool.description)}
+                                  className="ml-3 flex items-center gap-1 bg-white border-blue-300 text-blue-700 hover:bg-blue-100"
+                                >
+                                  <Zap className="h-3 w-3" />
+                                  테스트
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -403,6 +451,15 @@ export default function MCPStatusPanel() {
           ))
         )}
       </div>
+
+      {/* MCP 도구 테스트 다이얼로그 */}
+      <MCPToolTestDialog
+        open={testDialog.open}
+        onClose={handleCloseTestDialog}
+        serverId={testDialog.serverId}
+        toolName={testDialog.toolName}
+        toolDescription={testDialog.toolDescription}
+      />
     </div>
   );
 }
