@@ -41,7 +41,35 @@ export async function GET(
       );
     }
 
-    let result = { session };
+    // RAG/문서 기반 세션인 경우 문서 정보 추출
+    let documentInfo = null;
+    if (session.mode === 'document' || session.mode === 'rag') {
+      if (session.metadata) {
+        try {
+          const metadata = JSON.parse(session.metadata);
+          if (metadata.ragMetadata) {
+            documentInfo = {
+              projectName: metadata.ragMetadata.projectName,
+              documentTitles: metadata.ragMetadata.documentTitles || []
+            };
+          }
+        } catch (error) {
+          console.warn('메타데이터 파싱 오류:', error);
+        }
+      }
+      
+      // 메타데이터가 없는 경우 메시지에서 문서 정보 추출 시도
+      if (!documentInfo) {
+        documentInfo = chatRepo.extractDocumentInfoFromMessages(sessionId);
+      }
+    }
+
+    let result = { 
+      session: {
+        ...session,
+        documentInfo
+      }
+    };
 
     // 메시지 포함 요청시
     if (includeMessages) {

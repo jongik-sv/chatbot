@@ -143,7 +143,18 @@ export default function ChatInterface({
 
       // 문서 기반 세션인 경우 문서 정보 추출
       if (response.session.mode === 'document' || response.session.mode === 'rag') {
-        extractDocumentInfo(loadedMessages, response.session);
+        // API에서 받은 documentInfo가 있으면 우선 사용
+        if (response.session.documentInfo) {
+          setRagInfo({
+            projectId: '',
+            projectName: response.session.documentInfo.projectName || '',
+            documentIds: [],
+            documentTitles: response.session.documentInfo.documentTitles || []
+          });
+        } else {
+          // 없으면 기존 방식으로 추출
+          extractDocumentInfo(loadedMessages, response.session);
+        }
       }
 
       // 세션의 아티팩트 로드

@@ -549,3 +549,33 @@ Creating turbopack project { dir: 'C:\\Project\\chatbot\\ai-chatbot-mentor', tes
 이제 RAG 기반 대화에서 프로젝트와 문서 정보가 모든 화면에서 일관되게 표시됩니다.
 
 ------
+
+RAG 기반 대화를 선택해도 AI 모델 선택 콤보 밑 채팅창 위에 프로젝트와, 선택된 문서를 보여주는 정보가 안보여.
+
+## 2025-07-31 - RAG 대화 복원 시 문서 정보 표시 문제 해결
+
+### 문제 상황
+RAG 기반 대화를 선택했을 때 채팅창에서 프로젝트와 문서 정보가 표시되지 않는 문제
+
+### 원인 분석
+- `/api/sessions/[id]` 엔드포인트에서 단일 세션 조회 시 `documentInfo` 추출하지 않음
+- `ChatRepository.getSession()` 메서드는 `documentInfo`를 포함하지 않음 (복수 조회용 `getSessions()`에서만 처리)
+- ChatInterface에서 세션 로드 후 documentInfo 처리 로직 부족
+
+### 해결 방법
+1. **API 엔드포인트 수정**: `/api/sessions/[id]/route.ts`
+   - 단일 세션 조회 시에도 RAG 메타데이터에서 문서 정보 추출
+   - 세션 메타데이터와 메시지에서 문서 정보 복원 로직 추가
+
+2. **ChatInterface 수정**: `ChatInterface.tsx`
+   - API에서 받은 `documentInfo`를 우선 사용하도록 수정
+   - `ragInfo` 상태를 올바르게 설정하여 UI에 표시
+
+### 수정된 기능
+✅ RAG 대화 복원 시 세션 메타데이터에서 문서 정보 자동 추출
+✅ 채팅창 상단에 프로젝트명과 선택된 문서 목록 표시
+✅ 단일 세션 조회 API에서도 documentInfo 포함하여 반환
+
+이제 RAG 기반 대화를 선택하면 채팅창에 프로젝트와 문서 정보가 정상적으로 표시됩니다.
+
+------
