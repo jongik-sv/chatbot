@@ -1,15 +1,16 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ChatInterface from '@/components/chat/ChatInterface';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { ExclamationTriangleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-export default function ChatSessionPage() {
+function ChatSessionContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,5 +118,20 @@ export default function ChatSessionPage() {
         </div>
       </MainLayout>
     </ChatProvider>
+  );
+}
+
+export default function ChatSessionPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-3 text-gray-600">대화를 불러오는 중...</p>
+        </div>
+      </div>
+    }>
+      <ChatSessionContent />
+    </Suspense>
   );
 }

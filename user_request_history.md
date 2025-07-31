@@ -766,3 +766,10 @@ http://localhost:3000/?mode=rag&projectId=4&projectName=LLM+%ED%85%8C%EC%8A%A4%E
 채팅창에 답변하는 AI의 모델을 같이 보여줘. 어떤 모델이 어떤 대답을 했는지 알고 싶어.
 
 ------
+
+아직 프로젝트, 선택된 문서가 안나오는데 주소를 보면 조금 달라.
+RAG 기반 대화 일때 나오는 주소: http://localhost:3000/?mode=rag&projectId=4&projectName=LLM+%ED...
+안나오는 주소 : http://localhost:3000/chat/11?mode=rag&projectId=4&projectName=LLM+%ED...
+chat/11 이 부분이 달라.
+
+------

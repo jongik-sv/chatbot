@@ -76,14 +76,39 @@ export default function ChatInterface({
     const documentIds = searchParams.get('documentIds');
     const documentTitles = searchParams.get('documentTitles');
 
-    if (mode === 'rag' && projectId && documentIds && documentTitles) {
+    if (mode === 'rag' && projectId) {
       setSessionMode('rag');
-      setRagInfo({
+      
+      // documentIds와 documentTitles가 있으면 파싱 시도
+      let parsedDocumentIds: string[] = [];
+      let parsedDocumentTitles: string[] = [];
+      
+      if (documentIds) {
+        try {
+          parsedDocumentIds = JSON.parse(documentIds);
+        } catch (error) {
+          console.warn('documentIds JSON 파싱 오류:', error);
+          parsedDocumentIds = [];
+        }
+      }
+      
+      if (documentTitles) {
+        try {
+          parsedDocumentTitles = JSON.parse(documentTitles);
+        } catch (error) {
+          console.warn('documentTitles JSON 파싱 오류:', error);
+          parsedDocumentTitles = [];
+        }
+      }
+      
+      const ragInfoData = {
         projectId,
-        projectName: projectName || '',
-        documentIds: JSON.parse(documentIds),
-        documentTitles: JSON.parse(documentTitles)
-      });
+        projectName: decodeURIComponent(projectName || ''),
+        documentIds: parsedDocumentIds,
+        documentTitles: parsedDocumentTitles
+      };
+      
+      setRagInfo(ragInfoData);
     }
   }, [searchParams]);
 
@@ -141,16 +166,20 @@ export default function ChatInterface({
         switchModel(response.session.modelUsed);
       }
 
-      // 문서 기반 세션인 경우 문서 정보 추출
-      if (response.session.mode === 'document' || response.session.mode === 'rag') {
+      // URL 파라미터로 RAG 정보가 이미 설정되었는지 확인
+      const hasUrlRagInfo = searchParams.get('mode') === 'rag' && searchParams.get('projectId');
+      
+      // URL 파라미터가 없고 문서 기반 세션인 경우에만 문서 정보 추출
+      if ((response.session.mode === 'document' || response.session.mode === 'rag') && !hasUrlRagInfo) {
         // API에서 받은 documentInfo가 있으면 우선 사용
         if (response.session.documentInfo) {
-          setRagInfo({
+          const sessionRagInfo = {
             projectId: response.session.documentInfo.projectId?.toString() || '',
             projectName: response.session.documentInfo.projectName || '',
             documentIds: response.session.documentInfo.documentIds?.map(id => id.toString()) || [],
             documentTitles: response.session.documentInfo.documentTitles || []
-          });
+          };
+          setRagInfo(sessionRagInfo);
         } else {
           // 없으면 기존 방식으로 추출
           extractDocumentInfo(loadedMessages, response.session);
@@ -313,10 +342,6 @@ export default function ChatInterface({
     try {
       // 현재 모델의 설정 가져오기
       const modelSettings = getModelSettings(state.selectedModel);
-      
-      console.log('ChatInterface - 메시지 전송 전 선택된 문서 IDs:', selectedDocumentIds);
-      console.log('ChatInterface - 세션 모드:', sessionMode);
-      console.log('ChatInterface - RAG 정보:', ragInfo);
 
       // RAG 모드일 때는 ragInfo의 documentIds 사용, 그 외에는 기존 selectedDocumentIds 사용
       const documentIdsToUse = sessionMode === 'rag' && ragInfo 
