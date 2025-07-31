@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
@@ -62,13 +62,16 @@ export default function ChatInterface({
     documentTitles: string[];
   } | null>(null);
   const { state, dispatch, getModelSettings, switchModel } = useChatContext();
+  
+  // URL 파라미터로 RAG 정보가 설정되었는지 추적하는 ref
+  const ragInfoFromUrl = useRef(false);
 
   // 컴포넌트 마운트 시 모델 목록 로드
   useEffect(() => {
     loadAvailableModels();
   }, []);
 
-  // URL 파라미터에서 RAG 정보 읽기
+  // URL 파라미터에서 RAG 정보 읽기 (컴포넌트 마운트 시 1회만)
   useEffect(() => {
     const mode = searchParams.get('mode');
     const projectId = searchParams.get('projectId');
@@ -109,13 +112,19 @@ export default function ChatInterface({
       };
       
       setRagInfo(ragInfoData);
+      ragInfoFromUrl.current = true; // URL 파라미터로 설정했음을 표시
     }
-  }, [searchParams]);
+  }, []); // 의존성 배열을 빈 배열로 변경하여 마운트 시에만 실행
 
-  // 기존 세션이 있으면 로드
+  // 기존 세션이 있으면 로드 (URL 파라미터 처리 후에 실행)
   useEffect(() => {
     if (sessionId) {
-      loadSession(sessionId);
+      // URL 파라미터 처리를 위해 약간의 지연 추가
+      const timer = setTimeout(() => {
+        loadSession(sessionId);
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [sessionId]);
 
@@ -166,11 +175,8 @@ export default function ChatInterface({
         switchModel(response.session.modelUsed);
       }
 
-      // URL 파라미터로 RAG 정보가 이미 설정되었는지 확인
-      const hasUrlRagInfo = searchParams.get('mode') === 'rag' && searchParams.get('projectId');
-      
-      // URL 파라미터가 없고 문서 기반 세션인 경우에만 문서 정보 추출
-      if ((response.session.mode === 'document' || response.session.mode === 'rag') && !hasUrlRagInfo) {
+      // URL 파라미터로 RAG 정보가 설정된 경우 세션 정보를 무시
+      if ((response.session.mode === 'document' || response.session.mode === 'rag') && !ragInfoFromUrl.current) {
         // API에서 받은 documentInfo가 있으면 우선 사용
         if (response.session.documentInfo) {
           const sessionRagInfo = {
