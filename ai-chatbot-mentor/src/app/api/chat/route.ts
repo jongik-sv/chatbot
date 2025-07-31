@@ -831,7 +831,9 @@ export async function POST(request: NextRequest) {
           mentorId: mentorId,
           mentorName: mentorContext?.mentor.name,
           appliedRules: ruleApplicationResult.appliedRules,
-          rulesSummary: ruleApplicationResult.rulesSummary
+          rulesSummary: ruleApplicationResult.rulesSummary,
+          // MCP 도구 사용 정보 추가
+          mcpTools: mcpResults.length > 0 ? mcpResults : undefined
         }
       });
 

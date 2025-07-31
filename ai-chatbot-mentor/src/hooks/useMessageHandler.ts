@@ -83,16 +83,6 @@ export function useMessageHandler({
     setIsStreaming(true);
     setStreamingMessage('');
 
-    // 임시 어시스턴트 메시지 생성 (스트림용)
-    const tempAssistantMessage: Message = {
-      id: `temp-${Date.now()}`,
-      role: 'assistant',
-      content: '',
-      timestamp: getCurrentKoreanTime(),
-    };
-
-    setMessages(prev => [...prev, tempAssistantMessage]);
-
     try {
       // 현재 모델의 설정 가져오기
       const modelSettings = getModelSettings(state.selectedModel);
@@ -147,27 +137,22 @@ export function useMessageHandler({
           });
         }
 
-        // 최종 어시스턴트 메시지로 업데이트
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          if (updated[lastIndex]?.role === 'assistant') {
-            updated[lastIndex] = {
-              id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
-              role: 'assistant',
-              content: response.content || response.response || '응답을 받지 못했습니다.',
-              timestamp: getCurrentKoreanTime(),
-              metadata: {
-                artifacts: response.artifacts,
-                sources: response.sources,
-                modelSettings,
-                mcpTools: response.mcpTools,
-                isSequentialThinking: true
-              }
-            };
+        // 어시스턴트 메시지 추가 (임시 메시지 없이 바로 추가)
+        const assistantMessage: Message = {
+          id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response.content || response.response || '응답을 받지 못했습니다.',
+          timestamp: getCurrentKoreanTime(),
+          metadata: {
+            artifacts: response.artifacts,
+            sources: response.sources,
+            modelSettings,
+            mcpTools: response.mcpTools, // MCP 도구 정보 포함
+            isSequentialThinking: true
           }
-          return updated;
-        });
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
 
         // 아티팩트가 있으면 패널 열기
         if (response.artifacts && response.artifacts.length > 0) {
@@ -217,26 +202,21 @@ export function useMessageHandler({
           });
         }
 
-        // 최종 어시스턴트 메시지로 업데이트
-        setMessages(prev => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          if (updated[lastIndex]?.role === 'assistant') {
-            updated[lastIndex] = {
-              id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
-              role: 'assistant',
-              content: response.content || response.response,
-              timestamp: getCurrentKoreanTime(),
-              metadata: {
-                artifacts: response.artifacts,
-                sources: response.sources,
-                modelSettings,
-                mcpTools: response.mcpTools
-              }
-            };
+        // 어시스턴트 메시지 추가 (임시 메시지 없이 바로 추가)
+        const assistantMessage: Message = {
+          id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response.content || response.response || '응답을 받지 못했습니다.',
+          timestamp: getCurrentKoreanTime(),
+          metadata: {
+            artifacts: response.artifacts,
+            sources: response.sources,
+            modelSettings,
+            mcpTools: response.mcpTools // MCP 도구 정보 포함
           }
-          return updated;
-        });
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
 
         // 사용자 메시지에 MCP 도구 정보 추가 (있는 경우)
         if (response.mcpTools && response.mcpTools.length > 0) {
@@ -268,8 +248,18 @@ export function useMessageHandler({
       setIsStreaming(false);
       setStreamingMessage('');
       
-      // 임시 메시지 제거
-      setMessages(prev => prev.slice(0, -1));
+      // 오류 메시지 추가
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: '응답을 받을 수 없습니다. 다시 시도해주세요.',
+        timestamp: getCurrentKoreanTime(),
+        metadata: {
+          isError: true
+        }
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
       
       console.error('메시지 전송 실패:', error);
       setError(error instanceof Error ? error.message : '메시지 전송에 실패했습니다.');

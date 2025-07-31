@@ -190,8 +190,8 @@ export default function MessageList({ messages, mentorId, isStreaming, streaming
                 </div>
               </div>
               
-              {/* MCP 도구 사용 표시 (사용자 메시지에 표시) */}
-              {message.role === 'user' && message.metadata?.mcpTools && (
+              {/* MCP 도구 사용 표시 (AI 응답 아래에 표시) */}
+              {message.role === 'assistant' && message.metadata?.mcpTools && (
                 <div className="mt-2">
                   <MCPToolsDisplay mcpTools={message.metadata.mcpTools} />
                 </div>
@@ -215,6 +215,48 @@ export default function MessageList({ messages, mentorId, isStreaming, streaming
           </div>
         </div>
       ))}
+      
+      {/* 로딩 상태 표시 */}
+      {isStreaming && (
+        <div className="flex justify-start">
+          <div className="flex max-w-5xl flex-row">
+            {/* Avatar */}
+            <div className="flex-shrink-0 mr-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-600">
+                <CpuChipIcon className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* Loading message */}
+            <div className="flex flex-col">
+              <div className="px-4 py-2 rounded-lg shadow-sm bg-gray-100 text-gray-900 border border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <span className="text-sm text-gray-600">AI가 응답을 생성하고 있습니다...</span>
+                </div>
+                {streamingMessage && (
+                  <div className="mt-2 text-sm text-gray-700">
+                    <div 
+                      className="markdown-content prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: marked(streamingMessage, {
+                          gfm: true,
+                          breaks: true
+                        })
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div ref={messagesEndRef} className="h-4" />
     </div>
   );

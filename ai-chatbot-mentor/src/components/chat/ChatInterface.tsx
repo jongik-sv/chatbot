@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import ModelSelector from './ModelSelector';
-import TypingIndicator from './TypingIndicator';
+// TypingIndicator는 MessageList 내에서 처리
 import { ApiClient } from '../../lib/api';
 import { useChatContext } from '../../contexts/ChatContext';
 import { DocumentTextIcon, ChevronLeftIcon, ChevronRightIcon, FolderIcon } from '@heroicons/react/24/outline';
@@ -184,7 +184,7 @@ export default function ChatInterface({
             isStreaming={isStreaming}
             streamingMessage={streamingMessage}
           />
-          {(state.isLoading || isStreaming) && <TypingIndicator />}
+          {/* 로딩 인디케이터는 메시지 목록 내에서 처리 */}
         </div>
 
         {/* Input */}
