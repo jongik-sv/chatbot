@@ -356,6 +356,13 @@ export async function POST(request: NextRequest) {
       if (mcpToolsNeeded.length > 0) {
         console.log('MCP 도구 필요:', mcpToolsNeeded.map(t => t.toolName));
         
+        // MCP 서버들이 연결되지 않은 경우 재연결 시도
+        try {
+          await mcpService.connectAllServers();
+        } catch (connectError) {
+          console.warn('MCP 서버 재연결 시도 실패:', connectError);
+        }
+        
         for (const toolInfo of mcpToolsNeeded) {
           try {
             const mcpResult = await mcpService.executeTool(
@@ -384,6 +391,14 @@ export async function POST(request: NextRequest) {
             
           } catch (toolError) {
             console.error(`MCP 도구 실행 오류 (${toolInfo.toolName}):`, toolError);
+            
+            // 서버가 연결되지 않은 경우 사용자에게 친화적인 메시지 제공
+            let userFriendlyMessage = 'Tool execution failed';
+            if (toolError instanceof Error && toolError.message.includes('not connected')) {
+              userFriendlyMessage = `${toolInfo.toolName} 도구가 현재 사용할 수 없습니다. 서버 연결을 확인해주세요.`;
+              console.warn(`서버 ${toolInfo.serverId}가 연결되지 않아 도구 ${toolInfo.toolName}을 건너뜁니다.`);
+            }
+            
             mcpResults.push({
               toolName: toolInfo.toolName,
               serverId: toolInfo.serverId,
@@ -392,6 +407,10 @@ export async function POST(request: NextRequest) {
                 toolCallId: `call_${Date.now()}`,
                 success: false,
                 error: toolError instanceof Error ? toolError.message : 'Tool execution failed',
+                content: [{
+                  type: 'text',
+                  text: userFriendlyMessage
+                }],
                 isError: true,
                 timestamp: new Date(),
                 executionTime: 0

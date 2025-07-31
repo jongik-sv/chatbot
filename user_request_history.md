@@ -657,3 +657,50 @@ AI답변에 대해 진짜 스트림으로 구현하기 힘들다면 그냥 스�
 정직하고 단순한 UI/UX로 개선되었습니다.
 
 ------
+
+챗봇에서 MCP를 제대로 사용하지 못하고 있어.
+
+서버로그 : 
+MCP 도구 필요: [ 'sequentialthinking' ]
+[MCP 2025-07-31T02:27:22.932Z] Failed to execute tool sequentialthinking on server mcp-sequential-thinking: Error: Server mcp-sequential-thinking is not connected
+
+화면 에러 표시 :
+Reasoning: 복잡한 분석을 위해 순차적 사고 도구 사용
+Result: Error: Server mcp-sequential-thinking is not connected
+
+## 2025-07-31 - MCP 서버 연결 문제 해결 시작
+
+### 문제 상황
+- `sequential-thinking` MCP 서버가 연결되지 않은 상태
+- MCP 도구 실행 시 "Server not connected" 오류 발생
+- 사용자에게 기술적 오류 메시지가 그대로 노출
+
+### 원인 분석
+1. **서버 연결 실패**: `.mcp.json`에 설정된 서버들이 실제로 연결되지 않음
+2. **자동 연결 실패**: `autoConnect: true` 설정이 있지만 연결 과정에서 오류 발생
+3. **오류 처리 부족**: 연결 실패 시 사용자에게 친화적인 메시지 제공 부족
+
+### 해결 방법 구현
+1. **MCP 연결 API 생성**: `/api/mcp/connect` 엔드포인트 추가
+   - 서버 상태 조회 (GET)
+   - 수동 서버 연결 (POST)
+
+2. **자동 재연결 로직**: `/api/chat/route.ts`
+   - MCP 도구 사용 전 `connectAllServers()` 호출
+   - 연결 실패 시에도 계속 진행
+
+3. **사용자 친화적 오류 메시지**:
+   - 기술적 오류 대신 이해하기 쉬운 메시지 제공
+   - "도구가 현재 사용할 수 없습니다. 서버 연결을 확인해주세요."
+
+### 구현된 기능
+✅ MCP 서버 수동 연결 API 추가
+✅ 도구 사용 전 자동 재연결 시도
+✅ 연결 실패 시 친화적인 오류 메시지 표시
+✅ 서버 연결 상태 로깅 개선
+
+### 다음 단계
+- MCP 서버들의 실제 연결 상태 확인 필요
+- 필요시 서버 실행 명령어 및 환경 설정 점검
+
+------
