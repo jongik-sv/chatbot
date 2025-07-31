@@ -15,97 +15,7 @@ import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
-/**
- * 실제 스트림 응답 생성 - LLM으로부터 받은 토큰을 실시간으로 전송
- */
-function createRealStreamResponse(
-  llmService: any,
-  messages: any[],
-  options: any,
-  finalResponseData: any
-): Response {
-  const encoder = new TextEncoder();
-  
-  const stream = new ReadableStream({
-    async start(controller) {
-      try {
-        let fullContent = '';
-        
-        // LLM 서비스에서 실제 스트리밍으로 응답 받기
-        await llmService.chatStream(messages, {
-          ...options,
-          onToken: (token: string) => {
-            // 실시간으로 받은 토큰을 즉시 전송
-            const data = `data: ${JSON.stringify({ type: 'chunk', content: token })}\n\n`;
-            controller.enqueue(encoder.encode(data));
-            fullContent += token;
-          },
-          onComplete: async (result: any) => {
-            // 스트림 완료 후 데이터베이스에 어시스턴트 메시지 저장
-            try {
-              const assistantMessage = chatRepo.createMessage({
-                sessionId: finalResponseData.sessionId,
-                role: 'assistant',
-                content: fullContent,
-                contentType: 'text',
-                metadata: {
-                  artifacts: finalResponseData.artifacts,
-                  sources: finalResponseData.sources,
-                  mcpTools: finalResponseData.mcpTools
-                }
-              });
-
-              // 완료 정보 전송 (실제 messageId 포함)
-              const completeResponse = {
-                ...finalResponseData,
-                content: fullContent,
-                response: fullContent,
-                messageId: assistantMessage.id
-              };
-              const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
-              controller.enqueue(encoder.encode(completeData));
-            } catch (error) {
-              console.error('스트림 완료 시 메시지 저장 오류:', error);
-              // 오류가 발생해도 응답은 전송 (fallback messageId 사용)
-              const completeResponse = {
-                ...finalResponseData,
-                content: fullContent,
-                response: fullContent,
-                messageId: Date.now()
-              };
-              const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
-              controller.enqueue(encoder.encode(completeData));
-            }
-            
-            // 스트림 종료
-            const doneData = `data: [DONE]\n\n`;
-            controller.enqueue(encoder.encode(doneData));
-            controller.close();
-          },
-          onError: (error: Error) => {
-            // 에러 전송
-            const errorData = `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`;
-            controller.enqueue(encoder.encode(errorData));
-            controller.close();
-          }
-        });
-      } catch (error) {
-        // 초기 에러 처리
-        const errorData = `data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : '스트리밍 오류' })}\n\n`;
-        controller.enqueue(encoder.encode(errorData));
-        controller.close();
-      }
-    }
-  });
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-    },
-  });
-}
+// 스트리밍 함수 제거 - 일반 요청-응답만 사용
 
 const chatRepo = new ChatRepository();
 const llmService = new LLMService();
@@ -716,26 +626,7 @@ export async function POST(request: NextRequest) {
         } : undefined
       };
 
-      // 스트림 요청인 경우 - 실제 스트리밍 사용
-      if (stream) {
-        return createRealStreamResponse(
-          llmService,
-          conversationHistory,
-          {
-            model,
-            temperature: continuationContext ? 0.3 : 0.7,
-            maxTokens: 20000,
-            systemInstruction
-          },
-          {
-            sessionId: currentSession.id,
-            messageId: null, // 스트림에서는 나중에 설정
-            artifacts: [],
-            sources: [],
-            mcpTools: mcpResults
-          }
-        );
-      }
+      // 스트리밍 제거 - 일반 요청-응답 방식만 사용
 
       return NextResponse.json(response);
 

@@ -323,124 +323,94 @@ export default function ChatInterface({
         ? ragInfo.documentIds.map(id => parseInt(id))
         : selectedDocumentIds;
 
-      await ApiClient.sendMessageStream(
-        {
-          message: content,
-          model: state.selectedModel,
-          mode: sessionMode,
-          sessionId: state.currentSessionId,
-          mentorId: initialMentorId,
-          documentIds: documentIdsToUse,
-          files
-        },
-        // onChunk
-        (chunk: string) => {
-          setStreamingMessage(prev => prev + chunk);
-          setMessages(prev => {
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            if (updated[lastIndex]?.role === 'assistant') {
-              updated[lastIndex] = {
-                ...updated[lastIndex],
-                content: updated[lastIndex].content + chunk
-              };
+      // 스트리밍 제거 - 일반 요청-응답 방식 사용
+      const response = await ApiClient.sendMessage({
+        message: content,
+        model: state.selectedModel,
+        mode: sessionMode,
+        sessionId: state.currentSessionId,
+        mentorId: initialMentorId,
+        documentIds: documentIdsToUse,
+        files
+      });
+
+      setIsStreaming(false);
+      setStreamingMessage('');
+
+      // 세션 ID 업데이트 (새 세션인 경우)
+      if (!state.currentSessionId) {
+        dispatch({ type: 'SET_SESSION_ID', payload: response.sessionId });
+      }
+
+      // 세션 업데이트 콜백 호출
+      if (onSessionUpdate && response.sessionId) {
+        const responseContent = response.content || response.response;
+        onSessionUpdate(response.sessionId, {
+          messageCount: messages.length + 2, // user + assistant message
+          lastMessage: {
+            content: responseContent.substring(0, 100) + (responseContent.length > 100 ? '...' : ''),
+            role: 'assistant',
+            createdAt: new Date().toISOString()
+          },
+          updatedAt: new Date().toISOString(),
+          // RAG 정보 포함
+          ...(sessionMode === 'rag' && ragInfo && {
+            ragMetadata: {
+              projectId: ragInfo.projectId,
+              projectName: ragInfo.projectName,
+              documentIds: ragInfo.documentIds,
+              documentTitles: ragInfo.documentTitles
             }
-            return updated;
-          });
-        },
-        // onComplete
-        (response) => {
-          setIsStreaming(false);
-          setStreamingMessage('');
+          })
+        });
+      }
 
-          // 세션 ID 업데이트 (새 세션인 경우)
-          if (!state.currentSessionId) {
-            dispatch({ type: 'SET_SESSION_ID', payload: response.sessionId });
-          }
-
-          // 세션 업데이트 콜백 호출
-          if (onSessionUpdate && response.sessionId) {
-            const responseContent = response.content || response.response;
-            onSessionUpdate(response.sessionId, {
-              messageCount: messages.length + 2, // user + assistant message
-              lastMessage: {
-                content: responseContent.substring(0, 100) + (responseContent.length > 100 ? '...' : ''),
-                role: 'assistant',
-                createdAt: new Date().toISOString()
-              },
-              updatedAt: new Date().toISOString(),
-              // RAG 정보 포함
-              ...(sessionMode === 'rag' && ragInfo && {
-                ragMetadata: {
-                  projectId: ragInfo.projectId,
-                  projectName: ragInfo.projectName,
-                  documentIds: ragInfo.documentIds,
-                  documentTitles: ragInfo.documentTitles
-                }
-              })
-            });
-          }
-
-          // 최종 어시스턴트 메시지로 업데이트
-          setMessages(prev => {
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            if (updated[lastIndex]?.role === 'assistant') {
-              updated[lastIndex] = {
-                id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
-                role: 'assistant',
-                content: response.content || response.response,
-                timestamp: getCurrentKoreanTime(),
-                metadata: {
-                  artifacts: response.artifacts,
-                  sources: response.sources,
-                  modelSettings,
-                  mcpTools: response.mcpTools
-                }
-              };
+      // 최종 어시스턴트 메시지로 업데이트
+      setMessages(prev => {
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        if (updated[lastIndex]?.role === 'assistant') {
+          updated[lastIndex] = {
+            id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
+            role: 'assistant',
+            content: response.content || response.response,
+            timestamp: getCurrentKoreanTime(),
+            metadata: {
+              artifacts: response.artifacts,
+              sources: response.sources,
+              modelSettings,
+              mcpTools: response.mcpTools
             }
-            return updated;
-          });
-
-          // 사용자 메시지에 MCP 도구 정보 추가 (있는 경우)
-          if (response.mcpTools && response.mcpTools.length > 0) {
-            setMessages(prev => {
-              const updatedMessages = [...prev];
-              const lastUserMessageIndex = updatedMessages.length - 2; // assistant 메시지 바로 전
-              if (updatedMessages[lastUserMessageIndex]?.role === 'user') {
-                updatedMessages[lastUserMessageIndex] = {
-                  ...updatedMessages[lastUserMessageIndex],
-                  metadata: {
-                    ...updatedMessages[lastUserMessageIndex].metadata,
-                    mcpTools: response.mcpTools
-                  }
-                };
-              }
-              return updatedMessages;
-            });
-          }
-
-          // 아티팩트가 있으면 패널 열기
-          if (response.artifacts && response.artifacts.length > 0) {
-            setArtifacts(response.artifacts);
-            setIsArtifactPanelOpen(true);
-          }
-
-          dispatch({ type: 'SET_LOADING', payload: false });
-        },
-        // onError
-        (error) => {
-          setIsStreaming(false);
-          setStreamingMessage('');
-          
-          // 임시 메시지 제거
-          setMessages(prev => prev.slice(0, -1));
-          
-          console.error('메시지 전송 실패:', error);
-          setError(error.message || '메시지 전송에 실패했습니다.');
-          dispatch({ type: 'SET_LOADING', payload: false });
+          };
         }
-      );
+        return updated;
+      });
+
+      // 사용자 메시지에 MCP 도구 정보 추가 (있는 경우)
+      if (response.mcpTools && response.mcpTools.length > 0) {
+        setMessages(prev => {
+          const updatedMessages = [...prev];
+          const lastUserMessageIndex = updatedMessages.length - 2; // assistant 메시지 바로 전
+          if (updatedMessages[lastUserMessageIndex]?.role === 'user') {
+            updatedMessages[lastUserMessageIndex] = {
+              ...updatedMessages[lastUserMessageIndex],
+              metadata: {
+                ...updatedMessages[lastUserMessageIndex].metadata,
+                mcpTools: response.mcpTools
+              }
+            };
+          }
+          return updatedMessages;
+        });
+      }
+
+      // 아티팩트가 있으면 패널 열기
+      if (response.artifacts && response.artifacts.length > 0) {
+        setArtifacts(response.artifacts);
+        setIsArtifactPanelOpen(true);
+      }
+
+      dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error) {
       setIsStreaming(false);
       setStreamingMessage('');
