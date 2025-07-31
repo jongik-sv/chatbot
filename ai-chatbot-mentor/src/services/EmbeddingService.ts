@@ -303,20 +303,45 @@ export class EmbeddingService {
   }
 
   /**
+   * 환경변수에서 청킹 설정 읽기
+   */
+  private getChunkingConfig() {
+    const chunkSize = parseInt(process.env.EMBEDDING_CHUNK_SIZE || '500');
+    const overlapSize = parseInt(process.env.EMBEDDING_OVERLAP_SIZE || '50');
+    const chunkMode = (process.env.EMBEDDING_CHUNK_MODE || 'token') as 'character' | 'page' | 'token';
+    
+    return {
+      chunkSize,
+      overlapSize,
+      chunkMode
+    };
+  }
+
+  /**
    * 문서를 청크로 분할 (통합 메서드)
    */
-  chunkDocument(text: string, mode: 'character' | 'page' | 'token' = 'token', chunkSize: number = 500, overlap: number = 50): DocumentChunk[] {
-    console.log(`청킹 모드: ${mode}, 크기: ${chunkSize}, 오버랩: ${overlap}`);
+  chunkDocument(
+    text: string, 
+    mode?: 'character' | 'page' | 'token', 
+    chunkSize?: number, 
+    overlap?: number
+  ): DocumentChunk[] {
+    const config = this.getChunkingConfig();
+    const finalMode = mode || config.chunkMode;
+    const finalChunkSize = chunkSize || config.chunkSize;
+    const finalOverlap = overlap || config.overlapSize;
     
-    switch (mode) {
+    console.log(`청킹 모드: ${finalMode}, 크기: ${finalChunkSize}, 오버랩: ${finalOverlap}`);
+    
+    switch (finalMode) {
       case 'token':
-        return this.chunkDocumentByTokens(text, chunkSize, overlap);
+        return this.chunkDocumentByTokens(text, finalChunkSize, finalOverlap);
       case 'page':
         return this.chunkDocumentByPage(text);
       case 'character':
-        return this.chunkDocumentByCharacter(text, chunkSize, overlap);
+        return this.chunkDocumentByCharacter(text, finalChunkSize, finalOverlap);
       default:
-        return this.chunkDocumentByTokens(text, chunkSize, overlap);
+        return this.chunkDocumentByTokens(text, finalChunkSize, finalOverlap);
     }
   }
 
@@ -325,14 +350,19 @@ export class EmbeddingService {
    */
   async embedDocument(
     text: string, 
-    mode: 'character' | 'page' | 'token' = 'token', 
-    chunkSize: number = 500,
-    overlap: number = 50
+    mode?: 'character' | 'page' | 'token', 
+    chunkSize?: number,
+    overlap?: number
   ): Promise<EmbeddingResult[]> {
-    const chunks = this.chunkDocument(text, mode, chunkSize, overlap);
+    const config = this.getChunkingConfig();
+    const finalMode = mode || config.chunkMode;
+    const finalChunkSize = chunkSize || config.chunkSize;
+    const finalOverlap = overlap || config.overlapSize;
+    
+    const chunks = this.chunkDocument(text, finalMode, finalChunkSize, finalOverlap);
     const results: EmbeddingResult[] = [];
     
-    console.log(`Processing ${chunks.length} ${mode} chunks for embedding...`);
+    console.log(`Processing ${chunks.length} ${finalMode} chunks for embedding...`);
     
     for (const chunk of chunks) {
       try {
@@ -344,23 +374,23 @@ export class EmbeddingService {
         });
         
         // 진행률 표시 (모드별 간격 조정)
-        const progressInterval = mode === 'page' ? 1 : (mode === 'token' ? 5 : 10);
+        const progressInterval = finalMode === 'page' ? 1 : (finalMode === 'token' ? 5 : 10);
         if ((chunk.index + 1) % progressInterval === 0 || chunk.index === chunks.length - 1) {
-          if (mode === 'page') {
+          if (finalMode === 'page') {
             console.log(`Embedded page ${chunk.index + 1}/${chunks.length} (${chunk.metadata?.characterCount || 0} chars)`);
-          } else if (mode === 'token') {
+          } else if (finalMode === 'token') {
             console.log(`Embedded ${chunk.index + 1}/${chunks.length} token chunks (${chunk.metadata?.tokenCount || 0} tokens)`);
           } else {
             console.log(`Embedded ${chunk.index + 1}/${chunks.length} chunks`);
           }
         }
       } catch (error) {
-        console.error(`Failed to embed ${mode} chunk ${chunk.index}:`, error);
+        console.error(`Failed to embed ${finalMode} chunk ${chunk.index}:`, error);
         // 실패한 청크는 건너뛰고 계속 진행
       }
     }
     
-    console.log(`Embedding completed: ${results.length}/${chunks.length} ${mode} chunks processed`);
+    console.log(`Embedding completed: ${results.length}/${chunks.length} ${finalMode} chunks processed`);
     return results;
   }
 

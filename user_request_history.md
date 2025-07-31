@@ -751,3 +751,7 @@ const endpoint = (request.mode === 'document' || request.mode === 'rag' ||
 - 더 빠르고 효율적인 채팅 경험 제공
 
 ------
+
+임베딩할때 청크 크기, 오버랩 크기를 지정할 수 있도록 해줘. 설정 파일은 chatbot\.env.local 파일을 보도록 해줘.
+
+------

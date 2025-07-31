@@ -84,15 +84,19 @@ export class VectorSearchService extends BaseRepository {
   async processAndStoreDocument(
     documentId: number, 
     documentText: string, 
-    mode: 'character' | 'page' | 'token' = 'token',
-    chunkSize: number = 500,
-    overlap: number = 50
+    mode?: 'character' | 'page' | 'token',
+    chunkSize?: number,
+    overlap?: number
   ): Promise<void> {
     try {
-      console.log(`Processing document ${documentId} for embeddings using ${mode} mode (chunkSize: ${chunkSize}, overlap: ${overlap})...`);
+      const finalMode = mode || (process.env.EMBEDDING_CHUNK_MODE as 'character' | 'page' | 'token') || 'token';
+      const finalChunkSize = chunkSize || parseInt(process.env.EMBEDDING_CHUNK_SIZE || '500');
+      const finalOverlap = overlap || parseInt(process.env.EMBEDDING_OVERLAP_SIZE || '50');
       
-      // 문서를 청크로 분할하고 임베딩 생성
-      const embeddings = await embeddingService.embedDocument(documentText, mode, chunkSize, overlap);
+      console.log(`Processing document ${documentId} for embeddings using ${finalMode} mode (chunkSize: ${finalChunkSize}, overlap: ${finalOverlap})...`);
+      
+      // 문서를 청크로 분할하고 임베딩 생성 (환경변수 기본값 사용)
+      const embeddings = await embeddingService.embedDocument(documentText, finalMode, finalChunkSize, finalOverlap);
       
       // 기존 임베딩 삭제 (재처리 시)
       await this.deleteDocumentEmbeddings(documentId);
@@ -100,7 +104,7 @@ export class VectorSearchService extends BaseRepository {
       // 새 임베딩 저장
       await this.storeDocumentEmbeddings(documentId, embeddings);
       
-      console.log(`Document ${documentId} processing completed with ${embeddings.length} ${mode} chunks`);
+      console.log(`Document ${documentId} processing completed with ${embeddings.length} ${finalMode} chunks`);
     } catch (error) {
       console.error(`Failed to process document ${documentId}:`, error);
       throw error;
