@@ -21,6 +21,7 @@ interface MessageListProps {
   messages: Message[];
   mentorId?: number;
   isStreaming?: boolean;
+  streamingMessage?: string;
 }
 
 // 모델명을 사용자 친화적으로 표시
@@ -80,7 +81,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export default function MessageList({ messages, mentorId, isStreaming }: MessageListProps) {
+export default function MessageList({ messages, mentorId, isStreaming, streamingMessage }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { state } = useChatContext();
 

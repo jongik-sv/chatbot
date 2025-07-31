@@ -11,14 +11,22 @@ import { ArtifactService } from '../../../services/ArtifactService';
 import { mcpService } from '../../../services/MCPService';
 import { parseArtifactsFromContent } from '../../../utils/artifactParser';
 import { detectContinuation, shouldUpdateExistingArtifact, enhancePromptForContinuation } from '../../../utils/continuationHandler';
-import { ChatRequest, ChatResponse, Message } from '../../../types';
+import { ChatRequest, ChatResponse } from '../../../types';
 import { SequentialThinkingService } from '../../../services/SequentialThinkingService';
 import { SequentialThinkingProcessor } from '../../../services/SequentialThinkingProcessor';
 import { StreamingSequentialThinkingProcessor } from '../../../services/StreamingSequentialThinkingProcessor';
-import { readFile } from 'fs/promises';
-import path from 'path';
-
-// 스트리밍 함수 제거 - 일반 요청-응답만 사용
+/**
+ * Sequential Thinking 감지 함수
+ */
+function isSequentialThinking(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  return (lowerMessage.includes('복잡한') && lowerMessage.includes('분석')) ||
+         (lowerMessage.includes('단계별') && (lowerMessage.includes('분석') || lowerMessage.includes('계획'))) ||
+         (lowerMessage.includes('생각해') && lowerMessage.includes('단계')) ||
+         lowerMessage.includes('순차적 사고') ||
+         lowerMessage.includes('체계적으로 분석') ||
+         (lowerMessage.includes('문제 해결') && lowerMessage.includes('단계'));
+}
 
 const chatRepo = new ChatRepository();
 const llmService = new LLMService();
@@ -27,6 +35,16 @@ const ruleIntegration = new RuleIntegration();
 const sequentialThinkingService = new SequentialThinkingService();
 const sequentialThinkingProcessor = new SequentialThinkingProcessor();
 const streamingSequentialThinkingProcessor = new StreamingSequentialThinkingProcessor();
+
+/**
+ * 파일 타입 정의
+ */
+interface UploadedFile {
+  name: string;
+  type: string;
+  size: number;
+  data: ArrayBuffer;
+}
 
 /**
  * Sequential Thinking 대체 실행 (MCP 서버 연결 실패 시)
@@ -213,26 +231,8 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     });
   }
 
-  // 복잡한 사고/분석이 필요한 경우 (더 구체적인 조건)
-  if ((lowerMessage.includes('복잡한') && lowerMessage.includes('분석')) ||
-      (lowerMessage.includes('단계별') && (lowerMessage.includes('분석') || lowerMessage.includes('계획'))) ||
-      (lowerMessage.includes('생각해') && lowerMessage.includes('단계')) ||
-      lowerMessage.includes('순차적 사고') ||
-      lowerMessage.includes('체계적으로 분석') ||
-      (lowerMessage.includes('문제 해결') && lowerMessage.includes('단계'))) {
-    
-    tools.push({
-      serverId: 'sequential-thinking',
-      toolName: 'sequentialthinking',
-      arguments: {
-        thought: `사용자 요청 분석: ${message}`,
-        nextThoughtNeeded: true,
-        thoughtNumber: 1,
-        totalThoughts: 3
-      },
-      reasoning: '복잡한 분석을 위해 순차적 사고 도구 사용'
-    });
-  }
+  // Sequential Thinking은 별도 처리하므로 MCP 도구 목록에서 제외
+  // (스트리밍으로 처리됨)
 
   return tools;
 }
@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
             type: file.type,
             size: file.size,
             data: await file.arrayBuffer()
-          });
+          } as UploadedFile);
         }
       }
     } else {
@@ -418,127 +418,8 @@ export async function POST(request: NextRequest) {
       if (mcpToolsNeeded.length > 0) {
         console.log('MCP 도구 필요:', mcpToolsNeeded.map(t => t.toolName));
         
-        // Sequential Thinking이 필요한 경우 스트리밍 응답 시작
-        const hasSequentialThinking = mcpToolsNeeded.some(
-          tool => tool.serverId === 'sequential-thinking' && tool.toolName === 'sequentialthinking'
-        );
-        
-        if (hasSequentialThinking) {
-          console.log('🔄 Sequential Thinking 스트리밍 모드 시작');
-          
-          // 스트리밍 응답 헤더 설정
-          const headers = new Headers({
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-          });
-
-          // 스트리밍 응답 생성
-          const stream = new ReadableStream({
-            async start(controller) {
-              try {
-                // 사용자 메시지 저장
-                const userMessage = chatRepo.createMessage({
-                  sessionId: currentSession.id,
-                  role: 'user',
-                  content: message,
-                  contentType: 'text',
-                  metadata: {
-                    isSequentialThinking: true
-                  }
-                });
-
-                // 스트리밍 Sequential Thinking 실행
-                const streamGenerator = streamingSequentialThinkingProcessor.processSequentialThinkingStream(
-                  enhancedMessage,
-                  model,
-                  5, // maxSteps
-                  currentSession.id,
-                  userId?.toString()
-                );
-
-                let finalAnswer = '';
-                let totalSteps = 0;
-                let processingTime = 0;
-
-                for await (const chunk of streamGenerator) {
-                  try {
-                    controller.enqueue(new TextEncoder().encode(chunk));
-                    
-                    // 최종 결과 추출
-                    if (chunk.includes('"type":"final_complete"')) {
-                      try {
-                        // SSE 형식에서 JSON 데이터 추출
-                        const lines = chunk.split('\n');
-                        for (const line of lines) {
-                          if (line.startsWith('data: ')) {
-                            const jsonStr = line.substring(6); // 'data: ' 제거
-                            if (jsonStr.trim() && jsonStr !== '[DONE]') {
-                              const data = JSON.parse(jsonStr);
-                              if (data.type === 'final_complete') {
-                                finalAnswer = data.finalAnswer || '';
-                                totalSteps = data.totalSteps || 0;
-                                processingTime = data.processingTime || 0;
-                                break;
-                              }
-                            }
-                          }
-                        }
-                      } catch (parseError) {
-                        console.warn('최종 결과 파싱 실패:', parseError);
-                        console.warn('문제가 된 청크:', chunk);
-                      }
-                    }
-                  } catch (chunkError) {
-                    console.error('청크 처리 오류:', chunkError);
-                    console.error('문제가 된 청크:', chunk);
-                  }
-                }
-
-                // AI 응답 저장
-                if (finalAnswer) {
-                  const assistantMessage = chatRepo.createMessage({
-                    sessionId: currentSession.id,
-                    role: 'assistant',
-                    content: finalAnswer,
-                    contentType: 'text',
-                    metadata: {
-                      model: model,
-                      provider: 'gemini',
-                      isSequentialThinking: true,
-                      totalSteps: totalSteps,
-                      processingTime: processingTime,
-                      appliedRules: ruleApplicationResult.appliedRules,
-                      rulesSummary: ruleApplicationResult.rulesSummary
-                    }
-                  });
-
-                  // 세션 마지막 활동 시간 업데이트
-                  chatRepo.updateSessionTimestamp(currentSession.id);
-                }
-
-                controller.close();
-              } catch (error) {
-                console.error('스트리밍 Sequential Thinking 오류:', error);
-                
-                // 오류 메시지 전송
-                const errorMessage = `data: ${JSON.stringify({
-                  type: 'error',
-                  message: '단계별 사고 과정 중 오류가 발생했습니다.',
-                  error: error instanceof Error ? error.message : 'Unknown error',
-                  timestamp: new Date().toISOString()
-                })}\n\n`;
-                
-                controller.enqueue(new TextEncoder().encode(errorMessage));
-                controller.close();
-              }
-            }
-          });
-
-          return new Response(stream, { headers });
-        }
+        // Sequential Thinking도 일반 응답으로 처리 (스트리밍 비활성화)
+        console.log('MCP 도구 감지됨, 일반 응답 모드로 처리');
         
         // MCP 서버들이 연결되지 않은 경우 재연결 시도
         try {
@@ -627,9 +508,13 @@ export async function POST(request: NextRequest) {
                   toolName: toolInfo.toolName,
                   serverId: toolInfo.serverId,
                   result: {
+                    id: `fallback-${Date.now()}`,
+                    toolCallId: `call-${Date.now()}`,
                     success: true,
                     content: [{ type: 'text', text: fallbackResult }],
-                    executionTime: 100
+                    executionTime: 100,
+                    timestamp: new Date(),
+                    isError: false
                   },
                   reasoning: toolInfo.reasoning
                 });
@@ -678,6 +563,111 @@ export async function POST(request: NextRequest) {
       finalMessage += mcpContext;
     }
 
+    // Sequential Thinking 감지 및 스트리밍 처리
+    if (stream && isSequentialThinking(enhancedMessage)) {
+      console.log('🤔 Sequential Thinking 스트리밍 모드 시작');
+      
+      // 사용자 메시지 저장
+      const userMessage = chatRepo.createMessage({
+        sessionId: currentSession.id,
+        role: 'user',
+        content: message,
+        contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
+        metadata: uploadedFiles.length > 0 ? { 
+          files: uploadedFiles.map((f: UploadedFile) => ({ name: f.name, type: f.type, size: f.size })),
+          mcpTools: mcpResults.length > 0 ? mcpResults : undefined
+        } : {
+          mcpTools: mcpResults.length > 0 ? mcpResults : undefined
+        }
+      });
+
+      // 스트리밍 응답 설정
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            // 스트리밍 처리 시작
+            const streamGenerator = streamingSequentialThinkingProcessor.processSequentialThinkingStream(
+              enhancedMessage,
+              model,
+              5, // maxSteps
+              currentSession.id,
+              userId?.toString()
+            );
+
+            let finalContent = '';
+            let totalSteps = 0;
+            let processingTime = 0;
+
+            for await (const chunk of streamGenerator) {
+              // SSE 형식으로 전송
+              controller.enqueue(encoder.encode(chunk));
+              
+              // 최종 결과 추출
+              if (chunk.includes('"type":"final_complete"')) {
+                try {
+                  const data = JSON.parse(chunk.split('data: ')[1]);
+                  finalContent = data.finalAnswer;
+                  totalSteps = data.totalSteps;
+                  processingTime = data.processingTime;
+                } catch (e) {
+                  console.warn('최종 결과 파싱 오류:', e);
+                }
+              }
+            }
+
+            // 완료 신호
+            controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+            
+            // AI 응답 저장
+            const assistantMessage = chatRepo.createMessage({
+              sessionId: currentSession.id,
+              role: 'assistant',
+              content: finalContent || '단계별 사고 과정이 완료되었습니다.',
+              contentType: 'text',
+              metadata: {
+                model: model,
+                provider: 'sequential-thinking',
+                isSequentialThinking: true,
+                totalSteps: totalSteps,
+                processingTime: processingTime,
+                mentorId: mentorId,
+                mentorName: mentorContext?.mentor.name,
+                appliedRules: ruleApplicationResult.appliedRules,
+                rulesSummary: ruleApplicationResult.rulesSummary
+              }
+            });
+
+            // 세션 업데이트
+            if (onSessionUpdate && currentSession.id) {
+              // onSessionUpdate는 여기서 사용할 수 없으므로 직접 세션 업데이트
+              chatRepo.updateSessionTimestamp(currentSession.id);
+            }
+
+            controller.close();
+          } catch (error) {
+            console.error('스트리밍 처리 오류:', error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'error',
+              message: '스트리밍 처리 중 오류가 발생했습니다.',
+              error: error instanceof Error ? error.message : 'Unknown error'
+            })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      });
+    }
+
     // 현재 사용자 메시지 추가 (MCP 컨텍스트 포함)
     conversationHistory.push({
       role: 'user',
@@ -691,7 +681,7 @@ export async function POST(request: NextRequest) {
       content: message,
       contentType: uploadedFiles.length > 0 ? 'multimodal' : 'text',
       metadata: uploadedFiles.length > 0 ? { 
-        files: uploadedFiles.map(f => ({ name: f.name, type: f.type, size: f.size })),
+        files: uploadedFiles.map((f: UploadedFile) => ({ name: f.name, type: f.type, size: f.size })),
         mcpTools: mcpResults.length > 0 ? mcpResults : undefined
       } : {
         mcpTools: mcpResults.length > 0 ? mcpResults : undefined
@@ -714,7 +704,7 @@ export async function POST(request: NextRequest) {
       // 멀티모달 처리 (파일이 있는 경우)
       else if (uploadedFiles.length > 0) {
         // 이미지 파일 찾기
-        const imageFile = uploadedFiles.find(file => file.type.startsWith('image/'));
+        const imageFile = uploadedFiles.find((file: UploadedFile) => file.type.startsWith('image/'));
         
         if (imageFile) {
           // 이미지가 있는 경우 멀티모달 모델 사용
@@ -737,7 +727,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // 이미지가 아닌 파일들 (음성, 문서 등)
-          const audioFile = uploadedFiles.find(file => file.type.startsWith('audio/'));
+          const audioFile = uploadedFiles.find((file: UploadedFile) => file.type.startsWith('audio/'));
           
           if (audioFile) {
             // 음성 파일 처리 (향후 Speech-to-Text 구현)
@@ -753,7 +743,7 @@ export async function POST(request: NextRequest) {
               model,
               temperature: 0.7,
               maxTokens: 20000,
-              systemInstruction: `사용자가 다음 파일들을 업로드했습니다: ${uploadedFiles.map(f => f.name).join(', ')}`
+              systemInstruction: `사용자가 다음 파일들을 업로드했습니다: ${uploadedFiles.map((f: UploadedFile) => f.name).join(', ')}`
             });
           }
         }
@@ -818,7 +808,7 @@ export async function POST(request: NextRequest) {
           // 연속 답변이고 기존 아티팩트를 업데이트해야 하는 경우
           if (continuationContext?.shouldUpdateArtifact && continuationContext?.previousMessageId) {
             // 이전 메시지의 아티팩트 찾기
-            const previousArtifacts = await ArtifactService.getArtifactsByMessageId(continuationContext.previousMessageId);
+            const previousArtifacts = ArtifactService.getArtifactsByMessageId(continuationContext.previousMessageId);
             const existingArtifact = previousArtifacts.find(existing => 
               existing.type === artifactData.type && 
               (existing.title === artifactData.title || 
@@ -828,12 +818,13 @@ export async function POST(request: NextRequest) {
             if (existingArtifact) {
               // 기존 아티팩트 업데이트
               console.log('기존 아티팩트 업데이트:', existingArtifact.id);
-              const updatedArtifact = await ArtifactService.updateArtifact(existingArtifact.id, {
+              const updatedArtifact = ArtifactService.updateArtifact(existingArtifact.id, {
                 content: artifactData.content,
-                title: artifactData.title || existingArtifact.title,
-                updated_at: new Date().toISOString()
+                title: artifactData.title || existingArtifact.title
               });
-              createdArtifacts.push(updatedArtifact);
+              if (updatedArtifact) {
+                createdArtifacts.push(updatedArtifact);
+              }
               continue;
             }
           }
@@ -892,8 +883,6 @@ export async function POST(request: NextRequest) {
           artifactsProcessed: createdArtifacts.length
         } : undefined
       };
-
-      // 스트리밍 제거 - 일반 요청-응답 방식만 사용
 
       return NextResponse.json(response);
 

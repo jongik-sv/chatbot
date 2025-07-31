@@ -203,6 +203,7 @@ export interface ChatRequest {
   userId?: number;
   documentIds?: number[];
   files?: File[];
+  stream?: boolean;
 }
 
 export interface ChatResponse {
