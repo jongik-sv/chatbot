@@ -38,6 +38,12 @@ interface ChatSession {
   artifact_types?: string[];
   last_message?: string;
   user_id: number;
+  documentInfo?: {
+    projectId?: number;
+    projectName?: string;
+    documentIds?: number[];
+    documentTitles?: string[];
+  };
 }
 
 interface ConversationFilters {
@@ -59,6 +65,39 @@ export default function ConversationsPage() {
     sortBy: 'updated',
     sortOrder: 'desc'
   });
+
+  // RAG 대화 URL 생성 함수
+  const getConversationUrl = (conversation: ChatSession): string => {
+    const baseUrl = `/chat/${conversation.id}`;
+    
+    // RAG/문서 기반 대화인 경우 URL 파라미터 추가
+    if ((conversation.mode === 'document' || conversation.mode === 'rag') && conversation.documentInfo) {
+      const params = new URLSearchParams();
+      
+      // 모드 설정
+      params.set('mode', 'rag');
+      
+      // 프로젝트 정보
+      if (conversation.documentInfo.projectId) {
+        params.set('projectId', conversation.documentInfo.projectId.toString());
+      }
+      if (conversation.documentInfo.projectName) {
+        params.set('projectName', conversation.documentInfo.projectName);
+      }
+      
+      // 문서 정보
+      if (conversation.documentInfo.documentIds && conversation.documentInfo.documentIds.length > 0) {
+        params.set('documentIds', JSON.stringify(conversation.documentInfo.documentIds.map(id => id.toString())));
+      }
+      if (conversation.documentInfo.documentTitles && conversation.documentInfo.documentTitles.length > 0) {
+        params.set('documentTitles', JSON.stringify(conversation.documentInfo.documentTitles));
+      }
+      
+      return `${baseUrl}?${params.toString()}`;
+    }
+    
+    return baseUrl;
+  };
 
   useEffect(() => {
     loadConversations();
@@ -413,7 +452,7 @@ export default function ConversationsPage() {
                     
                     <div className="flex gap-2">
                       <a
-                        href={`/chat/${conversation.id}`}
+                        href={getConversationUrl(conversation)}
                         className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
                       >
                         <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1" />
@@ -527,7 +566,7 @@ export default function ConversationsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
                             <a
-                              href={`/chat/${conversation.id}`}
+                              href={getConversationUrl(conversation)}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               이어가기

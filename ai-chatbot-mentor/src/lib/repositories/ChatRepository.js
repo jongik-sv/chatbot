@@ -187,17 +187,27 @@ class ChatRepository {
     try {
       const metadata = JSON.parse(message.metadata);
       if (metadata.documentIds && Array.isArray(metadata.documentIds)) {
-        // 문서 ID로 문서명 조회
+        // 문서 ID로 문서명 및 프로젝트 정보 조회
         const documentIds = metadata.documentIds;
         const placeholders = documentIds.map(() => '?').join(',');
         const docStmt = this.db.prepare(`
-          SELECT filename FROM documents 
-          WHERE id IN (${placeholders})
+          SELECT d.id, d.filename, d.project_id, p.name as project_name
+          FROM documents d
+          LEFT JOIN projects p ON d.project_id = p.id
+          WHERE d.id IN (${placeholders})
         `);
         
         const documents = docStmt.all(...documentIds);
+        
+        // 프로젝트 정보 (첫 번째 문서의 프로젝트 사용)
+        const firstDoc = documents[0];
+        const projectName = firstDoc?.project_name || null;
+        const projectId = firstDoc?.project_id || null;
+        
         return {
-          projectName: null,
+          projectId,
+          projectName,
+          documentIds: documents.map(doc => doc.id),
           documentTitles: documents.map(doc => doc.filename)
         };
       }

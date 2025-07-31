@@ -146,9 +146,9 @@ export default function ChatInterface({
         // API에서 받은 documentInfo가 있으면 우선 사용
         if (response.session.documentInfo) {
           setRagInfo({
-            projectId: '',
+            projectId: response.session.documentInfo.projectId?.toString() || '',
             projectName: response.session.documentInfo.projectName || '',
-            documentIds: [],
+            documentIds: response.session.documentInfo.documentIds?.map(id => id.toString()) || [],
             documentTitles: response.session.documentInfo.documentTitles || []
           });
         } else {

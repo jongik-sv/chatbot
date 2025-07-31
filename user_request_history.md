@@ -755,3 +755,10 @@ const endpoint = (request.mode === 'document' || request.mode === 'rag' ||
 임베딩할때 청크 크기, 오버랩 크기를 지정할 수 있도록 해줘. 설정 파일은 chatbot\.env.local 파일을 보도록 해줘.
 
 ------
+
+대화목록에서 RAG 대화를 할 경우 프로젝트와 선택된 문서가 화면에 보이지가 않아.
+확인 결과 주소 뒤에 값이 있어야만 보이는데 RAG 대화에서는 왜 projectName, documentTitles 의 값이 없지? 저 값을 넣던지 아니면 다른 더 쉬운 방법으로 내용이 보이게 하던지 해줘.
+
+http://localhost:3000/?mode=rag&projectId=4&projectName=LLM+%ED%85%8C%EC%8A%A4%ED%8A%B8&documentIds=%5B%223%22%5D&documentTitles=%5B%22RE-%EC%9D%B8%EC%82%AC-004+%EA%B8%89%EC%97%AC%EA%B7%9C%EC%A0%95+v1.5.docx%22%5D
+
+------
