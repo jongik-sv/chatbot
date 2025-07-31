@@ -416,6 +416,184 @@ export class LLMService {
   }
 
   /**
+   * 스트리밍 채팅 - 실시간으로 응답을 받아 콜백 호출
+   */
+  async chatStream(
+    messages: Array<{role: string, content: string}>, 
+    options: LLMGenerationOptions & {
+      onToken: (token: string) => void;
+      onComplete: (result: LLMResponse) => void;
+      onError: (error: Error) => void;
+    }
+  ): Promise<void> {
+    const model = options.model || 'qwen3:8b';
+    const provider = this.getModelProvider(model);
+
+    try {
+      if (provider === 'ollama') {
+        await this.chatStreamWithOllama(messages, options);
+      } else {
+        await this.chatStreamWithGemini(messages, options);
+      }
+    } catch (error) {
+      console.error('스트리밍 채팅 실패:', error);
+      options.onError(error instanceof Error ? error : new Error('스트리밍 채팅 실패'));
+    }
+  }
+
+  /**
+   * Ollama 스트리밍 채팅
+   */
+  private async chatStreamWithOllama(
+    messages: Array<{role: string, content: string}>, 
+    options: LLMGenerationOptions & {
+      onToken: (token: string) => void;
+      onComplete: (result: LLMResponse) => void;
+      onError: (error: Error) => void;
+    }
+  ): Promise<void> {
+    const model = options.model || 'qwen3:8b';
+    
+    const requestBody = {
+      model,
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      stream: true,
+      options: {
+        temperature: options.temperature || 0.7,
+        num_predict: options.maxTokens || 20000
+      }
+    };
+
+    const response = await fetch(`${this.ollamaBaseURL}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ollama Chat API 오류: HTTP ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('응답 스트림을 읽을 수 없습니다');
+    }
+
+    const decoder = new TextDecoder();
+    let fullContent = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // 여러 줄의 JSON이 올 수 있으므로 줄 단위로 처리
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              if (data.message?.content) {
+                options.onToken(data.message.content);
+                fullContent += data.message.content;
+              }
+              
+              // 스트림 완료 확인
+              if (data.done) {
+                options.onComplete({
+                  success: true,
+                  content: fullContent,
+                  model,
+                  provider: 'ollama'
+                });
+                return;
+              }
+            } catch (parseError) {
+              // JSON 파싱 오류는 무시 (부분적인 데이터일 수 있음)
+              console.warn('JSON 파싱 오류:', parseError);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
+   * Gemini 스트리밍 채팅
+   */
+  private async chatStreamWithGemini(
+    messages: Array<{role: string, content: string}>, 
+    options: LLMGenerationOptions & {
+      onToken: (token: string) => void;
+      onComplete: (result: LLMResponse) => void;
+      onError: (error: Error) => void;
+    }
+  ): Promise<void> {
+    if (!this.geminiApiKey) {
+      options.onError(new Error('Gemini API 키가 설정되지 않음'));
+      return;
+    }
+
+    try {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(this.geminiApiKey);
+      
+      const modelConfig = { 
+        model: options.model || 'gemini-1.5-flash',
+        systemInstruction: options.systemInstruction
+      };
+
+      const model = genAI.getGenerativeModel(modelConfig);
+      
+      // Gemini 형식으로 메시지 변환
+      const history = messages.slice(0, -1).map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      const lastMessage = messages[messages.length - 1];
+      
+      const chat = model.startChat({
+        history,
+        generationConfig: {
+          temperature: options.temperature || 0.7,
+          maxOutputTokens: options.maxTokens || 20000,
+        }
+      });
+
+      const result = await chat.sendMessageStream(lastMessage.content);
+      let fullContent = '';
+
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        if (chunkText) {
+          options.onToken(chunkText);
+          fullContent += chunkText;
+        }
+      }
+
+      // 완료 콜백 호출
+      options.onComplete({
+        success: true,
+        content: fullContent,
+        model: options.model || 'gemini-1.5-flash',
+        provider: 'gemini'
+      });
+
+    } catch (error) {
+      console.error('Gemini 스트리밍 채팅 실패:', error);
+      options.onError(error instanceof Error ? error : new Error('Gemini 스트리밍 채팅 실패'));
+    }
+  }
+
+  /**
    * Gemini로 채팅
    */
   private async chatWithGemini(messages: Array<{role: string, content: string}>, options: LLMGenerationOptions): Promise<LLMResponse> {

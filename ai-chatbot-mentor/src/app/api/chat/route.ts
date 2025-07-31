@@ -16,39 +16,58 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 
 /**
- * 스트림 응답 생성
+ * 실제 스트림 응답 생성 - LLM으로부터 받은 토큰을 실시간으로 전송
  */
-function createStreamResponse(response: ChatResponse, content: string) {
+function createRealStreamResponse(
+  llmService: any,
+  messages: any[],
+  options: any,
+  finalResponseData: any
+): Response {
   const encoder = new TextEncoder();
   
   const stream = new ReadableStream({
-    start(controller) {
-      // 콘텐츠를 청크로 나누어 전송
-      const words = content.split(' ');
-      let currentIndex = 0;
-      
-      const sendChunk = () => {
-        if (currentIndex < words.length) {
-          const chunk = words[currentIndex] + (currentIndex < words.length - 1 ? ' ' : '');
-          const data = `data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`;
-          controller.enqueue(encoder.encode(data));
-          currentIndex++;
-          
-          // 다음 청크를 약간의 지연 후 전송
-          setTimeout(sendChunk, 50);
-        } else {
-          // 완료 정보 전송
-          const completeData = `data: ${JSON.stringify({ type: 'complete', response })}\n\n`;
-          controller.enqueue(encoder.encode(completeData));
-          
-          // 스트림 종료
-          const doneData = `data: [DONE]\n\n`;
-          controller.enqueue(encoder.encode(doneData));
-          controller.close();
-        }
-      };
-      
-      sendChunk();
+    async start(controller) {
+      try {
+        let fullContent = '';
+        
+        // LLM 서비스에서 실제 스트리밍으로 응답 받기
+        await llmService.chatStream(messages, {
+          ...options,
+          onToken: (token: string) => {
+            // 실시간으로 받은 토큰을 즉시 전송
+            const data = `data: ${JSON.stringify({ type: 'chunk', content: token })}\n\n`;
+            controller.enqueue(encoder.encode(data));
+            fullContent += token;
+          },
+          onComplete: (result: any) => {
+            // 완료 정보 전송
+            const completeResponse = {
+              ...finalResponseData,
+              content: fullContent,
+              response: fullContent
+            };
+            const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
+            controller.enqueue(encoder.encode(completeData));
+            
+            // 스트림 종료
+            const doneData = `data: [DONE]\n\n`;
+            controller.enqueue(encoder.encode(doneData));
+            controller.close();
+          },
+          onError: (error: Error) => {
+            // 에러 전송
+            const errorData = `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`;
+            controller.enqueue(encoder.encode(errorData));
+            controller.close();
+          }
+        });
+      } catch (error) {
+        // 초기 에러 처리
+        const errorData = `data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : '스트리밍 오류' })}\n\n`;
+        controller.enqueue(encoder.encode(errorData));
+        controller.close();
+      }
     }
   });
 
@@ -670,9 +689,25 @@ export async function POST(request: NextRequest) {
         } : undefined
       };
 
-      // 스트림 요청인 경우
+      // 스트림 요청인 경우 - 실제 스트리밍 사용
       if (stream) {
-        return createStreamResponse(response, llmResponse.content);
+        return createRealStreamResponse(
+          llmService,
+          conversationHistory,
+          {
+            model,
+            temperature: continuationContext ? 0.3 : 0.7,
+            maxTokens: 20000,
+            systemInstruction
+          },
+          {
+            sessionId: currentSession.id,
+            messageId: null, // 스트림에서는 나중에 설정
+            artifacts: [],
+            sources: [],
+            mcpTools: mcpResults
+          }
+        );
       }
 
       return NextResponse.json(response);
