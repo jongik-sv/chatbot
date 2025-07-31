@@ -40,15 +40,42 @@ function createRealStreamResponse(
             controller.enqueue(encoder.encode(data));
             fullContent += token;
           },
-          onComplete: (result: any) => {
-            // 완료 정보 전송
-            const completeResponse = {
-              ...finalResponseData,
-              content: fullContent,
-              response: fullContent
-            };
-            const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
-            controller.enqueue(encoder.encode(completeData));
+          onComplete: async (result: any) => {
+            // 스트림 완료 후 데이터베이스에 어시스턴트 메시지 저장
+            try {
+              const assistantMessage = chatRepo.createMessage({
+                sessionId: finalResponseData.sessionId,
+                role: 'assistant',
+                content: fullContent,
+                contentType: 'text',
+                metadata: {
+                  artifacts: finalResponseData.artifacts,
+                  sources: finalResponseData.sources,
+                  mcpTools: finalResponseData.mcpTools
+                }
+              });
+
+              // 완료 정보 전송 (실제 messageId 포함)
+              const completeResponse = {
+                ...finalResponseData,
+                content: fullContent,
+                response: fullContent,
+                messageId: assistantMessage.id
+              };
+              const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
+              controller.enqueue(encoder.encode(completeData));
+            } catch (error) {
+              console.error('스트림 완료 시 메시지 저장 오류:', error);
+              // 오류가 발생해도 응답은 전송 (fallback messageId 사용)
+              const completeResponse = {
+                ...finalResponseData,
+                content: fullContent,
+                response: fullContent,
+                messageId: Date.now()
+              };
+              const completeData = `data: ${JSON.stringify({ type: 'complete', response: completeResponse })}\n\n`;
+              controller.enqueue(encoder.encode(completeData));
+            }
             
             // 스트림 종료
             const doneData = `data: [DONE]\n\n`;

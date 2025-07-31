@@ -579,3 +579,38 @@ RAG 기반 대화를 선택했을 때 채팅창에서 프로젝트와 문서 정
 이제 RAG 기반 대화를 선택하면 채팅창에 프로젝트와 문서 정보가 정상적으로 표시됩니다.
 
 ------
+
+Runtime TypeError
+Cannot read properties of null (reading 'toString')
+
+## 2025-07-31 - Runtime TypeError 해결 완료
+
+### 문제 상황
+ChatInterface에서 `Cannot read properties of null (reading 'toString')` 런타임 오류 발생
+
+### 원인 분석
+1. **스트림 응답에서 messageId null 문제**: API 스트림 응답에서 `messageId: null`로 설정되어 있었음
+2. **toString() 안전성 부족**: `response.messageId.toString()` 호출 시 null 체크 없음
+3. **메시지 저장 누락**: 스트림 완료 시점에서 어시스턴트 메시지가 DB에 저장되지 않아 messageId가 생성되지 않음
+
+### 해결 방법
+1. **ChatInterface.tsx 안전성 개선**:
+   ```typescript
+   // 기존: response.messageId.toString()
+   // 수정: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`
+   ```
+
+2. **API 스트림 응답 수정**: `/api/chat/route.ts`
+   - 스트림 완료 시점에서 어시스턴트 메시지를 DB에 저장
+   - 실제 생성된 messageId를 완료 응답에 포함
+   - 오류 발생 시 fallback ID 제공
+
+### 수정된 기능
+✅ null 안전성 강화로 런타임 오류 방지
+✅ 스트림 완료 시 실제 messageId 반환
+✅ 메시지 저장 로직 개선으로 데이터 일관성 확보
+✅ 오류 상황에 대한 fallback 처리 추가
+
+이제 스트림 대화에서도 안정적으로 messageId가 처리됩니다.
+
+------

@@ -122,7 +122,7 @@ export default function ChatInterface({
     try {
       const response = await ApiClient.getSession(sessionId);
       const loadedMessages = response.messages.map((msg: MessageType) => ({
-        id: msg.id.toString(),
+        id: msg.id ? msg.id.toString() : `msg-${Date.now()}-${Math.random()}`,
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.createdAt), // 실제 메시지 생성 시간 사용
@@ -387,7 +387,7 @@ export default function ChatInterface({
             const lastIndex = updated.length - 1;
             if (updated[lastIndex]?.role === 'assistant') {
               updated[lastIndex] = {
-                id: response.messageId.toString(),
+                id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
                 role: 'assistant',
                 content: response.content || response.response,
                 timestamp: getCurrentKoreanTime(),
