@@ -20,12 +20,19 @@ import { StreamingSequentialThinkingProcessor } from '../../../services/Streamin
  */
 function isSequentialThinking(message: string): boolean {
   const lowerMessage = message.toLowerCase();
-  return (lowerMessage.includes('복잡한') && lowerMessage.includes('분석')) ||
-         (lowerMessage.includes('단계별') && (lowerMessage.includes('분석') || lowerMessage.includes('계획'))) ||
-         (lowerMessage.includes('생각해') && lowerMessage.includes('단계')) ||
-         lowerMessage.includes('순차적 사고') ||
-         lowerMessage.includes('체계적으로 분석') ||
-         (lowerMessage.includes('문제 해결') && lowerMessage.includes('단계'));
+  console.log('🔍 서버 Sequential Thinking 감지 확인:', {
+    message: message.substring(0, 50),
+    lowerMessage: lowerMessage.substring(0, 50),
+    includes단계별: lowerMessage.includes('단계별'),
+    includes순차적: lowerMessage.includes('순차적'),
+    includes복잡한분석: lowerMessage.includes('복잡한') && lowerMessage.includes('분석'),
+    includes체계적분석: lowerMessage.includes('체계적으로') && lowerMessage.includes('분석')
+  });
+  
+  return lowerMessage.includes('단계별') || 
+         lowerMessage.includes('순차적') ||
+         (lowerMessage.includes('복잡한') && lowerMessage.includes('분석')) ||
+         (lowerMessage.includes('체계적으로') && lowerMessage.includes('분석'));
 }
 
 const chatRepo = new ChatRepository();
@@ -231,8 +238,20 @@ async function analyzeMCPToolsNeeded(message: string): Promise<Array<{
     });
   }
 
-  // Sequential Thinking은 별도 처리하므로 MCP 도구 목록에서 제외
-  // (스트리밍으로 처리됨)
+  // Sequential Thinking 감지 시 MCP 도구로 추가
+  if (isSequentialThinking(message)) {
+    tools.push({
+      serverId: 'sequential-thinking',
+      toolName: 'sequentialthinking',
+      arguments: {
+        thought: `사용자 요청 분석: ${message}`,
+        nextThoughtNeeded: true,
+        thoughtNumber: 1,
+        totalThoughts: 5
+      },
+      reasoning: '복잡한 분석을 위해 순차적 사고 도구 사용'
+    });
+  }
 
   return tools;
 }
@@ -276,6 +295,16 @@ export async function POST(request: NextRequest) {
     }
 
     const { message, model, mode, sessionId, mentorId, userId, stream } = body;
+
+    // 디버깅 로그 추가
+    console.log('🔍 요청 파라미터 확인:', {
+      message: message?.substring(0, 50) + '...',
+      model,
+      mode,
+      stream,
+      hasStream: stream !== undefined,
+      streamValue: stream
+    });
 
     // 입력 검증
     if (!message || !message.trim()) {
@@ -563,8 +592,21 @@ export async function POST(request: NextRequest) {
       finalMessage += mcpContext;
     }
 
+    console.log('🔍 최종 메시지 구성:', {
+      originalLength: enhancedMessage.length,
+      mcpContextLength: mcpContext.length,
+      finalLength: finalMessage.length,
+      mcpContextPreview: mcpContext.substring(0, 200) || 'No MCP context'
+    });
+
     // Sequential Thinking 감지 및 스트리밍 처리
-    if (stream && isSequentialThinking(enhancedMessage)) {
+    console.log('🔍 스트리밍 조건 확인:', {
+      stream: stream,
+      isSequentialThinking: isSequentialThinking(enhancedMessage),
+      enhancedMessage: enhancedMessage?.substring(0, 100) + '...'
+    });
+
+    if (false) { // 스트리밍 비활성화
       console.log('🤔 Sequential Thinking 스트리밍 모드 시작');
       
       // 사용자 메시지 저장
@@ -583,7 +625,7 @@ export async function POST(request: NextRequest) {
 
       // 스트리밍 응답 설정
       const encoder = new TextEncoder();
-      const stream = new ReadableStream({
+      const readableStream = new ReadableStream({
         async start(controller) {
           try {
             // 스트리밍 처리 시작
@@ -616,9 +658,6 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // 완료 신호
-            controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
-            
             // AI 응답 저장
             const assistantMessage = chatRepo.createMessage({
               sessionId: currentSession.id,
@@ -638,11 +677,26 @@ export async function POST(request: NextRequest) {
               }
             });
 
+            // 완료 응답 전송 (MCP 도구 정보 포함)
+            const completeResponse = {
+              type: 'complete',
+              response: {
+                content: finalContent || '단계별 사고 과정이 완료되었습니다.',
+                sessionId: currentSession.id,
+                messageId: assistantMessage.id,
+                artifacts: [],
+                sources: [],
+                mcpTools: mcpResults.length > 0 ? mcpResults : undefined
+              }
+            };
+            
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(completeResponse)}\n\n`));
+            
+            // 완료 신호
+            controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+
             // 세션 업데이트
-            if (onSessionUpdate && currentSession.id) {
-              // onSessionUpdate는 여기서 사용할 수 없으므로 직접 세션 업데이트
-              chatRepo.updateSessionTimestamp(currentSession.id);
-            }
+            chatRepo.updateSessionTimestamp(currentSession.id);
 
             controller.close();
           } catch (error) {
@@ -657,7 +711,7 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      return new Response(stream, {
+      return new Response(readableStream, {
         headers: {
           'Content-Type': 'text/event-stream',
           'Cache-Control': 'no-cache',
@@ -860,6 +914,13 @@ export async function POST(request: NextRequest) {
       chatRepo.updateSessionTimestamp(currentSession.id);
 
       // 응답 구성
+      console.log('🔍 응답 구성 확인:', {
+        contentLength: llmResponse.content?.length || 0,
+        contentPreview: llmResponse.content?.substring(0, 100) || 'No content',
+        mcpToolsCount: mcpResults.length,
+        mcpToolsPreview: mcpResults.map(t => ({ tool: t.toolName, success: t.result.success }))
+      });
+
       const response: ChatResponse = {
         content: llmResponse.content,
         sessionId: currentSession.id,

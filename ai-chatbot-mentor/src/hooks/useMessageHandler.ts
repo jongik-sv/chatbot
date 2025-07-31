@@ -52,10 +52,19 @@ export function useMessageHandler({
   // Sequential Thinking 감지 함수
   const isSequentialThinking = (content: string): boolean => {
     const lowerContent = content.toLowerCase();
-    return lowerContent.includes('단계별') && 
-           (lowerContent.includes('분석') || 
-            lowerContent.includes('생각') ||
-            lowerContent.includes('순차적'));
+    console.log('🔍 클라이언트 Sequential Thinking 감지 확인:', {
+      content: content.substring(0, 50),
+      lowerContent: lowerContent.substring(0, 50),
+      includes단계별: lowerContent.includes('단계별'),
+      includes분석: lowerContent.includes('분석'),
+      includes생각: lowerContent.includes('생각'),
+      includes순차적: lowerContent.includes('순차적')
+    });
+    
+    return lowerContent.includes('단계별') || 
+           lowerContent.includes('순차적') ||
+           (lowerContent.includes('복잡한') && lowerContent.includes('분석')) ||
+           (lowerContent.includes('체계적으로') && lowerContent.includes('분석'));
   };
 
   const handleSendMessage = async (content: string, files?: File[]) => {
@@ -93,15 +102,12 @@ export function useMessageHandler({
         ? ragInfo.documentIds.map(id => parseInt(id))
         : selectedDocumentIds;
 
-      // Sequential Thinking 감지
+      // Sequential Thinking 감지 - 일반 응답으로 처리
       if (isSequentialThinking(content)) {
-        console.log('🤔 Sequential Thinking 감지됨, 스트리밍 모드 시작');
+        console.log('🤔 Sequential Thinking 감지됨, 일반 응답 모드로 처리');
         
-        // 스트리밍 방식 사용
-        let streamingContent = '';
-        let finalResponse: ChatResponse | null = null;
-
-        await ApiClient.sendMessageStream({
+        // 일반 응답 방식 사용 (스트리밍 비활성화)
+        const response = await ApiClient.sendMessage({
           message: content,
           model: state.selectedModel,
           mode: sessionMode,
@@ -109,113 +115,64 @@ export function useMessageHandler({
           mentorId: initialMentorId,
           documentIds: documentIdsToUse,
           files
-        },
-        // onChunk - 실시간으로 스트리밍 데이터 처리
-        (chunk: string) => {
-          try {
-            // SSE 형식 파싱
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const jsonStr = line.substring(6);
-                if (jsonStr.trim() && jsonStr !== '[DONE]') {
-                  const data = JSON.parse(jsonStr);
-                  
-                  // 실시간으로 사고 과정 표시
-                  if (data.type === 'thinking_start') {
-                    streamingContent = `✨ ${data.message}\n\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'step_start') {
-                    streamingContent += `🔄 ${data.message}\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'mcp_call') {
-                    streamingContent += `🔧 ${data.message}\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'mcp_result') {
-                    streamingContent += `✅ ${data.message}\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'thinking_generation') {
-                    streamingContent += `🤔 ${data.message}\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'step_complete') {
-                    streamingContent += `\n### 🤔 단계 ${data.stepNumber}: 사고 과정\n\n${data.thought}\n\n**추론**: ${data.reasoning}\n\n---\n\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'final_generation_start') {
-                    streamingContent += `🎯 ${data.message}\n\n`;
-                    setStreamingMessage(streamingContent);
-                  } else if (data.type === 'final_complete') {
-                    streamingContent += `## 🎯 최종 답변\n\n${data.finalAnswer}\n\n---\n*총 ${data.totalSteps}단계, ${Math.round(data.processingTime / 1000)}초 소요*`;
-                    setStreamingMessage(streamingContent);
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            console.warn('스트리밍 청크 파싱 오류:', e);
-          }
-        },
-        // onComplete
-        (response: ChatResponse) => {
-          finalResponse = response;
-          setIsStreaming(false);
-          setStreamingMessage('');
-        },
-        // onError
-        (error: Error) => {
-          console.error('스트리밍 오류:', error);
-          setError(error.message);
-          setIsStreaming(false);
-          setStreamingMessage('');
         });
 
-        // 스트리밍 완료 후 처리
-        if (finalResponse) {
-          // 세션 ID 업데이트 (새 세션인 경우)
-          if (!state.currentSessionId) {
-            dispatch({ type: 'SET_SESSION_ID', payload: finalResponse.sessionId });
-          }
+        console.log('📥 서버 응답 수신:', {
+          contentLength: response.content?.length || 0,
+          contentPreview: response.content?.substring(0, 100) || 'No content',
+          mcpToolsCount: response.mcpTools?.length || 0,
+          sessionId: response.sessionId,
+          messageId: response.messageId
+        });
 
-          // 세션 업데이트 콜백 호출
-          if (onSessionUpdate && finalResponse.sessionId) {
-            const responseContent = finalResponse.content || finalResponse.response;
-            onSessionUpdate(finalResponse.sessionId, {
-              messageCount: messages.length + 2,
-              lastMessage: {
-                content: responseContent.substring(0, 100) + (responseContent.length > 100 ? '...' : ''),
-                role: 'assistant',
-                createdAt: new Date().toISOString()
-              },
-              updatedAt: new Date().toISOString()
-            });
-          }
+        setIsStreaming(false);
+        setStreamingMessage('');
 
-          // 최종 메시지 업데이트
-          setMessages(prev => {
-            const updated = [...prev];
-            const lastIndex = updated.length - 1;
-            if (updated[lastIndex]?.role === 'assistant') {
-              updated[lastIndex] = {
-                id: finalResponse.messageId ? finalResponse.messageId.toString() : `assistant-${Date.now()}`,
-                role: 'assistant',
-                content: streamingContent,
-                timestamp: getCurrentKoreanTime(),
-                metadata: {
-                  artifacts: finalResponse.artifacts,
-                  sources: finalResponse.sources,
-                  modelSettings,
-                  mcpTools: finalResponse.mcpTools,
-                  isSequentialThinking: true
-                }
-              };
-            }
-            return updated;
+        // 세션 ID 업데이트 (새 세션인 경우)
+        if (!state.currentSessionId) {
+          dispatch({ type: 'SET_SESSION_ID', payload: response.sessionId });
+        }
+
+        // 세션 업데이트 콜백 호출
+        if (onSessionUpdate && response.sessionId) {
+          const responseContent = response.content || response.response;
+          onSessionUpdate(response.sessionId, {
+            messageCount: messages.length + 2,
+            lastMessage: {
+              content: responseContent.substring(0, 100) + (responseContent.length > 100 ? '...' : ''),
+              role: 'assistant',
+              createdAt: new Date().toISOString()
+            },
+            updatedAt: new Date().toISOString()
           });
+        }
 
-          // 아티팩트가 있으면 패널 열기
-          if (finalResponse.artifacts && finalResponse.artifacts.length > 0) {
-            setArtifacts(finalResponse.artifacts);
-            setIsArtifactPanelOpen(true);
+        // 최종 어시스턴트 메시지로 업데이트
+        setMessages(prev => {
+          const updated = [...prev];
+          const lastIndex = updated.length - 1;
+          if (updated[lastIndex]?.role === 'assistant') {
+            updated[lastIndex] = {
+              id: response.messageId ? response.messageId.toString() : `assistant-${Date.now()}`,
+              role: 'assistant',
+              content: response.content || response.response || '응답을 받지 못했습니다.',
+              timestamp: getCurrentKoreanTime(),
+              metadata: {
+                artifacts: response.artifacts,
+                sources: response.sources,
+                modelSettings,
+                mcpTools: response.mcpTools,
+                isSequentialThinking: true
+              }
+            };
           }
+          return updated;
+        });
+
+        // 아티팩트가 있으면 패널 열기
+        if (response.artifacts && response.artifacts.length > 0) {
+          setArtifacts(response.artifacts);
+          setIsArtifactPanelOpen(true);
         }
       } else {
         // 일반 요청-응답 방식 사용
