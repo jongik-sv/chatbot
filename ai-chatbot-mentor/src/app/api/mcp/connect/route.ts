@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MCPService } from '../../../../services/MCPService';
-
-const mcpService = MCPService.getInstance();
+import { mcpService } from '../../../../services/MCPService';
 
 export async function POST(request: NextRequest) {
   try {

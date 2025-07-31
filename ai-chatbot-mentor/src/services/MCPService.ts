@@ -659,6 +659,41 @@ export class MCPService extends EventEmitter {
   }
 
   /**
+   * 서버 상태 조회
+   */
+  async getServerStatus(): Promise<Record<string, any>> {
+    const servers = this.getAllServers();
+    const status: Record<string, any> = {};
+
+    for (const server of servers) {
+      const connection = this.connections.get(server.id);
+      const tools = this.getServerTools(server.id);
+      const stats = this.getServerStats(server.id);
+
+      status[server.id] = {
+        name: server.name,
+        status: server.status,
+        lastConnected: server.lastConnected,
+        error: server.error,
+        connection: connection ? {
+          status: connection.status,
+          lastPing: connection.lastPing,
+          latency: connection.latency,
+          error: connection.error
+        } : null,
+        toolsCount: tools.length,
+        tools: tools.map(tool => ({
+          name: tool.name,
+          description: tool.description
+        })),
+        stats: stats
+      };
+    }
+
+    return status;
+  }
+
+  /**
    * 이벤트 발생
    */
   private emitEvent(type: MCPEventType, serverId: string, data?: any) {
