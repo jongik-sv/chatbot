@@ -49,19 +49,7 @@
         "disabled": false,
         "autoApprove": []
       },
-      "@21st-dev/magic": {
-        "command": "cmd",
-        "args": [
-          "/c",
-          "npx",
-          "-y",
-          "@21st-dev/magic@latest",
-          "API_KEY=\"5a2851de36b1edb88a791501330cd242686723563bbe7c625aa3a3317a467b51\""
-        ],
-        "disabled": false,
-        "autoApprove": []
-      },
-      "pyhub.mcptools": {
+       "pyhub.mcptools": {
         "command": "C:\\mcptools\\pyhub.mcptools\\pyhub.mcptools.exe",
         "args": [
           "run",

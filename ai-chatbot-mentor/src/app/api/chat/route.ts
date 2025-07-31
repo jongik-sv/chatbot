@@ -12,6 +12,7 @@ import { mcpService } from '../../../services/MCPService';
 import { parseArtifactsFromContent } from '../../../utils/artifactParser';
 import { detectContinuation, shouldUpdateExistingArtifact, enhancePromptForContinuation } from '../../../utils/continuationHandler';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
+import { SequentialThinkingService } from '../../../services/SequentialThinkingService';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
@@ -21,160 +22,60 @@ const chatRepo = new ChatRepository();
 const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
 const ruleIntegration = new RuleIntegration();
+const sequentialThinkingService = new SequentialThinkingService();
 
 /**
  * Sequential Thinking 대체 실행 (MCP 서버 연결 실패 시)
  */
-async function executeSequentialThinkingFallback(args: Record<string, any>, message: string): Promise<string> {
-  const { thought } = args;
-  
-  // MCP 도구 분석
-  if (message.includes('MCP') || message.includes('도구') || message.includes('서버')) {
-    return `# MCP 도구 분석 결과
+async function executeSequentialThinkingFallback(args: Record<string, any>, message: string, model: string = 'gemini-2.0-flash-exp'): Promise<string> {
+  try {
+    console.log('Sequential Thinking 대체 실행 시작:', message.substring(0, 100));
+    
+    // 새로운 SequentialThinkingService 사용
+    const result = await sequentialThinkingService.executeThinking(message, 5, model);
+    
+    // 결과를 마크다운 형태로 포맷팅
+    const formattedResult = sequentialThinkingService.formatThinkingProcess(result);
+    
+    console.log(`Sequential Thinking 완료: ${result.totalSteps}단계, ${result.processingTime}ms`);
+    
+    return formattedResult;
+    
+  } catch (error) {
+    console.error('Sequential Thinking 대체 실행 오류:', error);
+    
+    // 오류 시 기본 분석 제공
+    return `# ⚠️ 단계별 사고 과정 실행 중 오류 발생
 
-**단계 1: 문제 파악**
-- MCP (Model Context Protocol) 서버 연결 문제 분석
-- 사용자가 요청한 도구 실행 환경 확인
+요청하신 내용에 대한 기본 분석을 제공합니다:
 
-**단계 2: 원인 분석**
-- Sequential Thinking 서버 연결 상태: 비활성화
-- 가능한 원인들:
-  1. MCP 서버 프로세스 시작 실패
-  2. npm 패키지 설치 문제
-  3. 네트워크 또는 권한 문제
-  4. 설정 파일 오류
+## 📝 요청 분석
+"${message.substring(0, 200)}${message.length > 200 ? '...' : ''}"
 
-**단계 3: 해결 방안**
-1. **수동 서버 연결**: MCP 관리 페이지에서 "연결" 버튼 클릭
-2. **패키지 재설치**: \`npx -y @modelcontextprotocol/server-sequential-thinking\`
-3. **대체 기능 사용**: 시스템이 제공하는 내장 분석 도구 활용
-4. **로그 확인**: 개발자 도구에서 연결 오류 상세 확인
+## 🔍 기본 접근 방법
 
-**단계 4: 권장사항**
-- 현재는 내장 분석 기능으로 충분한 단계별 사고 지원 가능
-- MCP 도구는 추가적인 고급 기능을 위한 선택사항
-- 문제 해결 시까지 일반 대화로 진행 권장`;
-  }
+**1단계: 문제 파악**
+- 사용자 요청의 핵심 내용 분석
+- 해결해야 할 주요 과제 식별
 
-  // 테트리스 개발 분석
-  if (message.includes('테트리스')) {
-    return `# 테트리스 개발 단계별 분석
+**2단계: 정보 정리**
+- 관련 정보 및 배경 지식 수집
+- 제약 조건 및 요구사항 정리
 
-**단계 1: 게임 구조 설계**
-- 게임 보드: 10x20 격자 시스템
-- 테트로미노: 7가지 기본 블록 (I, O, T, S, Z, J, L)
-- 게임 상태: 활성 블록, 고정 블록, 게임 오버 상태
-- 점수 시스템: 줄 제거 기준 점수 계산
+**3단계: 해결 방안 도출**
+- 가능한 접근 방법들 검토
+- 최적의 해결책 선택
 
-**단계 2: 핵심 로직 구현**
-1. **블록 생성 시스템**
-   - 랜덤 테트로미노 생성
-   - 다음 블록 미리보기
-   - 블록 초기 위치 설정
-
-2. **이동 및 회전 제어**
-   - 좌우 이동 (충돌 검사 포함)
-   - 블록 회전 (벽/바닥 킥 구현)
-   - 아래로 이동 (자동/수동)
-
-3. **충돌 검사**
-   - 벽면 충돌 감지
-   - 바닥 및 다른 블록과의 충돌
-   - 회전 시 공간 확보 검사
-
-**단계 3: 게임 메커니즘**
-1. **줄 완성 처리**
-   - 완성된 줄 감지 알고리즘
-   - 줄 제거 애니메이션
-   - 상위 블록들 아래로 이동
-
-2. **레벨 및 속도 조절**
-   - 점수/줄 수에 따른 레벨업
-   - 레벨별 낙하 속도 증가
-   - 난이도 곡선 설계
-
-**단계 4: 사용자 경험 개선**
-- 키보드 입력 처리 (WASD/화살표)
-- 부드러운 애니메이션 효과
-- 음향 효과 및 시각적 피드백
-- 일시정지/재시작 기능
-- 최고 점수 저장 시스템`;
-  }
-
-  // 프로그래밍/개발 관련
-  if (message.includes('개발') || message.includes('코드') || message.includes('프로그래밍')) {
-    return `# 개발 프로젝트 단계별 분석
-
-**단계 1: 요구사항 분석**
-- 사용자 요청사항 상세 분석
-- 기능적/비기능적 요구사항 분리
-- 우선순위 및 범위 정의
-- 기술적 제약사항 확인
-
-**단계 2: 기술 스택 선택**
-- 프론트엔드: React, Next.js, TypeScript 고려
-- 백엔드: Node.js, Express, API 설계
-- 데이터베이스: SQLite, PostgreSQL, MongoDB 검토
-- 배포: Vercel, Docker, CI/CD 파이프라인
-
-**단계 3: 아키텍처 설계**
-1. **시스템 구조**
-   - 컴포넌트 기반 설계
-   - 모듈화 및 재사용성 고려
-   - 상태 관리 패턴
-   - API 엔드포인트 설계
-
-2. **데이터 모델링**
-   - 데이터베이스 스키마 설계
-   - 관계 정의 및 정규화
-   - 인덱스 및 성능 최적화
-
-**단계 4: 구현 계획**
-1. MVP (최소 기능 제품) 정의
-2. 스프린트 기반 개발 일정
-3. 테스트 전략 수립
-4. 배포 및 모니터링 계획
-
-**단계 5: 품질 보장**
-- 코드 리뷰 프로세스
-- 단위/통합 테스트 작성
-- 성능 테스트 및 최적화
-- 보안 검토 및 취약점 분석`;
-  }
-
-  // 일반적인 문제 해결
-  return `# 단계별 사고 분석
-
-**단계 1: 문제 정의**
-"${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"
-
-현재 상황을 명확히 파악하고 해결해야 할 핵심 문제를 정의합니다.
-
-**단계 2: 정보 수집 및 분석**
-- 관련 정보 및 데이터 수집
-- 현재 상황의 배경과 맥락 파악
-- 제약 조건 및 가용 리소스 확인
-- 이해관계자 및 영향 범위 분석
-
-**단계 3: 해결책 도출**
-1. **브레인스토밍**: 가능한 모든 해결 방안 나열
-2. **평가 기준 설정**: 효과성, 실현 가능성, 비용, 시간
-3. **옵션 비교**: 각 방안의 장단점 분석
-4. **최적안 선택**: 기준에 따른 최선의 해결책 결정
-
-**단계 4: 실행 계획**
+**4단계: 실행 계획**
 - 구체적인 실행 단계 정의
-- 일정 및 마일스톤 설정
-- 필요한 자원 및 인력 배치
-- 위험 요소 식별 및 대응책 마련
+- 필요한 리소스 및 도구 확인
 
-**단계 5: 검토 및 개선**
-- 실행 결과 모니터링
-- 성과 지표 측정 및 평가
-- 피드백 수집 및 분석
-- 지속적 개선 방안 도출
+## 💡 권장사항
+더 정확한 단계별 분석을 위해서는 MCP Sequential Thinking 서버 연결을 확인하거나, 구체적인 질문으로 다시 요청해주세요.
 
-💡 **참고**: 현재 MCP Sequential Thinking 도구가 연결되지 않아 내장 분석 기능을 사용했습니다.`;
+---
+*오류로 인해 기본 분석만 제공되었습니다. 시스템 관리자에게 문의하세요.*`;
+  }
 }
 
 /**
@@ -538,7 +439,7 @@ export async function POST(request: NextRequest) {
                 );
               } catch (error) {
                 console.log('MCP Sequential Thinking 실패, 대체 실행 중...');
-                const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage);
+                const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage, model);
                 mcpResult = {
                   success: true,
                   content: [{ type: 'text', text: fallbackResult }],
@@ -577,7 +478,7 @@ export async function POST(request: NextRequest) {
             // Sequential Thinking 오류 시 대체 실행
             if (toolInfo.serverId === 'sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
               try {
-                const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage);
+                const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage, model);
                 mcpResults.push({
                   toolName: toolInfo.toolName,
                   serverId: toolInfo.serverId,
