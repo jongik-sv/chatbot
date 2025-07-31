@@ -37,10 +37,32 @@ class ChatRepository {
       if (tables.length === 0) {
         throw new Error('chat_sessions 테이블이 존재하지 않습니다. 데이터베이스 초기화가 필요합니다.');
       }
+
+      // metadata 컬럼이 없으면 추가
+      this.addMetadataColumnIfNotExists();
       
     } catch (error) {
       console.error("데이터베이스 초기화 실패:", error);
       throw error;
+    }
+  }
+
+  /**
+   * chat_sessions 테이블에 metadata 컬럼 추가 (없는 경우)
+   */
+  addMetadataColumnIfNotExists() {
+    try {
+      const columns = this.db.prepare("PRAGMA table_info(chat_sessions)").all();
+      const hasMetadataColumn = columns.some(col => col.name === 'metadata');
+      
+      if (!hasMetadataColumn) {
+        console.log('chat_sessions 테이블에 metadata 컬럼 추가 중...');
+        this.db.prepare("ALTER TABLE chat_sessions ADD COLUMN metadata TEXT").run();
+        console.log('✅ metadata 컬럼이 추가되었습니다.');
+      }
+    } catch (error) {
+      console.error('metadata 컬럼 추가 실패:', error);
+      // 이미 컬럼이 존재하는 경우 등의 에러는 무시
     }
   }
 
@@ -164,10 +186,14 @@ class ChatRepository {
    * 세션 업데이트
    */
   updateSession(sessionId, data) {
-    const { title, modelUsed } = data;
+    const { title, modelUsed, ragMetadata } = data;
 
-    let query = `UPDATE chat_sessions SET updated_at = CURRENT_TIMESTAMP`;
-    const params = [];
+    // metadata 컬럼이 존재하는지 확인
+    const columns = this.db.prepare("PRAGMA table_info(chat_sessions)").all();
+    const hasMetadataColumn = columns.some(col => col.name === 'metadata');
+
+    let query = `UPDATE chat_sessions SET updated_at = ?`;
+    const params = [this.getCurrentKoreanTimeISO()];
 
     if (title !== undefined) {
       query += `, title = ?`;
@@ -177,6 +203,12 @@ class ChatRepository {
     if (modelUsed !== undefined) {
       query += `, model_used = ?`;
       params.push(modelUsed);
+    }
+
+    // metadata 컬럼이 있고 ragMetadata가 제공된 경우에만 업데이트
+    if (hasMetadataColumn && ragMetadata !== undefined) {
+      query += `, metadata = ?`;
+      params.push(ragMetadata ? JSON.stringify({ ragMetadata }) : null);
     }
 
     query += ` WHERE id = ?`;

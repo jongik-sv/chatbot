@@ -39,6 +39,24 @@ export default function ChatSessionPage() {
     router.push('/history');
   };
 
+  const handleSessionUpdate = async (sessionId: number, updates: any) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        console.error('세션 업데이트 실패:', response.statusText);
+      }
+    } catch (error) {
+      console.error('세션 업데이트 오류:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
@@ -90,6 +108,7 @@ export default function ChatSessionPage() {
           <ChatInterface 
             className="flex-1" 
             sessionId={sessionId}
+            onSessionUpdate={handleSessionUpdate}
           />
         </div>
       </MainLayout>
