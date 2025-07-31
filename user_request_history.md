@@ -868,4 +868,19 @@ kiro : 실시간 스트리밍이 되지 않고 아예 내용이 전혀 안 나�
 kiro : 스트리밍 기능이 안되고 내용이 아예 없다는 문제. 서버 로그는 있지만 채팅창에는 내용이 없음. 또한 질문 밑에 MCP 사용 UI가 있으면 좋겠다는 요청.-
 -----
 
-kiro : 로그에는 5단계 한세트를 몇 번 반복하고 있지만 채팅창에는 아무 메시지가 나오지 않는다는 문제 보고
+kiro : 로그에는 5단계 한세트를 몇 번 반복하고 있지만 채팅창에는 아무 메시지가 나오지 않는다는 문제 보고-
+-----
+
+kiro : Kiro IDE가 파일들을 자동으로 포맷팅했다는 알림을 받았습니다. 그리고 답변을 보면 꼭 2개가 등록되어서 보이는데 하나로 합쳐져서 보여야 한다는 문제를 제기했습니다.-
+-----
+
+kiro : AI 답변 밑에 MCP 사용에 대한 UI가 있으면 좋겠다는 요청. 그림과 같은 내용이 나오고 접을 수 있는 UI를 원함. MCP를 어떻게 썼는지 분석할 수 있도록.-
+-----
+
+kiro : MCP UI를 붙였지만 TypeError가 발생했다는 보고. Cannot read properties of undefined (reading 'substring') 오류-
+-----
+
+kiro : Kiro IDE가 MCPToolsDisplay.tsx 파일을 자동으로 포맷팅했다는 알림을 받았습니다. 그리고 각 단계별 MCP 사용 UI와 메시지를 각각 못 찍는지 질문했습니다.---
+---
+
+kiro : 단계별로 AI 답변이 나오지도 않고 MCP 도구 기록도 나오지 않으며, 마지막에 하나 있는 MCP 도구기록을 열어보려면 TypeError가 발생한다는 문제 보고. Cannot read properties of undefined (reading 'substring') 오류
