@@ -226,14 +226,13 @@ export class MCPService extends EventEmitter {
       const serverId = serverIds[index];
       if (result.status === 'fulfilled') {
         connectedCount++;
-        this.log('info', `Successfully connected to server: ${serverId}`);
       } else {
         failedCount++;
-        this.log('warn', `Failed to connect to server ${serverId}:`, result.reason);
+        this.log('warn', `❌ ${serverId} connection failed`);
       }
     });
 
-    this.log('info', `Connection summary: ${connectedCount} connected, ${failedCount} failed`);
+    this.log('info', `🔗 MCP Connection Summary: ${connectedCount} connected, ${failedCount} failed`);
   }
 
   /**
@@ -244,7 +243,7 @@ export class MCPService extends EventEmitter {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        this.log('info', `Connecting to ${serverId} (attempt ${attempt}/${maxRetries})`);
+        this.log('info', `Connecting to ${serverId} (${attempt}/${maxRetries})`);
         await this.connectToServer(serverId);
         return; // 성공시 즉시 반환
       } catch (error) {
@@ -254,7 +253,7 @@ export class MCPService extends EventEmitter {
         // 마지막 시도가 아니면 잠시 대기
         if (attempt < maxRetries) {
           const delay = 1000 * attempt; // 점진적으로 대기 시간 증가
-          this.log('info', `Waiting ${delay}ms before retry...`);
+          this.log('debug', `Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -274,7 +273,7 @@ export class MCPService extends EventEmitter {
     }
 
     try {
-      this.log('info', `Attempting to connect to server: ${serverId}`);
+      this.log('debug', `Attempting to connect to server: ${serverId}`);
       this.connections.set(serverId, {
         serverId,
         status: 'connecting'
@@ -298,7 +297,7 @@ export class MCPService extends EventEmitter {
       // 기존 클라이언트가 있으면 연결 해제
       const existingClient = this.clients.get(serverId);
       if (existingClient) {
-        this.log('info', `Disconnecting existing client for server: ${serverId}`);
+        this.log('debug', `Disconnecting existing client for server: ${serverId}`);
         await existingClient.disconnect();
       }
 
@@ -315,7 +314,7 @@ export class MCPService extends EventEmitter {
         autoApprove: server.autoApprove
       };
 
-      this.log('info', `Creating MCP client for ${serverId} with command: ${config.command} ${config.args?.join(' ') || ''}`);
+      this.log('info', `Creating MCP client for ${serverId}`);
 
       const client = new MCPClient(config, {
         timeout: this.settings.timeout,
@@ -374,7 +373,7 @@ export class MCPService extends EventEmitter {
       // 서버의 도구 목록 로드
       await this.loadServerTools(serverId);
 
-      this.log('info', `Successfully initialized MCP server: ${server.name}`);
+      this.log('info', `✅ ${server.name} connected successfully`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Connection failed';
@@ -387,7 +386,7 @@ export class MCPService extends EventEmitter {
         error: errorMessage
       });
 
-      this.log('error', `Failed to connect to server ${serverId}: ${errorMessage}`, error);
+      this.log('error', `❌ ${serverId} connection failed: ${errorMessage}`);
       this.emitEvent('server_error', serverId, { error: errorMessage });
       
       // 실패한 클라이언트 정리
@@ -435,7 +434,7 @@ export class MCPService extends EventEmitter {
     try {
       const client = this.clients.get(serverId);
       if (!client) {
-        this.log('warn', `No client found for server ${serverId}`);
+        this.log('debug', `No client found for server ${serverId}`);
         return;
       }
 
@@ -443,10 +442,10 @@ export class MCPService extends EventEmitter {
       const tools = client.getTools();
       this.tools.set(serverId, tools);
 
-      this.log('info', `Loaded ${tools.length} tools for server ${serverId}`);
+      this.log('info', `  └─ ${tools.length} tools available`);
 
     } catch (error) {
-      this.log('error', `Failed to load tools for server ${serverId}:`, error);
+      this.log('error', `  └─ Failed to load tools: ${error instanceof Error ? error.message : 'Unknown error'}`);
       // 실패 시 빈 배열로 설정
       this.tools.set(serverId, []);
     }

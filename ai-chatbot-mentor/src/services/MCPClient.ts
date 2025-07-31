@@ -420,43 +420,25 @@ export class MCPClient extends EventEmitter {
         params: {}
       };
 
-      console.log(`[MCP DEBUG] Sending tools/list request:`, JSON.stringify(request));
       const response = await this.sendRequest(request);
-      console.log(`[MCP DEBUG] Received tools/list response:`, JSON.stringify(response, null, 2));
       
       if (response.error) {
         throw new Error(`Failed to load tools: ${response.error.message}`);
       }
 
-      // response 구조 상세 로깅
-      console.log(`[MCP DEBUG] Response type:`, typeof response);
-      console.log(`[MCP DEBUG] Response keys:`, Object.keys(response));
-      console.log(`[MCP DEBUG] Response.result type:`, typeof response.result);
-      if (response.result) {
-        console.log(`[MCP DEBUG] Response.result keys:`, Object.keys(response.result));
-      }
-
       const rawTools = response.result?.tools || [];
-      console.log(`[MCP DEBUG] Raw tools type:`, typeof rawTools);
-      console.log(`[MCP DEBUG] Raw tools is array:`, Array.isArray(rawTools));
-      console.log(`[MCP DEBUG] Raw tools length:`, rawTools.length);
-      console.log(`[MCP DEBUG] Raw tools from server:`, JSON.stringify(rawTools, null, 2));
 
       this.tools = rawTools.map((tool: any) => ({
         ...tool,
         serverId: this.config.id
       }));
 
-      console.log(`[MCP DEBUG] Successfully loaded ${this.tools.length} tools from server ${this.config.name}`);
-      console.log(`[MCP DEBUG] Final tools array:`, JSON.stringify(this.tools, null, 2));
+      this.log('info', `Successfully loaded ${this.tools.length} tools from server ${this.config.name}`);
       if (this.tools.length > 0) {
-        this.log('info', `Tool names: ${this.tools.map(t => t.name).join(', ')}`);
-      } else {
-        console.log(`[MCP DEBUG] WARNING: No tools loaded despite successful response!`);
+        this.log('info', `Available tools: ${this.tools.map(t => t.name).join(', ')}`);
       }
 
     } catch (error) {
-      console.log(`[MCP DEBUG] loadTools error:`, error);
       this.log('error', 'Failed to load tools:', error);
       this.tools = [];
     }
