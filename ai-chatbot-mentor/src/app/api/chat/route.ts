@@ -13,6 +13,7 @@ import { parseArtifactsFromContent } from '../../../utils/artifactParser';
 import { detectContinuation, shouldUpdateExistingArtifact, enhancePromptForContinuation } from '../../../utils/continuationHandler';
 import { ChatRequest, ChatResponse, Message } from '../../../types';
 import { SequentialThinkingService } from '../../../services/SequentialThinkingService';
+import { SequentialThinkingProcessor } from '../../../services/SequentialThinkingProcessor';
 import { readFile } from 'fs/promises';
 import path from 'path';
 
@@ -23,6 +24,7 @@ const llmService = new LLMService();
 const mentorContextService = new MentorContextService();
 const ruleIntegration = new RuleIntegration();
 const sequentialThinkingService = new SequentialThinkingService();
+const sequentialThinkingProcessor = new SequentialThinkingProcessor();
 
 /**
  * Sequential Thinking 대체 실행 (MCP 서버 연결 실패 시)
@@ -425,20 +427,38 @@ export async function POST(request: NextRequest) {
           try {
             let mcpResult;
             
-            // Sequential Thinking의 경우 대체 실행 시도
+            // Sequential Thinking의 경우 특별 처리
             if (toolInfo.serverId === 'sequential-thinking' && toolInfo.toolName === 'sequentialthinking') {
               try {
-                mcpResult = await mcpService.executeTool(
-                  toolInfo.serverId,
-                  toolInfo.toolName,
-                  toolInfo.arguments,
-                  {
-                    sessionId: currentSession.id,
-                    userId: userId?.toString()
-                  }
+                console.log('🤔 Sequential Thinking 처리 시작...');
+                
+                // 새로운 SequentialThinkingProcessor 사용
+                const thinkingResult = await sequentialThinkingProcessor.processSequentialThinking(
+                  enhancedMessage,
+                  model,
+                  5, // maxSteps
+                  currentSession.id,
+                  userId?.toString()
                 );
+                
+                // 완전한 결과를 포맷팅
+                const formattedResult = sequentialThinkingProcessor.formatCompleteResult(thinkingResult);
+                
+                mcpResult = {
+                  success: true,
+                  content: [{ type: 'text', text: formattedResult }],
+                  executionTime: thinkingResult.processingTime,
+                  metadata: {
+                    totalSteps: thinkingResult.totalSteps,
+                    processingTime: thinkingResult.processingTime,
+                    isSequentialThinking: true
+                  }
+                };
+                
+                console.log(`✅ Sequential Thinking 완료: ${thinkingResult.totalSteps}단계`);
+                
               } catch (error) {
-                console.log('MCP Sequential Thinking 실패, 대체 실행 중...');
+                console.log('Sequential Thinking 처리 실패, 대체 실행 중...', error);
                 const fallbackResult = await executeSequentialThinkingFallback(toolInfo.arguments, enhancedMessage, model);
                 mcpResult = {
                   success: true,

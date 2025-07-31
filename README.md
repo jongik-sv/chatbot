@@ -315,3 +315,61 @@ DEBUG=true npm run dev
 ---
 
 **Made with ❤️ using Next.js, Ollama, and Google Gemini**
+
+
+--- sequential-thinking 사용하기
+
+챗봇에서 sequential-thinking을 호출을 하긴 하는데 제대로 생각을 하지는 않는것 같아.
+
+'테트리스 개발을 위한 기능을 단계별 순차적으로 생각해서 알려줘.' 이 입력에 대해 아래처럼 나오는데 제대로 된 것은 아니지.
+
+Reasoning:
+복잡한 분석을 위해 순차적 사고 도구 사용
+Result:
+{
+  "thoughtNumber": 1,
+  "totalThoughts": 3,
+  "nextThoughtNeeded": true,
+  "branches": [],
+  "thoughtHistoryLength": 1
+}
+ID: result_1...
+
+---
+
+내가 원하는 것은 아래와 같아.
+
+입력 : '테트리스 개발을 위한 기능을 단계별 순차적으로 생각해서 알려줘.'
+
+실제 처리 방법 (LLM이 분석한 현재 문제점과 앞으로 고칠점)
+
+  사용자가 원하는 것은 현재 sequential-thinking MCP 도구가 단순히 JSON  반환하는 것이 아니라, 실제로 단계별로 사고하는 과정을 보여주고 그 결과를 바탕으로 최종 답변을 정리해서 제공하는 것입니다.
+
+  현재 문제점:
+  1. sequential-thinking 도구를 호출하지만 단순히 JSON 응답만 표시하고 끝남
+  2. 실제 사고 과정이나 내용이 표시되지 않음
+  3. 최종 정리된 답변이 제공되지 않음
+
+  사용자가 원하는 흐름:
+  1. "✻ Thinking…" 표시
+  2. 각 사고 단계별로 내용 표시
+  3. MCP 도구 호출 과정 표시 
+  4. 다시 "✻ Thinking…" 표시
+  5. 최종 정리된 답변 제공
+
+  이를 구현하려면 chat/route.ts의 MCP 도구 처리 부분을 수정해야 합니다. 특히 sequential-thinking 도구의 경우 특별한 처리가 필요합니다.
+
+  현재 구조를 보면:
+  1. MCP 도구가 필요한지 분석
+  2. 도구 실행
+  3. 결과를 그대로 표시
+
+  사용자가 원하는 구조:
+  1. "✻ Thinking…" 표시  
+  2. 사고 과정 단계별 표시
+
+  3. 최종 답변을 체계적으로 통합
+
+  연속적인 도구 호출을 통해 심층적인 분석을 수행하고, 각 단계의 사고
+ 
+  내용을 누적하여 종합적이고 정제된 최종 답변을 도출합니다. 이 과정에서 단순 JSON 응답을 넘어 사용자에게 의미 있는 인사이트를 제공하는 것이 핵심입니다.
