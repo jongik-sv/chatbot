@@ -840,4 +840,32 @@ kiro : sequential-thinking MCP 도구가 단순히 JSON만 반환하는 문제�
 kiro : 잘되긴 했는데 중간단계의 메시지를 볼 수가 없어. 중간단계와 MCP가 실행되는 모습을 마지막에 보는 것이 아니라 중간중간 발생할때마다 보고 싶어.--
 ----
 
-kiro : 에러 발생 : SyntaxError: Unexpected token 'd', "data: {"ty"... is not valid JSON
+kiro : 에러 발생 : SyntaxError: Unexpected token 'd', "data: {"ty"... is not valid JSON-
+-----
+
+kiro : Unexpected token 'd', "data: {"ty"... is not valid JSON------
+
+k
+iro : ChatInterface.tsx가 너무 기니까 리팩토링부터 하자. 그 다음 스트리밍 처리를 하도록 하자.
+------
+
+
+kiro : 이전 세션의 컨텍스트를 받았습니다. Sequential Thinking MCP 도구의 스트리밍 기능 구현과 ChatInterface.tsx 리팩토링 작업에 대한 내용을 이해했습니다. 계속해서 도움을 드릴 준비가 되었습니다.-----
+-
+
+kiro : 스트리밍 처리 진행 요청--
+----
+
+kiro : 스트리밍 처리 오류 수정 및 MCP 도구 UI 복원 요청 - onSessionUpdate 오류 해결과 사용자 메시지 하단의 MCP 도구 정보 UI 복원-
+-----
+
+kiro : Kiro IDE가 파일들을 자동으로 포맷팅했다는 알림을 받았습니다. 업데이트된 파일들을 확인하겠습니다.-
+-----
+
+kiro : 실시간 스트리밍이 되지 않고 아예 내용이 전혀 안 나온다는 문제 보고--
+----
+
+kiro : 스트리밍 기능이 안되고 내용이 아예 없다는 문제. 서버 로그는 있지만 채팅창에는 내용이 없음. 또한 질문 밑에 MCP 사용 UI가 있으면 좋겠다는 요청.-
+-----
+
+kiro : 로그에는 5단계 한세트를 몇 번 반복하고 있지만 채팅창에는 아무 메시지가 나오지 않는다는 문제 보고

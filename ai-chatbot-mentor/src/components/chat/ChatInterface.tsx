@@ -30,9 +30,9 @@ interface ChatInterfaceProps {
   onSessionUpdate?: (sessionId: number, updates: any) => void;
 }
 
-export default function ChatInterface({ 
-  className = '', 
-  sessionId, 
+export default function ChatInterface({
+  className = '',
+  sessionId,
   initialMode,
   initialMentorId,
   selectedDocumentIds,
@@ -107,7 +107,7 @@ export default function ChatInterface({
   return (
     <div className={`flex h-full overflow-hidden ${className}`}>
       {/* 메인 채팅 영역 */}
-      <div 
+      <div
         className="flex flex-col transition-all duration-300 relative"
         style={{ width: `${chatWidth}%` }}
       >
@@ -163,7 +163,7 @@ export default function ChatInterface({
                 <span className="font-medium">선택된 문서 ({ragInfo.documentTitles.length}개):</span>
                 <div className="ml-1 flex flex-wrap gap-1">
                   {ragInfo.documentTitles.map((title, index) => (
-                    <span 
+                    <span
                       key={index}
                       className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium"
                     >
@@ -178,9 +178,9 @@ export default function ChatInterface({
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          <MessageList 
-            messages={messages} 
-            mentorId={initialMentorId} 
+          <MessageList
+            messages={messages}
+            mentorId={initialMentorId}
             isStreaming={isStreaming}
             streamingMessage={streamingMessage}
           />
@@ -214,7 +214,7 @@ export default function ChatInterface({
 
       {/* 오른쪽 아티팩트 패널 */}
       {hasArtifacts && isArtifactPanelOpen && (
-        <div 
+        <div
           className="border-l border-gray-200 bg-gray-50 flex flex-col transition-all duration-300 relative"
           style={{ width: `${artifactPanelWidth}%` }}
         >
@@ -225,7 +225,7 @@ export default function ChatInterface({
               const startX = e.clientX;
               const startWidth = artifactPanelWidth;
               const containerRect = e.currentTarget.closest('.flex')?.getBoundingClientRect();
-              
+
               const handleMouseMove = (e: MouseEvent) => {
                 if (!containerRect) return;
                 const deltaX = startX - e.clientX;
@@ -278,16 +278,16 @@ export default function ChatInterface({
               </div>
             </div>
           </div>
-          
+
           {/* 패널 내용 */}
           <div className="flex-1 overflow-hidden">
-            <ArtifactPanel 
-              artifacts={artifacts} 
+            <ArtifactPanel
+              artifacts={artifacts}
               onCopy={handleArtifactCopy}
               onDownload={handleArtifactDownload}
               onUpdate={handleArtifactUpdate}
               onDelete={handleArtifactDelete}
-              className="h-full" 
+              className="h-full"
             />
           </div>
         </div>
