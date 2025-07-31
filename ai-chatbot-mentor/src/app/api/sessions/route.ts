@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
           role: lastMessage.role
         } : null,
         messageCount,
-        updatedAt: lastMessage?.createdAt || session.createdAt
+        updatedAt: lastMessage?.createdAt || session.createdAt,
+        // documentInfo는 ChatRepository에서 이미 추가되므로 그대로 전달
+        documentInfo: session.documentInfo
       };
     });
 

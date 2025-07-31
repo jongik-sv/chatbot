@@ -508,4 +508,44 @@ Next.js 앱의 여러 파일에서 `path.join()` 대신 `path.resolve()`를 사�
 Creating turbopack project { dir: 'C:\\Project\\chatbot\\ai-chatbot-mentor', testMode: true }
 [Error: You cannot use different slug names for the same dynamic path ('sessionId' !== 'id').] 서버가 실행이 안된다.
 
+대화 목록에 문서 기반 대화 표시가 문서 라고 되어 있는데 RAG 로 바꿔줘. 그리고 어떤 문서로 대화하는지도 표시 해줘. 대화 복원 했을 때도 해당 문서들이 위에 표시 될 수 있도록 해줘.
+
+## 2025-07-31 - RAG 대화 표시 및 문서 정보 개선 완료
+
+### 요청 내용
+1. 대화 목록에서 '문서' 모드를 'RAG'로 표시 변경
+2. 대화 목록에 사용된 문서명 표시 기능 추가  
+3. 대화 복원 시 문서 정보 표시 기능 개선
+
+### 작업 결과
+
+#### 1. 사용자 인터페이스 개선
+- **대화 목록 (conversations/page.tsx)**: '문서' → 'RAG' 라벨 변경 
+- **사이드바 (Sidebar.tsx)**: RAG 대화에 문서 정보 표시 추가
+- **채팅 인터페이스 (ChatInterface.tsx)**: RAG 정보 배너 구현
+
+#### 2. 데이터베이스 메타데이터 처리
+- **ChatRepository.js**: metadata 컬럼 자동 추가 기능
+- **세션 메타데이터 추출**: RAG 정보를 세션과 메시지에서 추출
+- **문서 정보 표시**: 프로젝트명과 문서 목록 표시
+
+#### 3. API 응답 개선  
+- **sessions/route.ts**: documentInfo 필드를 API 응답에 포함
+- **문서 정보 연결**: ChatRepository에서 추출한 정보를 UI까지 전달
+
+#### 4. 구현된 기능
+✅ 대화 목록에서 '문서' → 'RAG' 표시 변경
+✅ 대화 목록에 프로젝트명과 문서명 표시  
+✅ 대화 복원 시 RAG 정보 배너 자동 표시
+✅ 세션 메타데이터에서 문서 정보 자동 추출
+✅ Sidebar와 대화 목록 모두에서 문서 정보 표시
+
+### 기술적 개선사항
+- 메타데이터 파싱 오류 방지
+- 세션별 RAG 정보 저장 및 복원
+- UI 컴포넌트 간 일관된 데이터 흐름
+- 자동 데이터베이스 스키마 업데이트
+
+이제 RAG 기반 대화에서 프로젝트와 문서 정보가 모든 화면에서 일관되게 표시됩니다.
+
 ------

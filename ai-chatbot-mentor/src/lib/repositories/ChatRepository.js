@@ -137,7 +137,75 @@ class ChatRepository {
     params.push(limit, offset);
 
     const stmt = this.db.prepare(query);
-    return stmt.all(...params);
+    const sessions = stmt.all(...params);
+
+    // 세션별로 RAG 메타데이터에서 문서 정보 추출
+    return sessions.map(session => {
+      let documentInfo = null;
+      
+      if ((session.mode === 'document' || session.mode === 'rag') && session.metadata) {
+        try {
+          const metadata = JSON.parse(session.metadata);
+          if (metadata.ragMetadata) {
+            documentInfo = {
+              projectName: metadata.ragMetadata.projectName,
+              documentTitles: metadata.ragMetadata.documentTitles || []
+            };
+          }
+        } catch (error) {
+          console.warn('메타데이터 파싱 오류:', error);
+        }
+      }
+
+      // 메타데이터가 없는 경우 메시지에서 문서 정보 추출 시도
+      if (!documentInfo && (session.mode === 'document' || session.mode === 'rag')) {
+        documentInfo = this.extractDocumentInfoFromMessages(session.id);
+      }
+
+      return {
+        ...session,
+        documentInfo
+      };
+    });
+  }
+
+  /**
+   * 메시지에서 문서 정보 추출
+   */
+  extractDocumentInfoFromMessages(sessionId) {
+    // 첫 번째 사용자 메시지의 메타데이터에서 문서 정보 찾기
+    const messageStmt = this.db.prepare(`
+      SELECT metadata FROM messages 
+      WHERE session_id = ? AND role = 'user' AND metadata IS NOT NULL
+      ORDER BY created_at ASC 
+      LIMIT 1
+    `);
+    
+    const message = messageStmt.get(sessionId);
+    if (!message?.metadata) return null;
+
+    try {
+      const metadata = JSON.parse(message.metadata);
+      if (metadata.documentIds && Array.isArray(metadata.documentIds)) {
+        // 문서 ID로 문서명 조회
+        const documentIds = metadata.documentIds;
+        const placeholders = documentIds.map(() => '?').join(',');
+        const docStmt = this.db.prepare(`
+          SELECT filename FROM documents 
+          WHERE id IN (${placeholders})
+        `);
+        
+        const documents = docStmt.all(...documentIds);
+        return {
+          projectName: null,
+          documentTitles: documents.map(doc => doc.filename)
+        };
+      }
+    } catch (error) {
+      console.warn('메시지 메타데이터 파싱 오류:', error);
+    }
+
+    return null;
   }
 
   /**

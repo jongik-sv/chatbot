@@ -160,13 +160,29 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 `}
               >
                 <div className="truncate font-medium">{chat.title}</div>
+                {/* RAG 문서 정보 표시 */}
+                {(chat.mode === 'document' || chat.mode === 'rag') && chat.documentInfo && (
+                  <div className="text-xs text-blue-600 mt-1">
+                    {chat.documentInfo.projectName && (
+                      <div className="truncate">📁 {chat.documentInfo.projectName}</div>
+                    )}
+                    {chat.documentInfo.documentTitles && chat.documentInfo.documentTitles.length > 0 && (
+                      <div className="truncate">
+                        📄 {chat.documentInfo.documentTitles.length > 1 
+                          ? `${chat.documentInfo.documentTitles[0]} 외 ${chat.documentInfo.documentTitles.length - 1}개`
+                          : chat.documentInfo.documentTitles[0]
+                        }
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="text-xs text-gray-500 flex items-center justify-between">
                   <span>{formatTime(chat.updated_at)}</span>
                   <span className="text-xs px-1.5 py-0.5 bg-gray-100 rounded">
                     {chat.mode === 'chat' ? '일반' : 
                      chat.mode === 'mbti' ? 'MBTI' :
                      chat.mode === 'mentor' ? '멘토' :
-                     chat.mode === 'document' || chat.mode === 'rag' ? '문서' : chat.mode}
+                     chat.mode === 'document' || chat.mode === 'rag' ? 'RAG' : chat.mode}
                   </span>
                 </div>
               </a>

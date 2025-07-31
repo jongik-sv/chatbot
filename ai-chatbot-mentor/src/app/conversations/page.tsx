@@ -137,7 +137,7 @@ export default function ConversationsPage() {
       case 'mbti': return 'MBTI';
       case 'mentor': return '멘토';
       case 'document':
-      case 'rag': return '문서';
+      case 'rag': return 'RAG';
       default: return mode;
     }
   };
@@ -260,7 +260,7 @@ export default function ConversationsPage() {
                 <option value="chat">일반 대화</option>
                 <option value="mbti">MBTI 멘토</option>
                 <option value="mentor">멘토</option>
-                <option value="document">문서 기반</option>
+                <option value="document">RAG</option>
                 <option value="rag">RAG</option>
               </select>
             </div>
@@ -359,6 +359,29 @@ export default function ConversationsPage() {
                       {conversation.title}
                     </h3>
                     
+                    {/* RAG 문서 정보 표시 */}
+                    {(conversation.mode === 'document' || conversation.mode === 'rag') && conversation.documentInfo && (
+                      <div className="text-xs text-blue-600 mb-2 space-y-1">
+                        {conversation.documentInfo.projectName && (
+                          <div className="flex items-center">
+                            <span className="mr-1">📁</span>
+                            <span className="truncate">{conversation.documentInfo.projectName}</span>
+                          </div>
+                        )}
+                        {conversation.documentInfo.documentTitles && conversation.documentInfo.documentTitles.length > 0 && (
+                          <div className="flex items-center">
+                            <span className="mr-1">📄</span>
+                            <span className="truncate">
+                              {conversation.documentInfo.documentTitles.length > 1 
+                                ? `${conversation.documentInfo.documentTitles[0]} 외 ${conversation.documentInfo.documentTitles.length - 1}개`
+                                : conversation.documentInfo.documentTitles[0]
+                              }
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {conversation.last_message && (
                       <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                         {conversation.last_message}
@@ -448,6 +471,28 @@ export default function ConversationsPage() {
                               <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
                                 {conversation.title}
                               </div>
+                              {/* RAG 문서 정보 표시 */}
+                              {(conversation.mode === 'document' || conversation.mode === 'rag') && conversation.documentInfo && (
+                                <div className="text-xs text-blue-600 space-y-1 mt-1">
+                                  {conversation.documentInfo.projectName && (
+                                    <div className="flex items-center">
+                                      <span className="mr-1">📁</span>
+                                      <span className="truncate max-w-xs">{conversation.documentInfo.projectName}</span>
+                                    </div>
+                                  )}
+                                  {conversation.documentInfo.documentTitles && conversation.documentInfo.documentTitles.length > 0 && (
+                                    <div className="flex items-center">
+                                      <span className="mr-1">📄</span>
+                                      <span className="truncate max-w-xs">
+                                        {conversation.documentInfo.documentTitles.length > 1 
+                                          ? `${conversation.documentInfo.documentTitles[0]} 외 ${conversation.documentInfo.documentTitles.length - 1}개`
+                                          : conversation.documentInfo.documentTitles[0]
+                                        }
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                               <div className="text-sm text-gray-500">
                                 ID: {conversation.id}
                               </div>
